@@ -88,7 +88,12 @@ REGOLE:
   const out = await complete({ system, user, json: true, maxTokens: 500, kind: "console", cacheMinutes: 60 * 24 });
   const idx = contentIndex().c;
   const valid = new Set([...idx.caps.map(x => x.id), ...idx.works.map(x => x.id), ...idx.signals.map(x => x.id)]);
-  out.highlight = (out.highlight || []).map(String).filter(id => valid.has(id)).slice(0, 6);
+  const all = [...idx.caps, ...idx.works, ...idx.signals];
+  const norm = (v) => String(v || "").trim().toLowerCase().replace(/^(cap|work|signal|area|lavoro|radar)\s*[:\-]\s*/, "");
+  let ids = [];
+  (out.highlight || []).forEach(raw => { const id = norm(raw); const hit = all.find(x => x.id.toLowerCase() === id) || all.find(x => [x.name, x.title, x.client, x.label].filter(Boolean).some(n => n.toLowerCase() === id)); if (hit && !ids.includes(hit.id)) ids.push(hit.id); });
+  if (!ids.length && out.answer) { const t = String(out.answer).toLowerCase(); all.forEach(x => { const names = [x.name, x.title, x.client, x.label].filter(Boolean).map(n => n.toLowerCase()); if (names.some(n => n.length > 3 && t.includes(n)) && !ids.includes(x.id)) ids.push(x.id); }); }
+  out.highlight = ids.slice(0, 6);
   out.open = valid.has(out.open) ? out.open : null;
   out.label = String(out.label || "").slice(0, 40);
   out.ask = out.ask && out.ask.question ? { question: String(out.ask.question).slice(0, 160), options: (out.ask.options || []).map(String).slice(0, 4) } : null;

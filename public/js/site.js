@@ -401,6 +401,18 @@ const Focus = {
   }
 };
 
+/* id proposti dall'AI: tollera prefissi, nomi al posto degli id e, in mancanza, cerca i nomi nel testo della risposta */
+function resolveIds(list, text) {
+  const all = ALL().filter(i => i.kind !== "core"); const out = [];
+  const push = (i) => { if (i && !out.includes(i.id)) out.push(i.id); };
+  (list || []).forEach(raw => {
+    const id = String(raw || "").trim().toLowerCase().replace(/^(cap|work|signal|area|lavoro|radar)\s*[:\-]\s*/, "");
+    push(all.find(i => i.id.toLowerCase() === id) || all.find(i => [i.name, i.title, i.client, i.label].filter(Boolean).some(n => n.toLowerCase() === id)));
+  });
+  if (!out.length && text) { const t = String(text).toLowerCase(); all.forEach(i => { const names = [i.name, i.title, i.client, i.label].filter(Boolean).map(n => n.toLowerCase()); if (names.some(n => n.length > 3 && t.includes(n))) push(i); }); }
+  return out.slice(0, 6);
+}
+
 /* =========================================================
    CONSOLE WINDOW — la finestra che copre il sito
    ========================================================= */
@@ -410,7 +422,7 @@ const ConsoleWin = {
   open(q) {
     if (!this.el) return;
     this.el.hidden = false; document.body.classList.add("cwin-open");
-    if (!this.thread.children.length) this.thread.innerHTML = `<div class="msg console"><span class="who">Console</span><p>Dimmi cosa cerchi o quanto tempo hai. Ti propongo un percorso e configuro il sito di conseguenza.</p></div>`;
+    if (!this.thread.children.length) this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>Dimmi cosa cerchi, o quanto tempo hai: ti propongo un percorso e configuro il sito.</p></div>`;
     $("#cwin-chips").innerHTML = this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
     if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
   },
@@ -419,13 +431,13 @@ const ConsoleWin = {
   async send(q) {
     q = String(q || "").trim(); if (!q || this.busy) return; this.busy = true;
     this.add(`<div class="msg user"><p>${esc(q)}</p></div>`);
-    const think = this.add(`<div class="msg console thinking"><span class="who">Console</span><p>sto leggendo il sistema…</p></div>`);
+    const think = this.add(`<div class="msg bot thinking"><span class="who">Console</span><p>sto leggendo il sistema…</p></div>`);
     try {
       const r = await AI.console(q, this.history.slice(-3));
       this.history.push({ q, a: r.answer || "" }); this.last = r;
-      const items = (r.highlight || []).map(byId).filter(Boolean);
+      const items = resolveIds(r.highlight, r.answer).map(byId).filter(Boolean);
       const group = (k, label) => { const l = items.filter(i => i.kind === k); return l.length ? `<div class="prop-group"><small>${label}</small>${l.map(i => `<button type="button" class="prop-item" data-open="${i.id}">${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.src + " · " + i.title : i.name)}</button>`).join("")}</div>` : ""; };
-      let html = `<div class="msg console"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
+      let html = `<div class="msg bot"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
       if (r.ask && r.ask.question) html += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
       if (items.length) {
         const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
@@ -436,7 +448,7 @@ const ConsoleWin = {
       this.thread.scrollTop = this.thread.scrollHeight;
       if (Console && items.length) Console.highlight(items.map(i => i.id));
     } catch (err) {
-      think.className = "msg console"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
+      think.className = "msg bot"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
     }
     this.busy = false;
   },
