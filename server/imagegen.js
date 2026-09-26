@@ -38,11 +38,13 @@ async function moderate(text, key) {
 
 function buildPrompt(subject, mood, frame) {
   const style = STYLE[mood] || STYLE.vivid;
-  const framing = frame === "landscape" ? " Inquadratura orizzontale ampia: il soggetto al centro, la scena e lo sfondo si estendono ai lati." : frame === "portrait" ? " Inquadratura verticale: il soggetto al centro, la scena e lo sfondo si estendono sopra e sotto." : "";
+  const framing = frame === "landscape" ? " Inquadratura orizzontale: il soggetto al centro, la scena e lo sfondo si estendono ai lati."
+    : frame === "portrait" ? " Inquadratura verticale: il soggetto al centro, la scena e lo sfondo si estendono sopra e sotto."
+    : frame === "wide" ? " Composizione panoramica per un maxi-schermo molto largo: il soggetto è piccolo e al centro, occupa al massimo un terzo dell'altezza, con molto spazio di set vuoto ai lati e una fascia orizzontale uniforme; nulla di importante in alto o in basso." : "";
   return `Fotografia still life di ${subject}: oggetto singolo al centro dell'inquadratura, set da studio, ${style}, superfici lucide e materiali credibili, resa CGI fotorealistica, composizione pulita ed elegante, nessun testo, nessuna scritta, nessuna persona.${framing}`;
 }
 // Formati che chiedono al modello una ri-inquadratura vera (le dimensioni disponibili sono 3:2 e 2:3)
-const FRAMES = { "16:9": { frame: "landscape", size: "1536x1024" }, "32:9": { frame: "landscape", size: "1536x1024" }, "9:16": { frame: "portrait", size: "1024x1536" } };
+const FRAMES = { "16:9": { frame: "landscape", size: "1536x1024" }, "32:9": { frame: "wide", size: "1536x1024" }, "9:16": { frame: "portrait", size: "1024x1536" } };
 
 // Genera (o ripesca dalla cache) l'immagine per un soggetto. Ritorna { image: dataURL, subject, model, cached }.
 async function generate({ q, mood, format }) {
@@ -68,7 +70,8 @@ async function generate({ q, mood, format }) {
   if (base && base.image) {
     const fd = new FormData();
     fd.append("image", new Blob([Buffer.from(base.image.split(",")[1], "base64")], { type: "image/jpeg" }), "base.jpg");
-    fd.append("model", c.model); fd.append("prompt", `Stessa scena e stesso oggetto dell'immagine di riferimento, ri-inquadrati in formato ${fr.frame === "landscape" ? "orizzontale" : "verticale"}: estendi il set e lo sfondo, mantieni luce, materiali e stile. ${prompt}`);
+    const how = fr.frame === "landscape" ? "in formato orizzontale: estendi il set e lo sfondo ai lati" : fr.frame === "portrait" ? "in formato verticale: estendi il set e lo sfondo sopra e sotto" : "in una composizione panoramica: l'oggetto molto più piccolo e al centro, ampio spazio di set vuoto ai lati, nulla di importante in alto o in basso";
+    fd.append("model", c.model); fd.append("prompt", `Stesso oggetto e stessa scena dell'immagine di riferimento (identici materiali, colori, luce e stile), ricomposti ${how}. ${prompt}`);
     fd.append("n", "1"); fd.append("size", size); fd.append("quality", c.quality); fd.append("output_format", "jpeg"); fd.append("output_compression", "82");
     r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { authorization: `Bearer ${c.key}` }, body: fd });
   } else {

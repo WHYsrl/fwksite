@@ -51,11 +51,11 @@ window.Diffusion = (() => {
       <form class="org-word dn-form" autocomplete="off"><input type="text" maxlength="60" placeholder="Nomina un oggetto, anche impossibile" enterkeyhint="go" aria-label="Nomina un oggetto"><button type="submit">Genera</button></form>
       <div class="dn-chips">${SUGGEST.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>
       <div class="org-controls formats dn-formats" hidden>${FORMATS.map((f, i) => `<button type="button" data-f="${f.id}" class="${i === 0 ? "on" : ""}"><b>${f.name}</b><small>${f.label}</small></button>`).join("")}</div>
-      <div class="dn-regen" hidden><span class="dn-regen-note"></span><button type="button" class="dn-regen-btn"></button><button type="button" class="dn-replay">↻ Rivedi il denoising</button></div>`;
-    const stage = root.querySelector(".dn-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".dn-hud"), hint = root.querySelector(".dn-hint"), form = root.querySelector(".dn-form"), input = form.querySelector("input"), fmts = root.querySelector(".dn-formats"), regen = root.querySelector(".dn-regen"), regenBtn = root.querySelector(".dn-regen-btn"), regenNote = root.querySelector(".dn-regen-note");
+      <div class="dn-regen" hidden><span class="dn-regen-note"></span><button type="button" class="dn-replay">↻ Rivedi il denoising</button></div>`;
+    const stage = root.querySelector(".dn-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".dn-hud"), hint = root.querySelector(".dn-hint"), form = root.querySelector(".dn-form"), input = form.querySelector("input"), fmts = root.querySelector(".dn-formats"), regen = root.querySelector(".dn-regen"), regenNote = root.querySelector(".dn-regen-note");
     const accent = () => cssVar(root, "--accent", "#BF00FF"), bgCol = () => cssVar(root, "--bg", "#050307");
     if (!tiles.length) makeTiles(accent());
-    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0, variants: {}, regenBusy: "" };
+    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0, variants: {}, pending: {} };
     const small = document.createElement("canvas"), sctx = small.getContext("2d");
 
     function size() { const r = stage.getBoundingClientRect(); if (!r.width || !r.height) return false; st.dpr = Math.min(1.5, window.devicePixelRatio || 1); st.W = Math.round(r.width); st.H = Math.round(r.height); cv.width = st.W * st.dpr; cv.height = st.H * st.dpr; ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); return true; }
@@ -81,43 +81,14 @@ window.Diffusion = (() => {
       const [x0, x1] = span(col), [y0, y1] = span(row);
       const out = { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 }; salCache.set(img, out); return out;
     }
-    // Ritaglio più stretto possibile verso il formato senza tagliare il soggetto (margine 6%); il resto si estende con lo sfondo sfocato.
+    // Ritaglio al formato centrato sul soggetto (nessuna estensione: i formati veri li genera il modello)
     function reframe(img, ratio) {
       const iw = img.naturalWidth || img.width || 512, ih = img.naturalHeight || img.height || 512; const sal = analyze(img);
-      const m = 0.06; const bx0 = Math.max(0, sal.x0 - m) * iw, bx1 = Math.min(1, sal.x1 + m) * iw, by0 = Math.max(0, sal.y0 - m) * ih, by1 = Math.min(1, sal.y1 + m) * ih;
-      let sx = 0, sy = 0, sw = iw, sh = ih; const cur = iw / ih;
-      if (ratio > cur) { // più largo: si riduce l'altezza fin dove il soggetto lo consente
-        const want = iw / ratio; sh = Math.max(want, by1 - by0); sy = Math.min(Math.max(0, (by0 + by1) / 2 - sh / 2), ih - sh);
-      } else if (ratio < cur) { // più alto: si riduce la larghezza
-        const want = ih * ratio; sw = Math.max(want, bx1 - bx0); sx = Math.min(Math.max(0, (bx0 + bx1) / 2 - sw / 2), iw - sw);
-      }
-      const got = sw / sh; return { sx, sy, sw, sh, extend: Math.abs(got - ratio) / ratio > 0.02 };
+      let sw = iw, sh = iw / ratio; if (sh > ih) { sh = ih; sw = ih * ratio; }
+      const sx = Math.min(Math.max(0, sal.cx * iw - sw / 2), iw - sw), sy = Math.min(Math.max(0, sal.cy * ih - sh / 2), ih - sh);
+      return { sx, sy, sw, sh };
     }
-    // Disegna l'asset nel riquadro: sfondo esteso (copia sfocata e scurita) + soggetto contenuto
-    function drawAdapted(src, fr, ratio) {
-      const r = reframe(src, ratio);
-      ctx.save(); ctx.beginPath(); ctx.rect(fr.x, fr.y, fr.w, fr.h); ctx.clip();
-      if (r.extend) {
-        // soggetto contenuto e centrato; ai lati (o sopra e sotto) lo sfondo continua: bordo specchiato, sfocato e un po' più scuro
-        const cr = r.sw / r.sh; let dw = fr.w, dh = fr.w / cr; if (dh > fr.h) { dh = fr.h; dw = fr.h * cr; }
-        const dx = fr.x + (fr.w - dw) / 2, dy = fr.y + (fr.h - dh) / 2; const wide = dw < fr.w - 1;
-        const strip = (flipX, flipY, sxs, sys, sws, shs, tx, ty, tw, th) => {
-          if (tw < 1 || th < 1) return;
-          const bw = 24, bh = Math.max(2, Math.round(24 * th / Math.max(1, tw))); small.width = bw; small.height = bh; sctx.save(); sctx.imageSmoothingEnabled = true;
-          sctx.translate(flipX ? bw : 0, flipY ? bh : 0); sctx.scale(flipX ? -1 : 1, flipY ? -1 : 1); sctx.drawImage(src, sxs, sys, sws, shs, 0, 0, bw, bh); sctx.restore();
-          ctx.imageSmoothingEnabled = true; ctx.drawImage(small, 0, 0, bw, bh, tx - 2, ty - 2, tw + 4, th + 4);
-          ctx.fillStyle = "rgba(0,0,0,.24)"; ctx.fillRect(tx, ty, tw, th);
-        };
-        if (wide) { const k = Math.min(0.35, (dx - fr.x) / dw); strip(true, false, r.sx, r.sy, r.sw * k, r.sh, fr.x, dy, dx - fr.x, dh); strip(true, false, r.sx + r.sw * (1 - k), r.sy, r.sw * k, r.sh, dx + dw, dy, fr.x + fr.w - dx - dw, dh); }
-        else { const k = Math.min(0.35, (dy - fr.y) / dh); strip(false, true, r.sx, r.sy, r.sw, r.sh * k, dx, fr.y, dw, dy - fr.y); strip(false, true, r.sx, r.sy + r.sh * (1 - k), r.sw, r.sh * k, dx, dy + dh, dw, fr.y + fr.h - dy - dh); }
-        ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, dx, dy, dw, dh);
-        // giunzione morbida
-        const feather = Math.max(10, Math.min(dw, dh) * 0.05);
-        const g = wide ? ctx.createLinearGradient(dx, 0, dx + feather, 0) : ctx.createLinearGradient(0, dy, 0, dy + feather); g.addColorStop(0, "rgba(0,0,0,.28)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; if (wide) ctx.fillRect(dx, dy, feather, dh); else ctx.fillRect(dx, dy, dw, feather);
-        const g2 = wide ? ctx.createLinearGradient(dx + dw - feather, 0, dx + dw, 0) : ctx.createLinearGradient(0, dy + dh - feather, 0, dy + dh); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.28)"); ctx.fillStyle = g2; if (wide) ctx.fillRect(dx + dw - feather, dy, feather, dh); else ctx.fillRect(dx, dy + dh - feather, dw, feather);
-      } else { ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, fr.x, fr.y, fr.w, fr.h); }
-      ctx.restore();
-    }
+    function drawAdapted(src, fr, ratio) { const r = reframe(src, ratio); ctx.save(); ctx.beginPath(); ctx.rect(fr.x, fr.y, fr.w, fr.h); ctx.clip(); ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, fr.x, fr.y, fr.w, fr.h); ctx.restore(); }
 
     function draw() {
       if (!st.W) return;
@@ -174,28 +145,29 @@ window.Diffusion = (() => {
     }
     function replay() { if (!st.img) return; st.step = 0; reseed(); st.format = "free"; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); updHud(); draw(); }
     function syncFormats() { fmts.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.f === st.format)); syncRegen(); }
-    // "Rigenera nel formato": il modello ri-inquadra la scena in orizzontale o verticale (una chiamata in più, in cache)
-    const REGEN = { "16:9": "orizzontale", "9:16": "verticale", "32:9": "orizzontale" };
+    // Varianti di formato: appena c'è la base, il modello compone in parallelo orizzontale (16:9), verticale (9:16) e panoramica (32:9)
+    const VARIANTS = ["16:9", "9:16", "32:9"];
     function syncRegen() {
-      const f = st.format; const can = st.step >= N && st.img && REGEN[f] && !PREVIEW;
-      regenBtn.hidden = !can || !!st.variants[f]; regenNote.textContent = "";
-      if (can && st.variants[f]) regenNote.textContent = `Scena ri-inquadrata dal modello in ${REGEN[f]}`;
-      else if (can) { regenBtn.disabled = st.regenBusy === f; regenBtn.textContent = st.regenBusy === f ? "Il modello ri-inquadra…" : `Rigenera in ${f} con il modello`; regenNote.textContent = "Adattamento immediato: soggetto intero, sfondo esteso. Oppure:"; }
-      else if (st.step >= N && st.img && f !== "free" && f !== "1:1") regenNote.textContent = "";
+      const f = st.format; if (st.step < N || !st.img) { regenNote.textContent = ""; return; }
+      if (VARIANTS.includes(f)) regenNote.textContent = st.variants[f] ? `${f} composto dal modello` : st.pending[f] ? `Il modello sta componendo il ${f}… intanto un ritaglio` : st.pending[f] === false ? `${f}: il modello non ha risposto, ritaglio della base` : "";
+      else regenNote.textContent = f === "1:1" ? "1:1 · l'immagine com'è nata" : "";
+      fmts.querySelectorAll("button").forEach(b => { const id = b.dataset.f; b.classList.toggle("wait", VARIANTS.includes(id) && !!st.pending[id]); b.classList.toggle("ready", VARIANTS.includes(id) && !!st.variants[id]); });
     }
-    async function regenerate(f) {
-      if (!REGEN[f] || st.variants[f] || st.regenBusy) return; st.regenBusy = f; syncRegen(); const subject = st.subject;
-      try {
-        const r = await fetch("/api/ai/image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: subject, mood: document.documentElement.dataset.mood || "", format: f }) });
-        const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Il modello non risponde");
-        const img = new Image(); img.src = j.image; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("Immagine non leggibile")); });
-        if (st.subject !== subject) return; st.variants[f] = img;
-      } catch (e) { if (st.subject === subject) { hint.textContent = e.message || "Errore"; } }
-      st.regenBusy = ""; syncRegen(); draw();
+    function requestVariants(subject) {
+      VARIANTS.forEach(async (f) => {
+        if (st.variants[f] || st.pending[f] || PREVIEW) return; st.pending[f] = true; syncRegen();
+        try {
+          const r = await fetch("/api/ai/image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: subject, mood: document.documentElement.dataset.mood || "", format: f }) });
+          const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Il modello non risponde");
+          const img = new Image(); img.src = j.image; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("Immagine non leggibile")); });
+          if (st.subject !== subject) return; st.variants[f] = img; st.pending[f] = null;
+        } catch (e) { if (st.subject !== subject) return; st.pending[f] = false; }
+        syncRegen(); if (st.format === f) draw();
+      });
     }
     async function generate(subject) {
       subject = String(subject || "").trim().slice(0, 60); if (subject.length < 2) { input.focus(); return; }
-      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; st.variants = {}; st.regenBusy = ""; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
+      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; st.variants = {}; st.pending = {}; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
       try {
         let img;
         if (PREVIEW) { await new Promise(r => setTimeout(r, 1400)); img = previewImage(subject, accent()); st.model = "anteprima"; }
@@ -206,7 +178,7 @@ window.Diffusion = (() => {
         }
         await new Promise((res, rej) => { if (img.complete && img.naturalWidth) return res(); img.onload = res; img.onerror = () => rej(new Error("Immagine non leggibile")); });
         if (st.subject !== subject) return; // nel frattempo ha chiesto altro
-        st.img = img; st.status = "ready";
+        st.img = img; st.status = "ready"; requestVariants(subject);
       } catch (e) { if (st.subject !== subject) return; st.status = "error"; st.msg = e.message || "Errore"; }
       updHud(); draw();
     }
@@ -218,7 +190,6 @@ window.Diffusion = (() => {
     form.addEventListener("submit", e => { e.preventDefault(); generate(input.value); });
     root.querySelector(".dn-chips").addEventListener("click", e => { const b = e.target.closest("[data-s]"); if (!b) return; input.value = b.dataset.s; generate(b.dataset.s); });
     fmts.addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; st.format = b.dataset.f; syncFormats(); draw(); });
-    regenBtn.addEventListener("click", () => regenerate(st.format));
     root.querySelector(".dn-replay").addEventListener("click", replay);
     document.addEventListener("fw:theme", () => { makeTiles(accent()); st.lat = null; draw(); });
     new ResizeObserver(() => { if (size()) draw(); }).observe(stage);

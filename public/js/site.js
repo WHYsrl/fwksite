@@ -34,11 +34,33 @@ const html = document.documentElement;
 // Palette corrente (cambia con l'umore): i canvas leggono i colori dalle variabili CSS, non da costanti
 const Theme = {
   accent: "#BF00FF", accentRgb: "191,0,255", bg: "#050307", paper: "#EEEAF1",
-  from(el) { const cs = getComputedStyle(el || html); const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d; const t = { accent: v("--accent", "#BF00FF"), accentRgb: v("--accent-rgb", "191,0,255"), bg: v("--bg", "#050307"), paper: v("--paper", "#EEEAF1") }; t.rgba = (a) => `rgba(${t.accentRgb},${a})`; return t; },
+  ink: "#fff", ink2: "#CFC7D8", ink3: "#8B8197", inkRgb: "255,255,255",
+  from(el) { const cs = getComputedStyle(el || html); const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d; const t = { accent: v("--accent", "#BF00FF"), accentRgb: v("--accent-rgb", "191,0,255"), bg: v("--bg", "#050307"), paper: v("--paper", "#EEEAF1"), ink: v("--ink", "#fff"), ink2: v("--ink-2", "#CFC7D8"), ink3: v("--ink-3", "#8B8197"), inkRgb: v("--ink-rgb", "255,255,255") }; t.rgba = (a) => `rgba(${t.accentRgb},${a})`; t.inkA = (a) => `rgba(${t.inkRgb},${a})`; return t; },
   read() { Object.assign(this, this.from(html)); return this; },
   rgba(a) { return `rgba(${this.accentRgb},${a})`; }
 };
 Theme.read();
+// Immagini chiare per il mood "Chiaro": il server elenca in DATA.lightMedia le versioni chiare (public/media/light/*) delle immagini d'ambiente;
+// qui si scambia il src delle <img> quando cambia il mood, anche per le parti disegnate dopo (schermate mobile, drawer)
+const LightMedia = {
+  map: DATA.lightMedia || {}, timer: 0,
+  light(src) { const s = String(src || ""); const i = s.lastIndexOf("/media/"); if (i < 0) return null; const k = s.slice(i); return this.map[k] ? media(this.map[k]) : null; },
+  apply() {
+    if (!Object.keys(this.map).length) return;
+    document.body.classList.add("light-media");
+    const on = html.dataset.mood === "light";
+    $$("img").forEach(img => {
+      if (on) { if (img.dataset.dark) return; const l = this.light(img.getAttribute("src")); if (l) { img.dataset.dark = img.getAttribute("src"); img.src = l; } }
+      else if (img.dataset.dark) { img.src = img.dataset.dark; delete img.dataset.dark; }
+    });
+  },
+  init() {
+    if (!Object.keys(this.map).length) return;
+    document.addEventListener("fw:theme", () => this.apply());
+    new MutationObserver(() => { clearTimeout(this.timer); this.timer = setTimeout(() => this.apply(), 60); }).observe(document.body, { childList: true, subtree: true });
+    this.apply();
+  }
+};
 const hasGsap = typeof window.gsap !== "undefined";
 if (hasGsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
@@ -308,26 +330,26 @@ const Console = (() => {
   // il nodo centrale è il cubo del logo (stesse tre facce del file ufficiale, box 51.09×59)
   const CUBE = [[51.09, 14.75, 25.55, 59, 51.09, 44.25], [25.55, 29.5, 0, 14.75, 25.55, 0, 51.09, 14.75], [25.55, 29.5, 25.55, 59, 0, 44.25]];
   function cube(x, y, h) { const k = h / 59; ctx.save(); ctx.translate(x - 25.55 * k, y - 29.5 * k); ctx.scale(k, k); CUBE.forEach(pl => { ctx.beginPath(); for (let i = 0; i < pl.length; i += 2) i ? ctx.lineTo(pl[i], pl[i + 1]) : ctx.moveTo(pl[i], pl[i + 1]); ctx.closePath(); ctx.fill(); }); ctx.restore(); }
-  function label(p, nd, main, eyebrow, font, color, off) { const right = Math.cos(nd.ang) >= -0.15; const x = right ? p.x + off : p.x - off; ctx.textAlign = right ? "left" : "right"; ctx.textBaseline = "middle"; if (eyebrow) { ctx.font = `500 9px ${MONO}`; ctx.fillStyle = "rgba(139,129,151,1)"; ctx.letterSpacing = "1.2px"; ctx.fillText(eyebrow, x, p.y - 9); ctx.letterSpacing = "0px"; } ctx.font = font; ctx.fillStyle = color; ctx.fillText(main, x, eyebrow ? p.y + 5 : p.y); }
+  function label(p, nd, main, eyebrow, font, color, off) { const right = Math.cos(nd.ang) >= -0.15; const x = right ? p.x + off : p.x - off; ctx.textAlign = right ? "left" : "right"; ctx.textBaseline = "middle"; if (eyebrow) { ctx.font = `500 9px ${MONO}`; ctx.fillStyle = T.ink3; ctx.letterSpacing = "1.2px"; ctx.fillText(eyebrow, x, p.y - 9); ctx.letterSpacing = "0px"; } ctx.font = font; ctx.fillStyle = color; ctx.fillText(main, x, eyebrow ? p.y + 5 : p.y); }
   function draw(t) {
     ctx.clearRect(0, 0, W, H); if (!nodes.length || !W) return;
     // i nodi trascinati "a gruppo" inseguono con un leggero ritardo
     nodes.forEach(nd => { if (nd.tox != null) { nd.ox += (nd.tox - nd.ox) * .22; nd.oy += (nd.toy - nd.oy) * .22; if (Math.abs(nd.tox - nd.ox) < .3 && Math.abs(nd.toy - nd.oy) < .3) { nd.ox = nd.tox; nd.oy = nd.toy; nd.tox = nd.toy = null; } } });
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
-    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? T.rgba(.9) : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
+    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? T.rgba(.9) : T.inkA(active || hiOn ? e.alpha * .5 : e.alpha); ctx.stroke(); });
     ctx.setLineDash([]);
     if (!reduced) {
       if (t > spawnAt && particles.length < 9 * amp()) { const sEdges = edges.filter(e => e.signal); if (sEdges.length) { const e = sEdges[Math.floor(Math.random() * sEdges.length)]; const next = edges.find(x => x.b.id === e.b.id && x.a.kind === "core"); particles.push({ segs: [[e.a.id, e.b.id], next ? [e.b.id, next.a.id] : null].filter(Boolean), i: 0, p: 0, v: (0.00065 + Math.random() * 0.0004) * speed() }); } spawnAt = t + (700 + Math.random() * 900) / speed(); }
       const dt = last ? Math.min(50, t - last) : 16;
-      particles = particles.filter(pt => { pt.p += pt.v * dt; if (pt.p >= 1) { pt.i++; pt.p = 0; if (pt.i >= pt.segs.length) return false; } const [ia, ib] = pt.segs[pt.i]; const a = P[ia], b = P[ib]; if (!a || !b) return false; const x = a.x + (b.x - a.x) * pt.p, y = a.y + (b.y - a.y) * pt.p; const q = Math.max(0, pt.p - 0.12); const tx = a.x + (b.x - a.x) * q, ty = a.y + (b.y - a.y) * q; const g = ctx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, "rgba(238,234,241,0)"); g.addColorStop(1, "rgba(238,234,241,.9)"); ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = pt.i === 0 ? PAPER : PURPLE; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill(); return true; });
+      particles = particles.filter(pt => { pt.p += pt.v * dt; if (pt.p >= 1) { pt.i++; pt.p = 0; if (pt.i >= pt.segs.length) return false; } const [ia, ib] = pt.segs[pt.i]; const a = P[ia], b = P[ib]; if (!a || !b) return false; const x = a.x + (b.x - a.x) * pt.p, y = a.y + (b.y - a.y) * pt.p; const q = Math.max(0, pt.p - 0.12); const tx = a.x + (b.x - a.x) * q, ty = a.y + (b.y - a.y) * q; const g = ctx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, T.inkA(0)); g.addColorStop(1, T.inkA(.9)); ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = pt.i === 0 ? PAPER : PURPLE; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill(); return true; });
     }
     nodes.forEach(nd => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
-      if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; cube(p.x, p.y, r * 2.1); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
-      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
-      else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#CFC7D8"; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? "#fff" : "#CFC7D8", nd.r + 9); }
+      if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : T.ink; cube(p.x, p.y, r * 2.1); ctx.fillStyle = T.inkA(.9); ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
+      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : T.ink; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, T.ink, nd.r + 12); }
+      else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.ink2; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? T.ink : T.ink2, nd.r + 9); }
       else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, "RADAR · FONTE ESTERNA", `400 11px ${MONO}`, PAPER, nd.r + 8); }
       ctx.restore();
     });
@@ -799,6 +821,7 @@ const Intro = {
 /* =========================================================
    BOOT
    ========================================================= */
+LightMedia.init(); // prima di Modes.apply: ascolta fw:theme e scambia le immagini se il mood è "Chiaro"
 Modes.apply();
 Focus.load();
 watchPaper();

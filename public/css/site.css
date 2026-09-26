@@ -35,13 +35,16 @@ html[data-mood="calm"]{--bg:#07090F;--bg-2:#0E1220;--bg-3:#161B2C;--ink:#F4F2FA;
 html[data-mood="nervous"]{--bg:#0B100F;--bg-2:#121A18;--bg-3:#1B2523;--ink:#EEF3F0;--ink-2:#C2CEC8;--ink-3:#849690;--ink-4:#566660;--line:rgba(255,255,255,.1);--accent:#5FBFA5;--accent-ink:#9CE2CE;--accent-rgb:95,191,165;--accent-soft:rgba(95,191,165,.16);--paper:#E9EFEC;--paper-2:#DCE5E0;--paper-ink:#0B110F;--paper-ink-2:#455650;--paper-line:rgba(11,17,15,.14)}
 /* "Chiaro": il negativo. Fondo carta, inchiostro scuro, viola più profondo per il contrasto; la carta del Radar diventa scura. */
 html[data-mood="light"]{color-scheme:light;--bg:#F5F2F8;--bg-2:#FFFFFF;--bg-3:#ECE7F1;--bg-rgb:245,242,248;--bg2-rgb:255,255,255;--ink:#0B0910;--ink-2:#3F3849;--ink-3:#6E677A;--ink-4:#9A93A6;--ink-rgb:11,9,16;--line:rgba(11,9,16,.12);--line-2:rgba(11,9,16,.06);--accent:#8E00C4;--accent-ink:#6A0094;--accent-rgb:142,0,196;--accent-soft:rgba(142,0,196,.1);--on-accent:#fff;--paper:#0E0A13;--paper-2:#17111E;--paper-card:#1D1626;--paper-soft:rgba(255,255,255,.06);--paper-ink:#FFFFFF;--paper-ink-2:#CFC7D8;--paper-line:rgba(255,255,255,.14);--glow:.3}
-/* le parti che vivono sopra un'immagine o dentro uno "schermo" restano scure anche in chiaro */
-html[data-mood="light"] .console,html[data-mood="light"] .cover,html[data-mood="light"] .cwin,html[data-mood="light"] .slide-img,html[data-mood="light"] .org-lab,html[data-mood="light"] .ph{--bg:#050307;--bg-2:#0E0A13;--bg-3:#17111E;--bg-rgb:5,3,7;--bg2-rgb:14,10,19;--ink:#fff;--ink-2:#CFC7D8;--ink-3:#8B8197;--ink-4:#5A5164;--ink-rgb:255,255,255;--line:rgba(255,255,255,.12);--line-2:rgba(255,255,255,.06);--accent:#BF00FF;--accent-ink:#D96BFF;--accent-rgb:191,0,255;--accent-soft:rgba(191,0,255,.16);color:var(--ink)}
+/* le parti che vivono sopra un'immagine restano scure in chiaro solo se non esistono le versioni chiare delle immagini (body.light-media); il laboratorio Denoise è uno "schermo" e resta scuro sempre */
+html[data-mood="light"] body:not(.light-media) .console,html[data-mood="light"] body:not(.light-media) .cover,html[data-mood="light"] body:not(.light-media) .cwin,html[data-mood="light"] body:not(.light-media) .slide-img,html[data-mood="light"] body:not(.light-media) .ph,html[data-mood="light"] .org-lab{--bg:#050307;--bg-2:#0E0A13;--bg-3:#17111E;--bg-rgb:5,3,7;--bg2-rgb:14,10,19;--ink:#fff;--ink-2:#CFC7D8;--ink-3:#8B8197;--ink-4:#5A5164;--ink-rgb:255,255,255;--line:rgba(255,255,255,.12);--line-2:rgba(255,255,255,.06);--accent:#BF00FF;--accent-ink:#D96BFF;--accent-rgb:191,0,255;--accent-soft:rgba(191,0,255,.16);color:var(--ink)}
 /* sopra l'hero il logo resta bianco (il resto della barra ha i suoi sfondi) */
-html[data-mood="light"] body.over-hero .topbar .logo{color:#fff}
-html[data-mood="light"] .console::after{background:linear-gradient(180deg,rgba(5,3,7,.5),transparent 25%,transparent 70%,#F5F2F8 100%)}
+html[data-mood="light"] body.over-hero:not(.light-media) .topbar .logo{color:#fff}
+html[data-mood="light"] body:not(.light-media) .console::after{background:linear-gradient(180deg,rgba(5,3,7,.5),transparent 25%,transparent 70%,#F5F2F8 100%)}
+/* con le immagini chiare: etichette sopra le foto in inchiostro scuro */
+html[data-mood="light"] body.light-media .cover .status,html[data-mood="light"] body.light-media .slide-img .num,html[data-mood="light"] body.light-media .ph .address{color:var(--ink)}
+html[data-mood="light"] body.light-media .ph{background:var(--bg-3)}html[data-mood="light"] body.light-media .ph .address{background:linear-gradient(0deg,rgba(var(--bg-rgb),.94),rgba(var(--bg-rgb),.6) 60%,transparent)}
 html[data-mood="light"] .statusbar{color:#4A4356}html[data-mood="light"] .statusbar b,html[data-mood="light"] .statusbar .clock{color:#0B0910}
-html[data-mood="light"] .intro-bg{opacity:.22}
+html[data-mood="light"] body:not(.light-media) .intro-bg{opacity:.22}
 html[data-mood="light"] .grain{display:none}
 
 html[data-mood]{transition:background-color .8s}
@@ -535,6 +538,8 @@ body.cwin-open{overflow:hidden}
 .dn-regen button:hover{border-color:var(--accent);color:var(--ink)}
 .dn-regen button:disabled{opacity:.6;cursor:wait}
 .dn-regen .dn-replay{margin-left:auto}
+.dn-formats button.wait b::after{content:"…";color:var(--ink-4);margin-left:3px}
+.dn-formats button.ready b::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
 .org-caption{margin-top:12px;font-size:13.5px;color:var(--ink-3);line-height:1.5}
 .org-caption b{color:var(--ink-2);font-weight:600}
 /* ---- TEAM: persone chiave + organico per reparto ---- */

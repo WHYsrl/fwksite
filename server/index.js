@@ -49,7 +49,9 @@ app.get("/", (req, res) => {
 });
 app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(withImage(concrete.decorate(store.getContent()))); });
 // il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
-function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; return content; }
+function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; return content; }
+// Versioni chiare delle immagini d'ambiente (mood "Chiaro"): public/media/light/<nome>.jpg sostituisce /media/<nome>.jpg
+const LIGHT_MEDIA = (() => { try { const dir = path.join(__dirname, "..", "public", "media", "light"); const out = {}; fs.readdirSync(dir).filter(f => /\.(jpe?g|png|webp)$/i.test(f) && !/-sm\./.test(f)).forEach(f => { out["/media/" + f] = "/media/light/" + f; }); return out; } catch { return {}; } })();
 // Radar: ricerca dal vivo per il visitatore (fonti esterne, non curate)
 app.get("/api/radar/search", limit, async (req, res) => {
   const q = String(req.query.q || "").trim().slice(0, 80); if (q.length < 2) return res.status(400).json({ error: "Scrivi almeno due lettere" });
