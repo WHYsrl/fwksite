@@ -221,10 +221,10 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <div class="venn rv" id="venn" aria-hidden="true">
       <svg viewBox="0 0 520 420">
         <g fill="none" stroke="currentColor" stroke-width="1.2">
-          <circle class="vc" cx="170" cy="130" r="95"/><circle class="vc" cx="350" cy="130" r="95"/><circle class="vc" cx="260" cy="210" r="95"/><circle class="vc" cx="170" cy="290" r="95"/><circle class="vc" cx="350" cy="290" r="95"/>
+          <circle class="vc" data-phase="0" cx="170" cy="130" r="95"/><circle class="vc" data-phase="2" cx="350" cy="130" r="95"/><circle class="vc" data-phase="4" cx="260" cy="210" r="95"/><circle class="vc" data-phase="1" cx="170" cy="290" r="95"/><circle class="vc" data-phase="3" cx="350" cy="290" r="95"/>
         </g>
         <g class="vt" font-family="Helvetica Now Display, sans-serif" font-size="15" fill="currentColor" text-anchor="middle">
-          <text x="150" y="112">Mapping</text><text x="372" y="112">Production</text><text x="260" y="215" class="vi">Iteration</text><text x="150" y="318">Tailoring</text><text x="372" y="318">Deployment</text>
+          <text data-phase="0" x="150" y="112">Mapping</text><text data-phase="2" x="372" y="112">Production</text><text data-phase="4" x="260" y="215" class="vi">Iteration</text><text data-phase="1" x="150" y="318">Tailoring</text><text data-phase="3" x="372" y="318">Deployment</text>
         </g>
       </svg>
     </div>
