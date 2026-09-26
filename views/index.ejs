@@ -73,6 +73,22 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
         <button type="button" data-time="10"><b>10 minuti</b><span>Voglio vedere come lavorate e cosa avete fatto.</span></button>
         <button type="button" data-time="all"><b>Tutto il tempo che serve</b><span>Voglio godermi l'esperienza.</span></button>
       </div>
+      <!-- Console già nell'intro (mobile): utile ma opzionale -->
+      <div class="intro-console" id="intro-console">
+        <div class="intro-or"><i></i><span>oppure</span><i></i></div>
+        <form class="prompt-row" id="intro-form" autocomplete="off">
+          <label for="intro-q" class="sr-only">Chiedi alla Console</label>
+          <input id="intro-q" type="text" placeholder="Dillo alla Console: cosa cerchi?" enterkeyhint="send" maxlength="300">
+          <button type="submit" aria-label="Chiedi alla Console">→</button>
+        </form>
+        <div class="chips">
+          <button type="button" data-intro-ask="Ho fretta: l'essenziale">Ho fretta</button>
+          <button type="button" data-intro-ask="Cosa fate per il retail?">Retail</button>
+          <button type="button" data-intro-ask="Come usate l'AI?">AI</button>
+          <button type="button" data-intro-ask="Mostrami le esperienze immersive">Immersivo</button>
+        </div>
+        <p class="intro-console-hint">Ti propone un percorso e configura il sito. Facoltativo.</p>
+      </div>
     </section>
     <section class="intro-step" data-step="2">
       <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 2 di 2</div>
@@ -89,7 +105,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
       <p class="intro-msg" id="intro-msg"></p>
       <ul class="intro-log" id="intro-log"></ul>
       <p class="intro-hint">Puoi cambiare scelta in qualsiasi momento premendo il tasto <b class="modes-pill"><span class="modes-ico"></span>Modalità</b> in alto.</p>
-      <button type="button" class="btn primary" id="intro-go">Via</button>
+      <div class="intro-actions"><button type="button" class="btn primary" id="intro-go">Via</button><button type="button" class="btn intro-ask" id="intro-ask">✦ Chiedi alla Console</button></div>
     </section>
   </div>
 </div>

@@ -501,8 +501,19 @@ const Intro = {
     this.el.addEventListener("click", e => {
       const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
       const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); setTimeout(() => this.configure(), 220); return; }
+      const a = e.target.closest("[data-intro-ask]"); if (a) { this.console(a.dataset.introAsk); return; }
+      if (e.target.closest("#intro-ask")) { this.console(""); return; }
       if (e.target.closest("#intro-skip") || e.target.closest("#intro-go")) this.finish();
     });
+    // la Console dentro l'intro (mobile): scorciatoia opzionale alle domande
+    const f = $("#intro-form", this.el);
+    if (f) f.addEventListener("submit", e => { e.preventDefault(); const i = $("#intro-q", f); const q = i.value.trim(); i.blur(); if (q) this.console(q); });
+  },
+  // Chiude l'intro con le scelte fatte finora (o i valori di default) e apre la Console con la domanda
+  console(q) {
+    Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
+    ConsoleWin.open(String(q || "").trim()); // la finestra sta sotto l'intro (z-index) e appare mentre l'intro sfuma
+    this.finish();
   },
   step(n) { $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n))); },
   configure() {
