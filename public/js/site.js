@@ -31,6 +31,13 @@ const signalsFor = (id) => DATA.signals.filter(s => s.caps.includes(id));
 const ALL = () => [{ id: "core", kind: "core" }, ...DATA.caps.map(c => ({ ...c, kind: "cap" })), ...DATA.works.map(w => ({ ...w, kind: "work" })), ...DATA.signals.map(s => ({ ...s, kind: "signal" }))];
 const byId = (id) => ALL().find(i => i.id === id);
 const html = document.documentElement;
+// Palette corrente (cambia con l'umore): i canvas leggono i colori dalle variabili CSS, non da costanti
+const Theme = {
+  accent: "#BF00FF", accentRgb: "191,0,255", bg: "#050307", paper: "#EEEAF1",
+  read() { const cs = getComputedStyle(html); const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d; this.accent = v("--accent", "#BF00FF"); this.accentRgb = v("--accent-rgb", "191,0,255"); this.bg = v("--bg", "#050307"); this.paper = v("--paper", "#EEEAF1"); return this; },
+  rgba(a) { return `rgba(${this.accentRgb},${a})`; }
+};
+Theme.read();
 const hasGsap = typeof window.gsap !== "undefined";
 if (hasGsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
@@ -64,6 +71,7 @@ const Modes = {
     let energy = this.mood === "nervous" ? "calm" : this.mood;
     if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
     html.dataset.energy = energy; html.dataset.mood = this.mood;
+    Theme.read(); document.dispatchEvent(new CustomEvent("fw:theme")); // i canvas si adeguano alla palette dell'umore
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
     const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? "Essenziale" : "Modalità") : (this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità");
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
@@ -228,7 +236,7 @@ function bindPrompt(form) {
   form.addEventListener("submit", e => { e.preventDefault(); const q = input.value.trim(); input.value = ""; ConsoleWin.open(q); });
 }
 function flashCards(ids) {
-  ids.forEach(id => { const el = $(`.cap[data-open="${id}"], .work[data-open="${id}"], .card[data-id="${id}"]`); if (el && hasGsap && !reduced) gsap.fromTo(el, { boxShadow: "0 0 0 0 rgba(191,0,255,.9)" }, { boxShadow: "0 0 0 14px rgba(191,0,255,0)", duration: 1.4, ease: "power2.out" }); });
+  ids.forEach(id => { const el = $(`.cap[data-open="${id}"], .work[data-open="${id}"], .card[data-id="${id}"]`); if (el && hasGsap && !reduced) gsap.fromTo(el, { boxShadow: `0 0 0 0 ${Theme.rgba(.9)}` }, { boxShadow: `0 0 0 14px ${Theme.rgba(0)}`, duration: 1.4, ease: "power2.out" }); });
 }
 
 /* =========================================================
@@ -237,7 +245,7 @@ function flashCards(ids) {
 const Console = (() => {
   const cv = $("#graph"); if (!cv) return null;
   const ctx = cv.getContext("2d");
-  const PURPLE = "#BF00FF", PAPER = "#EEEAF1";
+  let PURPLE = Theme.accent, PAPER = Theme.paper; document.addEventListener("fw:theme", () => { PURPLE = Theme.accent; PAPER = Theme.paper; });
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
   let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
   const deg = (d) => d * Math.PI / 180;
@@ -305,7 +313,7 @@ const Console = (() => {
     nodes.forEach(nd => { if (nd.tox != null) { nd.ox += (nd.tox - nd.ox) * .22; nd.oy += (nd.toy - nd.oy) * .22; if (Math.abs(nd.tox - nd.ox) < .3 && Math.abs(nd.toy - nd.oy) < .3) { nd.ox = nd.tox; nd.oy = nd.toy; nd.tox = nd.toy = null; } } });
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
-    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? "rgba(191,0,255,.9)" : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
+    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? Theme.rgba(.9) : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
     ctx.setLineDash([]);
     if (!reduced) {
       if (t > spawnAt && particles.length < 9 * amp()) { const sEdges = edges.filter(e => e.signal); if (sEdges.length) { const e = sEdges[Math.floor(Math.random() * sEdges.length)]; const next = edges.find(x => x.b.id === e.b.id && x.a.kind === "core"); particles.push({ segs: [[e.a.id, e.b.id], next ? [e.b.id, next.a.id] : null].filter(Boolean), i: 0, p: 0, v: (0.00065 + Math.random() * 0.0004) * speed() }); } spawnAt = t + (700 + Math.random() * 900) / speed(); }
@@ -316,7 +324,7 @@ const Console = (() => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
       if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; cube(p.x, p.y, r * 2.1); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
-      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#050307"; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
+      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : Theme.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
       else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#CFC7D8"; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? "#fff" : "#CFC7D8", nd.r + 9); }
       else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, "RADAR · FONTE ESTERNA", `400 11px ${MONO}`, PAPER, nd.r + 8); }
       ctx.restore();
@@ -741,7 +749,7 @@ const Intro = {
     this.el.hidden = false; document.body.style.overflow = "hidden";
     this.el.addEventListener("click", e => {
       const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
-      const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); setTimeout(() => this.configure(), 220); return; }
+      const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); Modes.set("mood", this.mood); /* la palette dell'umore si vede subito */ setTimeout(() => this.configure(), 220); return; }
       const a = e.target.closest("[data-intro-ask]"); if (a) { this.console(a.dataset.introAsk); return; }
       if (e.target.closest("#intro-ask")) { this.console(""); return; }
       if (e.target.closest("#intro-skip") || e.target.closest("#intro-go")) this.finish();

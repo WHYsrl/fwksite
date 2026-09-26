@@ -135,9 +135,9 @@
     resize(W, H) { const kx = W / this.W, ky = H / this.H; this.W = W; this.H = H; for (const p of this.ps) { p.x *= kx; p.y *= ky; } this.compose(); }
   }
 
-  function draw(ctx, m, W, H, sp, spW) {
+  function draw(ctx, m, W, H, sp, spW, trailFill) {
     // scia: si scurisce un po' ogni frame invece di cancellare
-    ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = "rgba(5,3,7,.34)"; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = trailFill || "rgba(5,3,7,.34)"; ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = "lighter";
     const half = sp.width / 2, scale = m.mobile ? 0.8 : 1;
     for (const p of m.ps) { const s = (p.w ? spW : sp); const sz = sp.width * p.s * scale; ctx.drawImage(s, p.x - sz / 2, p.y - sz / 2, sz, sz); }
@@ -152,7 +152,12 @@
       <div class="org-controls formats">${COMPS.map((c, i) => `<button type="button" data-comp="${i}" class="${i === 0 ? "on" : ""}"><b>${c.name}</b><small>${c.label}</small></button>`).join("")}</div>`;
     const stage = root.querySelector(".org-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".org-hud"), hint = root.querySelector(".org-hint"), form = root.querySelector(".org-word");
     let W = 0, H = 0, dpr = 1, m = null, visible = false, raf = 0, last = 0, hudAt = 0, press = null;
-    const sp = sprite("#BF00FF", 8), spW = sprite("#FFFFFF", 8);
+    // colori dalla palette corrente (cambia con l'umore): accento per le particelle, sfondo per la scia
+    const cssVar = (n, d) => (getComputedStyle(document.documentElement).getPropertyValue(n) || "").trim() || d;
+    let sp = sprite(cssVar("--accent", "#BF00FF"), 8); const spW = sprite("#FFFFFF", 8);
+    const trail = () => { const h = cssVar("--bg", "#050307").replace("#", ""); const n = h.length === 3 ? h.split("").map(c => c + c).join("") : h; const v = parseInt(n, 16); return `rgba(${(v >> 16) & 255},${(v >> 8) & 255},${v & 255},.34)`; };
+    let trailFill = trail();
+    document.addEventListener("fw:theme", () => { sp = sprite(cssVar("--accent", "#BF00FF"), 8); trailFill = trail(); });
     const size = () => {
       const r = stage.getBoundingClientRect(); if (!r.width || !r.height) return false;
       dpr = Math.min(1.5, window.devicePixelRatio || 1); W = Math.round(r.width); H = Math.round(r.height);
@@ -170,7 +175,7 @@
     const frame = (now) => {
       raf = 0; if (!visible || !root.isConnected) return;
       const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
-      m.update(dt); draw(ctx, m, W, H, sp, spW);
+      m.update(dt); draw(ctx, m, W, H, sp, spW, trailFill);
       if (now - hudAt > 300) { hudAt = now; updHud(); }
       raf = requestAnimationFrame(frame);
     };
@@ -178,7 +183,7 @@
     const io = new IntersectionObserver(es => { visible = es.some(e => e.isIntersecting) && !document.hidden; if (visible) start(); }, { threshold: 0.25 });
     document.addEventListener("visibilitychange", () => { if (document.hidden) visible = false; else { visible = true; start(); } });
     io.observe(stage);
-    new ResizeObserver(() => { if (size()) draw(ctx, m, W, H, sp, spW); }).observe(stage);
+    new ResizeObserver(() => { if (size()) draw(ctx, m, W, H, sp, spW, trailFill); }).observe(stage);
     root.querySelector(".org-controls").addEventListener("click", e => { const b = e.target.closest("[data-comp]"); if (!b || !m) return; m.setComp(+b.dataset.comp); updHud(); start(); });
     const loadImageFile = (file) => { if (!file || !m) return; const url = URL.createObjectURL(file); const img = new Image(); img.onload = () => { const ok = m.setImage(img, file.name.replace(/\.[a-z0-9]+$/i, "")); status = ok ? "" : "Non riesco a leggere questa immagine: prova un PNG o SVG con il logo su fondo uniforme"; if (ok && COMPS[m.comp].id === "logo") m.setComp(0); URL.revokeObjectURL(url); updHud(); start(); }; img.onerror = () => { status = "Immagine non valida"; updHud(); }; img.src = url; };
     const loadFromSite = async (raw) => {
@@ -204,7 +209,7 @@
     stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", () => { press = null; m && (m.pointer = null); });
     stage.addEventListener("pointerleave", () => { press = null; if (m) m.pointer = null; });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (m) m.compose(); });
-    if (size()) { draw(ctx, m, W, H, sp, spW); updHud(); }
+    if (size()) { draw(ctx, m, W, H, sp, spW, trailFill); updHud(); }
   }
   window.OrganismLab = { mount, mountAll: (sel) => document.querySelectorAll(sel || "[data-organism]").forEach(mount) };
 })();

@@ -14,7 +14,7 @@
   --bg:#050307;--bg-2:#0E0A13;--bg-3:#17111E;
   --ink:#fff;--ink-2:#CFC7D8;--ink-3:#8B8197;--ink-4:#5A5164;
   --line:rgba(255,255,255,.12);--line-2:rgba(255,255,255,.06);
-  --accent:#BF00FF;--accent-ink:#D96BFF;--accent-soft:rgba(191,0,255,.16);
+  --accent:#BF00FF;--accent-ink:#D96BFF;--accent-rgb:191,0,255;--accent-soft:rgba(var(--accent-rgb),.16);
   --paper:#EEEAF1;--paper-2:#E2DCE7;--paper-ink:#0B0910;--paper-ink-2:#4A4352;--paper-line:rgba(11,9,16,.14);
   --sans:"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif;
   --serif:"Instrument Serif","GT Super Display",Georgia,"Times New Roman",serif;
@@ -28,6 +28,15 @@ html[data-weather="night"]{--bg:#030204;--bg-2:#0A070E;--glow:.45}
 html[data-weather="snow"],html[data-weather="cloud"]{--bg:#060508;--ink-2:#D8D2DF}
 html[data-energy="calm"]{--amp:.45;--speed:.6;--glow:.35}
 html[data-energy="vivid"]{--amp:1.6;--speed:1.5;--glow:.85}
+/* Umore → palette (vince sul meteo). "Entusiasta" resta nero + viola brand a piena energia.
+   "Calmo" vira al blu notte con accento lavanda; "Nervoso" cerca quiete: verde-grigio profondo, accento menta, meno contrasto, niente grana. */
+html[data-mood="calm"]{--bg:#07090F;--bg-2:#0E1220;--bg-3:#161B2C;--ink:#F4F2FA;--ink-2:#C9C6DA;--ink-3:#8B8AA0;--ink-4:#5B5C70;--accent:#8A7CFF;--accent-ink:#B8AEFF;--accent-rgb:138,124,255;--accent-soft:rgba(138,124,255,.16);--paper:#ECEBF4;--paper-2:#DFDDEA;--paper-ink:#0B0C14;--paper-ink-2:#474A5C;--paper-line:rgba(11,12,20,.14)}
+html[data-mood="nervous"]{--bg:#0B100F;--bg-2:#121A18;--bg-3:#1B2523;--ink:#EEF3F0;--ink-2:#C2CEC8;--ink-3:#849690;--ink-4:#566660;--line:rgba(255,255,255,.1);--accent:#5FBFA5;--accent-ink:#9CE2CE;--accent-rgb:95,191,165;--accent-soft:rgba(95,191,165,.16);--paper:#E9EFEC;--paper-2:#DCE5E0;--paper-ink:#0B110F;--paper-ink-2:#455650;--paper-line:rgba(11,17,15,.14)}
+html[data-mood]{transition:background-color .8s}
+/* le immagini d'ambiente (non i lavori) seguono la palette: virate e attenuate */
+.console-bg img,.cover img,.cwin-bg img,.ph img,.cap-img img,.intro-bg img,.tile img,.area-card img,.slide-cap img{transition:filter .9s}
+html[data-mood="calm"] .console-bg img,html[data-mood="calm"] .cover img,html[data-mood="calm"] .cwin-bg img,html[data-mood="calm"] .ph img,html[data-mood="calm"] .cap-img img,html[data-mood="calm"] .intro-bg img,html[data-mood="calm"] .tile img,html[data-mood="calm"] .area-card img,html[data-mood="calm"] .slide-cap img{filter:hue-rotate(-38deg) saturate(.72) brightness(.92)}
+html[data-mood="nervous"] .console-bg img,html[data-mood="nervous"] .cover img,html[data-mood="nervous"] .cwin-bg img,html[data-mood="nervous"] .ph img,html[data-mood="nervous"] .cap-img img,html[data-mood="nervous"] .intro-bg img,html[data-mood="nervous"] .tile img,html[data-mood="nervous"] .area-card img,html[data-mood="nervous"] .slide-cap img{filter:hue-rotate(-112deg) saturate(.5) brightness(.8)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 html,body{height:100%}
@@ -58,7 +67,7 @@ p{margin:0}
 /* grana e alone del cursore */
 .grain{position:fixed;inset:-50%;pointer-events:none;z-index:1;opacity:.055;mix-blend-mode:screen;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain 1.2s steps(4) infinite}
 @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-1%,-1%)}100%{transform:translate(0,0)}}
-.glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(191,0,255,calc(.22*var(--glow))),transparent 60%);opacity:0;transition:opacity .6s}
+.glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(var(--accent-rgb),calc(.22*var(--glow))),transparent 60%);opacity:0;transition:opacity .6s}
 body.has-mouse .glow{opacity:1}
 
 /* ---------- top bar ---------- */
@@ -119,7 +128,7 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .statusbar{position:absolute;left:0;right:0;bottom:62px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 var(--gutter);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .statusbar b{color:var(--ink-2);font-weight:500}
 .statusbar .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:8px;animation:pulse calc(2.2s/var(--speed)) infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(191,0,255,.55)}70%{box-shadow:0 0 0 9px rgba(191,0,255,0)}100%{box-shadow:0 0 0 0 rgba(191,0,255,0)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),.55)}70%{box-shadow:0 0 0 9px rgba(var(--accent-rgb),0)}100%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),0)}}
 .statusbar .clock{font-variant-numeric:tabular-nums;color:var(--ink)}
 .ticker{position:absolute;left:0;right:0;bottom:0;height:44px;z-index:3;border-top:1px solid var(--paper-line);background:var(--paper);color:var(--paper-ink);display:flex;align-items:center;overflow:hidden}
 .ticker .label{flex:none;height:100%;display:flex;align-items:center;padding:0 18px 0 var(--gutter);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper);background:var(--paper-ink)}
@@ -213,6 +222,8 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .intro-opts button:hover{border-color:var(--ink-2);transform:translateY(-1px)}
 .intro-opts button:active,.intro-opts button.on{border-color:var(--accent);background:var(--accent-soft)}
 .intro-opts b{font-size:20px;font-weight:600;letter-spacing:-.015em}
+.intro-opts button{position:relative;padding-right:56px}
+.intro-opts .swatch{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,var(--s1) 0 50%,var(--s2) 50% 100%)}
 .intro-opts span{color:var(--ink-3);font-size:14.5px}
 .intro-msg{font-size:clamp(17px,1.4vw,20px);color:var(--ink-2);max-width:52ch}
 .intro-log{list-style:none;margin:22px 0;padding:0;display:grid;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
@@ -361,7 +372,7 @@ body.cwin-open{overflow:hidden}
 
 /* organismo · frame morph */
 .morph{margin-top:32px;display:flex;align-items:center;gap:20px}
-.morph-frame{width:180px;height:101px;border:1.5px solid #fff;border-radius:4px;position:relative;box-shadow:inset 0 0 0 1px rgba(191,0,255,.35);transition:none}
+.morph-frame{width:180px;height:101px;border:1.5px solid #fff;border-radius:4px;position:relative;box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.35);transition:none}
 .morph-frame::before{content:"";position:absolute;left:12%;right:12%;top:20%;bottom:20%;border:1px solid var(--accent);opacity:.8}
 .morph-label{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--accent-ink)}
 .morph-cap{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);max-width:220px}
@@ -496,7 +507,7 @@ body.cwin-open{overflow:hidden}
 .org-controls button small{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4)}
 .org-controls button small em{font-style:normal;color:var(--accent-ink)}
 .org-controls button.pulse{animation:org-pulse 1.8s infinite}
-@keyframes org-pulse{0%,100%{box-shadow:inset 0 0 0 0 rgba(191,0,255,0)}50%{box-shadow:inset 0 0 0 2px rgba(191,0,255,.7)}}
+@keyframes org-pulse{0%,100%{box-shadow:inset 0 0 0 0 rgba(var(--accent-rgb),0)}50%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.7)}}
 .org-caption{margin-top:12px;font-size:13.5px;color:var(--ink-3);line-height:1.5}
 .org-caption b{color:var(--ink-2);font-weight:600}
 /* ---- TEAM: persone chiave + organico per reparto ---- */
@@ -790,7 +801,7 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .tabbar button.on{color:#fff}
   .tabbar button.on svg{stroke:var(--accent-ink)}
   .tabbar .fab{transform:translateY(-14px)}
-  .tabbar .fab i{width:54px;height:54px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;box-shadow:0 10px 30px rgba(191,0,255,.45)}
+  .tabbar .fab i{width:54px;height:54px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;box-shadow:0 10px 30px rgba(var(--accent-rgb),.45)}
   .tabbar .fab i svg{stroke:#fff}
   .tabbar .fab span{color:var(--accent-ink)}
   /* sheet */
