@@ -9,7 +9,9 @@ ejs.renderFile(path.join(__dirname, "..", "views", "index.ejs"), { content, prev
   h = h.replace(/(src|href|content)="\/media\//g, '$1="media/');
   const dir = path.join(__dirname, "..", "preview"); fs.mkdirSync(path.join(dir, "media"), { recursive: true });
   fs.writeFileSync(path.join(dir, "index.html"), h);
-  fs.copyFileSync(path.join(__dirname, "..", "public", "css", "site.css"), path.join(dir, "site.css"));
+  fs.writeFileSync(path.join(dir, "site.css"), fs.readFileSync(path.join(__dirname, "..", "public", "css", "site.css"), "utf8").replace(/\/public\/fonts\//g, "fonts/"));
+  fs.mkdirSync(path.join(dir, "fonts"), { recursive: true });
+  for (const f of fs.readdirSync(path.join(__dirname, "..", "public", "fonts"))) fs.copyFileSync(path.join(__dirname, "..", "public", "fonts", f), path.join(dir, "fonts", f));
   fs.copyFileSync(path.join(__dirname, "..", "public", "js", "site.js"), path.join(dir, "site.js"));
   fs.copyFileSync(path.join(__dirname, "..", "public", "js", "organism.js"), path.join(dir, "organism.js"));
   for (const f of fs.readdirSync(path.join(__dirname, "..", "public", "media"))) fs.copyFileSync(path.join(__dirname, "..", "public", "media", f), path.join(dir, "media", f));

@@ -203,7 +203,7 @@ function bindPrompt(form) {
   form.addEventListener("submit", e => { e.preventDefault(); const q = input.value.trim(); input.value = ""; ConsoleWin.open(q); });
 }
 function flashCards(ids) {
-  ids.forEach(id => { const el = $(`.cap[data-open="${id}"], .work[data-open="${id}"], .card[data-id="${id}"]`); if (el && hasGsap && !reduced) gsap.fromTo(el, { boxShadow: "0 0 0 0 rgba(190,0,255,.9)" }, { boxShadow: "0 0 0 14px rgba(190,0,255,0)", duration: 1.4, ease: "power2.out" }); });
+  ids.forEach(id => { const el = $(`.cap[data-open="${id}"], .work[data-open="${id}"], .card[data-id="${id}"]`); if (el && hasGsap && !reduced) gsap.fromTo(el, { boxShadow: "0 0 0 0 rgba(191,0,255,.9)" }, { boxShadow: "0 0 0 14px rgba(191,0,255,0)", duration: 1.4, ease: "power2.out" }); });
 }
 
 /* =========================================================
@@ -212,8 +212,8 @@ function flashCards(ids) {
 const Console = (() => {
   const cv = $("#graph"); if (!cv) return null;
   const ctx = cv.getContext("2d");
-  const PURPLE = "#BE00FF", PAPER = "#EEEAF1";
-  const SANS = '"Google Sans Flex","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
+  const PURPLE = "#BF00FF", PAPER = "#EEEAF1";
+  const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
   let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
   const deg = (d) => d * Math.PI / 180;
   const amp = () => parseFloat(getComputedStyle(html).getPropertyValue("--amp")) || 1;
@@ -236,13 +236,15 @@ const Console = (() => {
   function resize() { const dpr = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); build(); if (!running) draw(performance.now()); }
   function pos(nd, t) { const a = reduced ? 0 : (nd.kind === "core" ? 3 : nd.kind === "cap" ? 7 : 9) * amp(); return { x: nd.bx + nd.ox + Math.sin(t * 0.00035 * speed() + nd.ph) * a, y: nd.by + nd.oy + Math.cos(t * 0.00028 * speed() + nd.ph * 1.3) * a }; }
   function related(nd) { if (!nd) return new Set(); const set = new Set([nd.id]); edges.forEach(e => { if (e.a.id === nd.id) set.add(e.b.id); if (e.b.id === nd.id) set.add(e.a.id); }); return set; }
-  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  // il nodo centrale è il cubo del logo (stesse tre facce del file ufficiale, box 51.09×59)
+  const CUBE = [[51.09, 14.75, 25.55, 59, 51.09, 44.25], [25.55, 29.5, 0, 14.75, 25.55, 0, 51.09, 14.75], [25.55, 29.5, 25.55, 59, 0, 44.25]];
+  function cube(x, y, h) { const k = h / 59; ctx.save(); ctx.translate(x - 25.55 * k, y - 29.5 * k); ctx.scale(k, k); CUBE.forEach(pl => { ctx.beginPath(); for (let i = 0; i < pl.length; i += 2) i ? ctx.lineTo(pl[i], pl[i + 1]) : ctx.moveTo(pl[i], pl[i + 1]); ctx.closePath(); ctx.fill(); }); ctx.restore(); }
   function label(p, nd, main, eyebrow, font, color, off) { const right = Math.cos(nd.ang) >= -0.15; const x = right ? p.x + off : p.x - off; ctx.textAlign = right ? "left" : "right"; ctx.textBaseline = "middle"; if (eyebrow) { ctx.font = `500 9px ${MONO}`; ctx.fillStyle = "rgba(139,129,151,1)"; ctx.letterSpacing = "1.2px"; ctx.fillText(eyebrow, x, p.y - 9); ctx.letterSpacing = "0px"; } ctx.font = font; ctx.fillStyle = color; ctx.fillText(main, x, eyebrow ? p.y + 5 : p.y); }
   function draw(t) {
     ctx.clearRect(0, 0, W, H); if (!nodes.length || !W) return;
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
-    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? "rgba(190,0,255,.9)" : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
+    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? "rgba(191,0,255,.9)" : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
     ctx.setLineDash([]);
     if (!reduced) {
       if (t > spawnAt && particles.length < 9 * amp()) { const sEdges = edges.filter(e => e.signal); if (sEdges.length) { const e = sEdges[Math.floor(Math.random() * sEdges.length)]; const next = edges.find(x => x.b.id === e.b.id && x.a.kind === "core"); particles.push({ segs: [[e.a.id, e.b.id], next ? [e.b.id, next.a.id] : null].filter(Boolean), i: 0, p: 0, v: (0.00065 + Math.random() * 0.0004) * speed() }); } spawnAt = t + (700 + Math.random() * 900) / speed(); }
@@ -252,7 +254,7 @@ const Console = (() => {
     nodes.forEach(nd => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
-      if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; roundRect(p.x - r, p.y - r, r * 2, r * 2, r * .18); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
+      if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; cube(p.x, p.y, r * 2.1); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
       else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#050307"; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
       else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#CFC7D8"; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? "#fff" : "#CFC7D8", nd.r + 9); }
       else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, "RADAR · FONTE ESTERNA", `400 11px ${MONO}`, PAPER, nd.r + 8); }

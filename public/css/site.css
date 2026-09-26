@@ -1,17 +1,22 @@
 /* =========================================================
    FRAMEWORKS · Adaptive Content Systems — stile del sito
-   Palette brand: nero / bianco / viola #BE00FF
-   Font: Google Sans Flex (brand) · Instrument Serif (stand-in di GT Super) · Geist Mono (dati)
+   Palette brand: nero / bianco / viola #BF00FF (dal file del logo)
+   Font: Helvetica Now Display (brand, self-hosted in /public/fonts) · Instrument Serif (stand-in di GT Super) · Geist Mono (dati)
    Le variabili --amp / --speed / --tint cambiano con le modalità ambientali (data-energy / data-weather).
    ========================================================= */
+@font-face{font-family:"Helvetica Now Display";font-weight:300;font-style:normal;font-display:swap;src:url("/public/fonts/HelveticaNowDisplay-Light.woff2") format("woff2")}
+@font-face{font-family:"Helvetica Now Display";font-weight:400;font-style:normal;font-display:swap;src:url("/public/fonts/HelveticaNowDisplay-Regular.woff2") format("woff2")}
+@font-face{font-family:"Helvetica Now Display";font-weight:500;font-style:normal;font-display:swap;src:url("/public/fonts/HelveticaNowDisplay-Medium.woff2") format("woff2")}
+@font-face{font-family:"Helvetica Now Display";font-weight:700;font-style:normal;font-display:swap;src:url("/public/fonts/HelveticaNowDisplay-Bold.woff2") format("woff2")}
+@font-face{font-family:"Helvetica Now Display";font-weight:800;font-style:normal;font-display:swap;src:url("/public/fonts/HelveticaNowDisplay-ExtraBold.woff2") format("woff2")}
 :root{
   color-scheme:dark;
   --bg:#050307;--bg-2:#0E0A13;--bg-3:#17111E;
   --ink:#fff;--ink-2:#CFC7D8;--ink-3:#8B8197;--ink-4:#5A5164;
   --line:rgba(255,255,255,.12);--line-2:rgba(255,255,255,.06);
-  --accent:#BE00FF;--accent-ink:#D96BFF;--accent-soft:rgba(190,0,255,.16);
+  --accent:#BF00FF;--accent-ink:#D96BFF;--accent-soft:rgba(191,0,255,.16);
   --paper:#EEEAF1;--paper-2:#E2DCE7;--paper-ink:#0B0910;--paper-ink-2:#4A4352;--paper-line:rgba(11,9,16,.14);
-  --sans:"Google Sans Flex","Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --sans:"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif;
   --serif:"Instrument Serif","GT Super Display",Georgia,"Times New Roman",serif;
   --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --gutter:clamp(16px,4vw,64px);
@@ -53,7 +58,7 @@ p{margin:0}
 /* grana e alone del cursore */
 .grain{position:fixed;inset:-50%;pointer-events:none;z-index:1;opacity:.055;mix-blend-mode:screen;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain 1.2s steps(4) infinite}
 @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-1%,-1%)}100%{transform:translate(0,0)}}
-.glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(190,0,255,calc(.22*var(--glow))),transparent 60%);opacity:0;transition:opacity .6s}
+.glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(191,0,255,calc(.22*var(--glow))),transparent 60%);opacity:0;transition:opacity .6s}
 body.has-mouse .glow{opacity:1}
 
 /* ---------- top bar ---------- */
@@ -114,7 +119,7 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .statusbar{position:absolute;left:0;right:0;bottom:62px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:0 var(--gutter);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .statusbar b{color:var(--ink-2);font-weight:500}
 .statusbar .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:8px;animation:pulse calc(2.2s/var(--speed)) infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(190,0,255,.55)}70%{box-shadow:0 0 0 9px rgba(190,0,255,0)}100%{box-shadow:0 0 0 0 rgba(190,0,255,0)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(191,0,255,.55)}70%{box-shadow:0 0 0 9px rgba(191,0,255,0)}100%{box-shadow:0 0 0 0 rgba(191,0,255,0)}}
 .statusbar .clock{font-variant-numeric:tabular-nums;color:var(--ink)}
 .ticker{position:absolute;left:0;right:0;bottom:0;height:44px;z-index:3;border-top:1px solid var(--paper-line);background:var(--paper);color:var(--paper-ink);display:flex;align-items:center;overflow:hidden}
 .ticker .label{flex:none;height:100%;display:flex;align-items:center;padding:0 18px 0 var(--gutter);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper);background:var(--paper-ink)}
@@ -331,7 +336,7 @@ body.cwin-open{overflow:hidden}
 
 /* organismo · frame morph */
 .morph{margin-top:32px;display:flex;align-items:center;gap:20px}
-.morph-frame{width:180px;height:101px;border:1.5px solid #fff;border-radius:4px;position:relative;box-shadow:inset 0 0 0 1px rgba(190,0,255,.35);transition:none}
+.morph-frame{width:180px;height:101px;border:1.5px solid #fff;border-radius:4px;position:relative;box-shadow:inset 0 0 0 1px rgba(191,0,255,.35);transition:none}
 .morph-frame::before{content:"";position:absolute;left:12%;right:12%;top:20%;bottom:20%;border:1px solid var(--accent);opacity:.8}
 .morph-label{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--accent-ink)}
 .morph-cap{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);max-width:220px}
@@ -412,7 +417,7 @@ body.cwin-open{overflow:hidden}
 .org-controls button small{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4)}
 .org-controls button small em{font-style:normal;color:var(--accent-ink)}
 .org-controls button.pulse{animation:org-pulse 1.8s infinite}
-@keyframes org-pulse{0%,100%{box-shadow:inset 0 0 0 0 rgba(190,0,255,0)}50%{box-shadow:inset 0 0 0 2px rgba(190,0,255,.7)}}
+@keyframes org-pulse{0%,100%{box-shadow:inset 0 0 0 0 rgba(191,0,255,0)}50%{box-shadow:inset 0 0 0 2px rgba(191,0,255,.7)}}
 .org-caption{margin-top:12px;font-size:13.5px;color:var(--ink-3);line-height:1.5}
 .org-caption b{color:var(--ink-2);font-weight:600}
 /* ---- TEAM: persone chiave + organico per reparto ---- */
@@ -681,7 +686,7 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .tabbar button.on{color:#fff}
   .tabbar button.on svg{stroke:var(--accent-ink)}
   .tabbar .fab{transform:translateY(-14px)}
-  .tabbar .fab i{width:54px;height:54px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;box-shadow:0 10px 30px rgba(190,0,255,.45)}
+  .tabbar .fab i{width:54px;height:54px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;box-shadow:0 10px 30px rgba(191,0,255,.45)}
   .tabbar .fab i svg{stroke:#fff}
   .tabbar .fab span{color:var(--accent-ink)}
   /* sheet */

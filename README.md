@@ -78,8 +78,8 @@ Costi indicativi (settembre 2026): Standard ~25 $/mese + disco 5 GB ~1,25 $/mese
 
 ## Note
 
-- **Font**: in questa versione Google Sans Flex (font di brand, da Google Fonts) e Instrument Serif come sostituto di GT Super Display. Per usare Helvetica Now Display e GT Super con licenza web: metti i file in `public/fonts/`, aggiungi le `@font-face` in cima a `public/css/site.css` e aggiorna le variabili `--sans` e `--serif`.
+- **Font**: Helvetica Now Display (brand) è self-hosted in `public/fonts` (woff2 nei pesi 300/400/500/700/800, convertiti dagli OTF della cartella `font/`); Geist Mono per i dati e Instrument Serif come sostituto di GT Super Display arrivano da Google Fonts. Quando avrai i file di GT Super (e di Auger Mono, la cartella è vuota), si mettono in `public/fonts` e si aggiungono i `@font-face` in `site.css`.
+- **Logo**: il simbolo inline `#fw-logo` in `views/index.ejs` è generato dal file ufficiale `logo/Svg/Frameworks_bianco.svg` (cubo + wordmark, colore = `currentColor`); `#fw-mark` è il solo cubo (favicon).
 - **Immagini**: quelle in `public/media/` sono placeholder generati con FAC (Seedream 5.0 Flash). Le immagini dei lavori si sostituiscono dal backoffice.
-- **Video dei lavori**: nel backoffice il campo "Video" accetta un link Vimeo (`https://vimeo.com/ID` o `https://vimeo.com/ID/HASH` per i video non in elenco) oppure un URL mp4/webm; il video viene mostrato in loop muto nel dettaglio del lavoro, al posto dell'immagine (che resta la copertina della card).
 - **Meteo**: Open-Meteo per Roma, cache 15 minuti; se non raggiungibile la pagina funziona lo stesso.
 - **Sicurezza**: cambia `ADMIN_PASSWORD` e `SESSION_SECRET`; in produzione i cookie sono `secure`. Il backoffice non è indicizzato (noindex).
