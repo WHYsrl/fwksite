@@ -127,7 +127,7 @@ const AI = {
     const pt = { "2": "2 minuti: solo l'essenziale → al massimo 2 aree e 1 lavoro, niente radar, una frase", "10": "10 minuti → 2-3 aree e 2-3 lavori", all: "tutto il tempo → fino a 6 elementi, radar incluso se pertinente" }[prefs.time];
     const pm = { calm: "calmo: tono disteso", vivid: "entusiasta: tono acceso, puoi includere il radar", nervous: "nervoso: asciutto, niente radar" }[prefs.mood];
     const pref = pt || pm ? `\nPREFERENZE GIÀ SCELTE ALL'INGRESSO (rispettale):${pt ? " tempo = " + pt + ";" : ""}${pm ? " umore = " + pm : ""}\n` : "";
-    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"1-2 frasi in italiano che nominano le aree e i lavori proposti","label":"2-3 parole che riassumono il percorso proposto","highlight":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nREGOLE: highlight con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; se la richiesta è troppo vaga per proporre qualcosa, highlight vuoto e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se nella richiesta il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null (se ha già scelto il tempo, lascia null); mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${pref}${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
+    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"1-3 frasi in italiano: prima la risposta, poi cosa proponi di vedere","label":"2-3 parole che riassumono il percorso","highlight":["id"],"sections":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nREGOLE: highlight solo con aree/lavori/segnali davvero legati alla richiesta (id ESATTI, senza prefisso), altrimenti vuoto; sections tra sistema, aree, lavori, metodo, team, radar, contatti (persone → team; chi siamo → sistema; domande generiche → sistema, aree, metodo con label "Scopri Frameworks"); se la richiesta è troppo vaga, highlight e sections vuoti e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se nella richiesta il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null (se ha già scelto il tempo, lascia null); mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${pref}${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
     return out;
   },
   async adapt(p) {
@@ -177,6 +177,7 @@ document.addEventListener("click", e => {
   const apply = e.target.closest("[data-apply]"); if (apply) { ConsoleWin.apply(apply.dataset.apply); return; }
   const reset = e.target.closest("#focus-reset, [data-focus-reset]"); if (reset) { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); return; }
   const disc = e.target.closest("[data-discover]"); if (disc) { Path.discover(); return; }
+  const gt = e.target.closest("[data-goto]"); if (gt) { if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); goSection(gt.dataset.goto); return; }
   const filt = e.target.closest("[data-filter]"); if (filt) { $$("[data-filter]", filt.parentElement).forEach(b => b.classList.toggle("on", b === filt)); App.filterWorks(filt.dataset.filter); }
 });
 async function runAdapt(box) {
@@ -381,7 +382,7 @@ const App = {
       ${teamHTML()}
       <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
       <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
-      <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      <div class="m-text metodo-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
       ${contactHTML()}
     </section>`;
     const lavori = `<section class="screen" data-screen="lavori">
@@ -433,15 +434,15 @@ function initialTab() { const h = (location.hash || "").replace("#", ""); const 
    (mostra solo aree, lavori e segnali proposti finché non si resetta)
    ========================================================= */
 const Focus = {
-  ids: null, label: "", text: "", q: "",
-  load() { try { const j = JSON.parse(sessionStorage.getItem("fw.focus") || "null"); if (j && Array.isArray(j.ids) && j.ids.length) { this.ids = new Set(j.ids); this.label = j.label || ""; this.text = j.text || ""; this.q = j.q || ""; } } catch {} },
-  save() { try { if (this.ids) sessionStorage.setItem("fw.focus", JSON.stringify({ ids: [...this.ids], label: this.label, text: this.text, q: this.q })); else sessionStorage.removeItem("fw.focus"); } catch {} },
+  ids: null, label: "", text: "", q: "", sections: [],
+  load() { try { const j = JSON.parse(sessionStorage.getItem("fw.focus") || "null"); if (j && Array.isArray(j.ids) && j.ids.length) { this.ids = new Set(j.ids); this.label = j.label || ""; this.text = j.text || ""; this.q = j.q || ""; this.sections = j.sections || []; } } catch {} },
+  save() { try { if (this.ids) sessionStorage.setItem("fw.focus", JSON.stringify({ ids: [...this.ids], label: this.label, text: this.text, q: this.q, sections: this.sections })); else sessionStorage.removeItem("fw.focus"); } catch {} },
   has(id) { return !this.ids || this.ids.has(id); },
   list(items) { return this.ids ? items.filter(i => this.ids.has(i.id)) : items; },
   // gli elementi del percorso nell'ordine aree → lavori → radar (dentro ogni gruppo, l'ordine proposto dalla Console)
   items() { if (!this.ids) return []; const rank = { cap: 0, work: 1, signal: 2 }; return [...this.ids].map(byId).filter(i => i && i.kind !== "core").map((i, k) => ({ i, k })).sort((a, b) => (rank[a.i.kind] - rank[b.i.kind]) || (a.k - b.k)).map(x => x.i); },
-  set(ids, label, text, q) { this.ids = new Set(ids); this.label = label || ""; this.text = text || ""; this.q = q || ""; this.save(); this.apply(); },
-  clear() { this.ids = null; this.label = ""; this.text = ""; this.q = ""; this.save(); if (Modes.density === "2") Modes.set("density", "10"); this.apply(); if (!isMobile()) window.scrollTo({ top: 0, behavior: "instant" }); },
+  set(ids, label, text, q, sections) { this.ids = new Set(ids); this.label = label || ""; this.text = text || ""; this.q = q || ""; this.sections = (sections || []).filter(x => SECTIONS[x]); this.save(); this.apply(); },
+  clear() { this.ids = null; this.label = ""; this.text = ""; this.q = ""; this.sections = []; this.save(); if (Modes.density === "2") Modes.set("density", "10"); this.apply(); if (!isMobile()) window.scrollTo({ top: 0, behavior: "instant" }); },
   apply() {
     const on = !!this.ids;
     document.body.classList.toggle("has-focus", on);
@@ -484,6 +485,7 @@ const Path = {
         ${Focus.q ? `<p class="path-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}
         <h2 class="serif">${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2>
         <p class="path-meta">${this.metaText()}</p>
+        ${Focus.sections.length ? `<div class="path-also"><span>Vedi anche</span>${Focus.sections.map(x => `<button type="button" class="btn ghost" data-goto="${x}">${esc(SECTIONS[x].name)} →</button>`).join("")}</div>` : ""}
       </div>
       ${caps.length ? step("Aree", `${caps.length} ${caps.length === 1 ? "area" : "aree"}`) + `<div class="caps path-caps">${caps.map(x => clone(`#aree .cap[data-open="${x.id}"]`)).join("")}</div>` : ""}
       ${works.length ? step("Lavori", `${works.length} ${works.length === 1 ? "lavoro" : "lavori"}`) + `<div class="works path-works">${works.map(x => clone(`#lavori .work[data-open="${x.id}"]`)).join("")}</div>` : ""}
@@ -502,7 +504,7 @@ const Path = {
     const zones = `<div class="tapzones" aria-hidden="true"><span data-story-prev></span><span data-story-next></span></div>`;
     const tappa = (i, k) => `<div class="eyebrow"><span class="dot"></span>Tappa ${String(i).padStart(2, "0")} di ${c.items.length} · ${k}</div>`;
     const img = (src, fallback, i) => `<div class="slide-img"><img src="${media(src) || media(fallback)}" alt="" loading="lazy"><span class="num">${String(i).padStart(2, "0")} / ${c.items.length}</span>${zones}</div>`;
-    const intro = `<article class="slide slide-intro"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Percorso della Console${label}</div>${Focus.q ? `<p class="story-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}<h2>${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2><p class="story-meta">${this.metaText()}</p><div class="slide-actions">${next("Inizia")}</div></div></article>`;
+    const intro = `<article class="slide slide-intro"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Percorso della Console${label}</div>${Focus.q ? `<p class="story-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}<h2>${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2><p class="story-meta">${this.metaText()}</p>${Focus.sections.length ? `<div class="story-also"><span>Vedi anche</span>${Focus.sections.map(x => `<button type="button" class="btn" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : ""}<div class="slide-actions">${next("Inizia")}</div></div></article>`;
     const body = c.items.map((it, k) => {
       const i = k + 1, last = i === c.items.length, go = next(last ? "Fine" : "Avanti");
       if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri l'area</button>${go}</div></div></article>`;
@@ -527,6 +529,21 @@ const Path = {
   discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = $("main > .statement"); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
   go(delta) { const t = this.track; if (!t || !t.isConnected) return; const k = Math.round(t.scrollLeft / t.clientWidth) + delta; t.scrollTo({ left: Math.max(0, Math.min(t.children.length - 1, k)) * t.clientWidth, behavior: reduced ? "auto" : "smooth" }); }
 };
+
+/* Sezioni del sito proponibili dalla Console: nome e destinazione su desktop (ancora) e su mobile (schermata + blocco) */
+const SECTIONS = { sistema: { name: "Sistema", m: ["sistema", null] }, aree: { name: "Aree", m: ["sistema", ".list-cards"] }, lavori: { name: "Lavori", m: ["lavori", null] }, metodo: { name: "Metodo", m: ["sistema", ".m-text.metodo-m"] }, team: { name: "Team", m: ["sistema", ".team-m"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: "Contatti", m: ["contatti", null] } };
+function goSection(id) {
+  const sec = SECTIONS[id]; if (!sec) return;
+  if (isMobile()) {
+    if (id === "contatti") { openContactSheet(); return; }
+    App.show(sec.m[0]); if (sec.m[1]) setTimeout(() => { const el = $(`.screen[data-screen="${sec.m[0]}"] ${sec.m[1]}`); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 70, behavior: reduced ? "auto" : "smooth" }); }, 80);
+    return;
+  }
+  if (Focus.ids) Focus.clear();
+  const t = $("#" + id); if (!t) return;
+  if (getComputedStyle(t).display === "none") Modes.set("density", "all");
+  setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60);
+}
 
 /* id proposti dall'AI: tollera prefissi, nomi al posto degli id e, in mancanza, cerca i nomi nel testo della risposta */
 function resolveIds(list, text) {
@@ -568,10 +585,12 @@ const ConsoleWin = {
       let pane1 = `<section class="pane"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
       if (r.ask && r.ask.question) pane1 += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
       let pane2 = "";
-      if (items.length) {
-        const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", answer: r.answer || "", q, density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
-        pane1 += `<button type="button" class="pane-next" data-pane-next>Vedi il percorso <span>→</span></button>`;
-        pane2 = `<section class="pane"><div class="proposal"><div class="eyebrow"><span class="dot"></span>Percorso proposto${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">Vai</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div></section>`;
+      const secs = (r.sections || []).filter(x => SECTIONS[x]);
+      if (items.length || secs.length) {
+        const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), sections: secs, label: r.label || "", answer: r.answer || "", q, density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
+        pane1 += `<button type="button" class="pane-next" data-pane-next>${items.length ? "Vedi il percorso" : "Dove andare"} <span>→</span></button>`;
+        const secGroup = secs.length ? `<div class="prop-group"><small>${items.length ? "Vedi anche" : "Sezioni del sito"}</small>${secs.map(x => `<button type="button" class="prop-item sec" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : "";
+        pane2 = `<section class="pane"><div class="proposal"><div class="eyebrow"><span class="dot"></span>${items.length ? "Percorso proposto" : "Navigazione proposta"}${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}${secGroup}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">${items.length ? "Vai" : "Portami lì"}</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div></section>`;
       }
       pane1 += `</section>`;
       const html = `<div class="msg bot${pane2 ? " paged" : ""}"><div class="panes">${pane1}${pane2}</div>${pane2 ? `<div class="pane-dots" aria-hidden="true"><i class="on"></i><i></i></div>` : ""}</div>`;
@@ -595,7 +614,8 @@ const ConsoleWin = {
     const p = (this.proposals || {})[id]; if (!p) return;
     if (p.density) Modes.set("density", p.density); else if (Modes.density === "2") Modes.set("density", "10");
     if (p.energy) Modes.set("mood", p.energy);
-    Focus.set(p.ids, p.label, p.answer, p.q);
+    if (!p.ids.length) { this.close(); closeDetail(); if (p.sections && p.sections.length) goSection(p.sections[0]); return; } // solo sezioni: niente percorso, si va lì
+    Focus.set(p.ids, p.label, p.answer, p.q, p.sections || []);
     this.close(); closeDetail();
     if (isMobile()) App.show("percorso"); else Path.scrollToTop();
   }

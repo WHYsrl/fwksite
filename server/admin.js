@@ -59,6 +59,17 @@ router.post("/testi", (req, res) => {
   store.setSetting("site", s); flash(req, "Testi salvati"); res.redirect("/admin/testi");
 });
 
+// ---------- contesto della Console (pagina nascosta: non è pubblicata, la legge solo l'AI) ----------
+router.get("/contesto", (req, res) => res.render("admin/context", { text: store.getSetting("console_context", ""), test: null }));
+router.post("/contesto", async (req, res) => {
+  store.setSetting("console_context", String(req.body.text || "").slice(0, 12000));
+  if (req.body.action === "test" && req.body.q) {
+    try { const out = await ai.consoleQuery(String(req.body.q).slice(0, 300), [], null); return res.render("admin/context", { text: store.getSetting("console_context", ""), test: { q: req.body.q, out } }); }
+    catch (e) { flash(req, "Test fallito: " + e.message, "err"); }
+  } else flash(req, "Contesto salvato: la Console lo usa dalla prossima domanda");
+  res.redirect("/admin/contesto");
+});
+
 // ---------- capacità ----------
 router.get("/capacita", (req, res) => res.render("admin/caps", { caps: store.listCaps(true) }));
 router.get("/capacita/new", (req, res) => res.render("admin/cap-form", { cap: { id: "", sort: store.listCaps(true).length + 1, name: "", accent: "", short: "", body: "", tags: [], image: "", published: true }, media: store.listMedia(), isNew: true }));

@@ -12,6 +12,7 @@ const admin = require("./admin");
 
 store.seedIfEmpty();
 store.seedTeamIfEmpty();
+store.seedConsoleContext();
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
 const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
 store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(q, 7, lang) })));

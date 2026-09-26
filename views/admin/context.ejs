@@ -1,0 +1,21 @@
+<%- include('../partials/admin-head', { title: 'Contesto Console' }) %>
+<div class="head"><h1>Contesto della Console</h1></div>
+<p class="muted">Pagina nascosta: questo testo <b>non è pubblicato</b>, lo legge solo la Console per rispondere alle domande generiche (cos'è Frameworks, come si inserisce in Frame by Frame, il rapporto con Why e FRY, storia, numeri, sedi, chi fa cosa…). Scrivi in prosa o per punti, come parleresti a un nuovo collega. Le persone e i ruoli arrivano già dalla pagina Team; qui metti quello che il sito non dice.</p>
+<form method="post" action="/admin/contesto" class="form">
+  <section class="card">
+    <label>Testo di contesto (max 12.000 caratteri) <textarea name="text" rows="22" style="font-family:var(--sans);font-size:14px;line-height:1.5"><%= text %></textarea></label>
+    <div class="actions"><button class="btn primary" type="submit">Salva</button></div>
+  </section>
+  <section class="card">
+    <h2>Prova una domanda</h2>
+    <p class="muted">Salva e chiedi alla Console come farebbe un visitatore (usa il contesto appena salvato).</p>
+    <div class="grid2"><label>Domanda <input name="q" value="<%= test ? test.q : '' %>" placeholder="es. chi guida Frameworks? che rapporto avete con Frame by Frame?"></label><label>&nbsp;<button class="btn" type="submit" name="action" value="test">Salva e prova</button></label></div>
+    <% if (test) { %>
+    <div class="card" style="margin-top:12px;background:var(--bg)">
+      <p><b>Risposta:</b> <%= test.out.answer %></p>
+      <p class="mono" style="margin-top:8px">percorso: <%= test.out.label || '—' %> · elementi: <%= (test.out.highlight || []).join(', ') || '—' %> · sezioni: <%= (test.out.sections || []).join(', ') || '—' %><% if (test.out.ask) { %> · domanda di chiarimento: <%= test.out.ask.question %><% } %></p>
+    </div>
+    <% } %>
+  </section>
+</form>
+<%- include('../partials/admin-foot') %>

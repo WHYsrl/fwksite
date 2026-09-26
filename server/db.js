@@ -75,6 +75,8 @@ function migrateRadarV2(queries) {
   });
   tx();
 }
+// Contesto della Console: testo di default se non è mai stato scritto (si modifica nel backoffice)
+function seedConsoleContext() { const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "seed.json"), "utf8")); if (getSetting("console_context", null) == null && seed.console_context) setSetting("console_context", seed.console_context); }
 // Il team è arrivato dopo il primo seed: si popola se la tabella è vuota (anche su database già esistenti), e i testi della sezione se mancano.
 function seedTeamIfEmpty() {
   const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "seed.json"), "utf8"));
@@ -207,7 +209,7 @@ function importAll(data) {
   tx();
 }
 
-module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, seedTeamIfEmpty, migrateRadarV2, freshSignals,
+module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, seedTeamIfEmpty, seedConsoleContext, migrateRadarV2, freshSignals,
   listTeam, getMember, upsertMember, deleteMember,
   listCaps, getCap, upsertCap, deleteCap, listWorks, getWork, upsertWork, deleteWork,
   listSignals, getSignal, signalByUrl, upsertSignal, setSignalStatus, deleteSignal, countSignals,

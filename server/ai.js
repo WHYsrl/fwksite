@@ -63,9 +63,22 @@ function contentIndex() {
   const caps = c.caps.map(x => `- [cap:${x.id}] ${x.name}: ${x.short}`).join("\n");
   const works = c.works.map(x => `- [work:${x.id}] ${x.client} — ${x.title} (${x.year}) · aree: ${x.caps.join(", ")}: ${x.short}`).join("\n");
   const sig = c.signals.slice(0, 20).map(x => `- [signal:${x.id}] ${x.src} (${x.date}): ${x.title} · aree: ${x.caps.join(", ")}`).join("\n");
-  const team = (c.team || []).filter(m => m.is_key).map(m => `- ${m.name}: ${m.role}${m.unit ? " (" + m.unit + ")" : ""}`).join("\n");
-  return { c, text: `AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}${team ? `\n\nTEAM (persone chiave, solo per rispondere a domande sulle persone; non sono id da proporre):\n${team}` : ""}` };
+  const team = (c.team || []).map(m => `- ${m.name}: ${m.role}${m.unit ? " (" + m.unit + ")" : ""}${m.is_key ? " · persona chiave" : ""}`).join("\n");
+  const sections = SECTIONS.map(x => `- [sec:${x.id}] ${x.name}: ${x.desc}`).join("\n");
+  return { c, text: `AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}\n\nSEZIONI DEL SITO (si propongono con "sections"):\n${sections}${team ? `\n\nTEAM (persone; non sono id da proporre: per le persone proponi la sezione team):\n${team}` : ""}` };
 }
+// Le sezioni del sito che la Console può proporre come navigazione
+const SECTIONS = [
+  { id: "sistema", name: "Sistema", desc: "chi siamo, il contesto che cambia, l'organismo vivente (Adaptive Content Systems)" },
+  { id: "aree", name: "Aree", desc: "le quattro capacità" },
+  { id: "lavori", name: "Lavori", desc: "i casi" },
+  { id: "metodo", name: "Metodo", desc: "le cinque fasi del ciclo: mapping, tailoring, production, deployment, iteration" },
+  { id: "team", name: "Team", desc: "le persone: chi guida l'unit e i reparti" },
+  { id: "radar", name: "Radar", desc: "rassegna di notizie esterne in tempo reale" },
+  { id: "contatti", name: "Contatti", desc: "come parlarci" }
+];
+// Contesto aziendale nascosto (backoffice → Contesto Console): cos'è Frameworks, il gruppo, i rapporti con Why e FRY…
+function contextText() { const t = String(store.getSetting("console_context", "") || "").trim(); return t ? t.slice(0, 7000) : ""; }
 
 const BRAND_SYSTEM = `Sei la Console di Frameworks, l'unit di Frame by Frame S.p.A. (Roma) che progetta Adaptive Content Systems:
 "organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto". Contenuti creati per sopravvivere: asset progettati per estendersi, aggiornarsi e riconfigurarsi.
@@ -84,16 +97,19 @@ function prefsText(prefs) {
 }
 
 async function consoleQuery(q, history = [], prefs = null) {
-  const { text } = contentIndex();
-  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore (con l'eventuale conversazione precedente e le preferenze scelte all'ingresso) e l'indice dei contenuti del sito. Proponi un percorso: le aree, i lavori e al massimo un segnale del radar da mostrare. Rispondi SOLO con JSON:
-{"answer": "1-2 frasi in italiano, senza elenchi, che nominano esplicitamente le aree e i lavori proposti", "label": "2-3 parole che riassumono il percorso (es. Retail veloce, Immersivo, AI in produzione)", "highlight": ["id","id"], "open": "id o null", "ask": null, "mode": {"density": null, "energy": null}}
+  const { text } = contentIndex(); const ctx = contextText();
+  const system = BRAND_SYSTEM + (ctx ? `\n\nCONTESTO AZIENDALE (usalo per rispondere a domande su Frameworks, il gruppo, le persone, la storia; non citarlo come "contesto", parla in prima persona plurale):\n${ctx}` : "") + `\n\nRicevi una richiesta del visitatore (con l'eventuale conversazione precedente e le preferenze scelte all'ingresso) e l'indice dei contenuti del sito. Rispondi alla domanda e proponi la navigazione più sensata. Rispondi SOLO con JSON:
+{"answer": "1-3 frasi in italiano, senza elenchi: prima la risposta vera alla domanda, poi (se ha senso) cosa proponi di vedere", "label": "2-3 parole che riassumono il percorso (es. Retail veloce, Le persone, Scopri Frameworks)", "highlight": ["id","id"], "sections": ["id"], "open": "id o null", "ask": null, "mode": {"density": null, "energy": null}}
 REGOLE:
-- highlight: da 2 a 6 id presi ESATTAMENTE dall'indice (senza il prefisso cap:/work:/signal:), prima le aree, poi i lavori, poi al massimo un segnale del radar.
-- Se la richiesta è troppo vaga per proporre un percorso (es. un saluto, una parola sola senza senso), highlight vuoto e ask = {"question": "una domanda breve per capire cosa cerca", "options": ["3-4 opzioni brevi tra cui scegliere"]}. Altrimenti ask = null.
-- open: l'id più pertinente (di solito un'area o un lavoro), oppure null.
+- highlight: SOLO aree, lavori e al massimo un segnale del radar davvero legati alla richiesta (id ESATTI dall'indice, senza prefisso). Se nessuno c'entra, lascia highlight VUOTO: non proporre aree o lavori a caso.
+- sections: le sezioni del sito pertinenti (id ESATTI: sistema, aree, lavori, metodo, team, radar, contatti). Domande su chi siamo, la società, il gruppo, la storia → "sistema"; su persone, ruoli, chi guida → "team"; su come lavoriamo → "metodo"; su notizie e tendenze → "radar"; per contattarci, preventivi, incontri → "contatti".
+- Se la domanda è generica su Frameworks ("cosa fate", "chi siete", "parlami di voi") o non trova niente di specifico, proponi una navigazione per scoprire Frameworks: sections ["sistema","aree","metodo"] con label "Scopri Frameworks".
+- Se la richiesta è troppo vaga per capire cosa cerca (un saluto, una parola senza senso), highlight e sections vuoti e ask = {"question": "una domanda breve per capire cosa cerca", "options": ["3-4 opzioni brevi tra cui scegliere"]}. Altrimenti ask = null.
+- open: l'id più pertinente tra aree e lavori, oppure null.
 - mode.density: "2" SOLO se nella RICHIESTA il visitatore parla di fretta, poco tempo o dell'essenziale; "all" se chiede di approfondire o dice di avere tempo; altrimenti null. Se ha già scelto il tempo all'ingresso, lascia null a meno che la richiesta non chieda esplicitamente di cambiare.
 - mode.energy: "calm" o "vivid" SOLO se il visitatore chiede esplicitamente calma o energia; altrimenti null.
-- Se la richiesta non c'entra con Frameworks, rispondi con garbo in una frase e proponi comunque un percorso generale (le quattro aree).`;
+- Se la richiesta non c'entra con Frameworks né con la comunicazione, rispondi con garbo in una frase e proponi sections ["sistema","aree"].
+- Non inventare: se il contesto non dice qualcosa (una data, un numero, un nome), dillo e proponi la sezione o i contatti.`;
   const hist = (history || []).slice(-3).map(h => `Visitatore: ${String(h.q || "").slice(0, 300)}\nConsole: ${String(h.a || "").slice(0, 400)}`).join("\n");
   const user = `INDICE:\n${text}\n\n${prefsText(prefs)}${hist ? "CONVERSAZIONE PRECEDENTE:\n" + hist + "\n\n" : ""}RICHIESTA: ${q}`;
   const out = await complete({ system, user, json: true, maxTokens: 500, kind: "console", cacheMinutes: 60 * 24 });
@@ -103,8 +119,10 @@ REGOLE:
   const norm = (v) => String(v || "").trim().toLowerCase().replace(/^(cap|work|signal|area|lavoro|radar)\s*[:\-]\s*/, "");
   let ids = [];
   (out.highlight || []).forEach(raw => { const id = norm(raw); const hit = all.find(x => x.id.toLowerCase() === id) || all.find(x => [x.name, x.title, x.client, x.label].filter(Boolean).some(n => n.toLowerCase() === id)); if (hit && !ids.includes(hit.id)) ids.push(hit.id); });
-  if (!ids.length && out.answer) { const t = String(out.answer).toLowerCase(); all.forEach(x => { const names = [x.name, x.title, x.client, x.label].filter(Boolean).map(n => n.toLowerCase()); if (names.some(n => n.length > 3 && t.includes(n)) && !ids.includes(x.id)) ids.push(x.id); }); }
   out.highlight = ids.slice(0, 6);
+  const secIds = SECTIONS.map(x => x.id); const normSec = (v) => String(v || "").trim().toLowerCase().replace(/^sec(tion)?\s*[:\-]\s*/, "");
+  out.sections = [...new Set((out.sections || []).map(normSec).filter(v => secIds.includes(v)))].slice(0, 4);
+  if (!out.highlight.length && !out.sections.length && !(out.ask && out.ask.question)) { out.sections = ["sistema", "aree", "metodo"]; out.label = out.label || "Scopri Frameworks"; }
   out.open = valid.has(out.open) ? out.open : null;
   out.label = String(out.label || "").slice(0, 40);
   out.ask = out.ask && out.ask.question ? { question: String(out.ask.question).slice(0, 160), options: (out.ask.options || []).map(String).slice(0, 4) } : null;
@@ -134,4 +152,4 @@ Rispondi con JSON: {"items":[{"i":0,"relevant":true,"score":0-100,"caps":["id"],
   return out.items || [];
 }
 
-module.exports = { config, isConfigured, complete, consoleQuery, adapt, classifySignals };
+module.exports = { config, isConfigured, complete, consoleQuery, adapt, classifySignals, SECTIONS };
