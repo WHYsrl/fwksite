@@ -61,7 +61,9 @@ app.post("/api/ai/console", limit, async (req, res) => {
   if (!q) return res.status(400).json({ error: "Richiesta vuota" });
   if (!ai.config().features.console) return res.status(503).json({ error: "Funzione disattivata", code: "disabled" });
   const history = Array.isArray(req.body.history) ? req.body.history.slice(-3).map(h => ({ q: String(h.q || "").slice(0, 300), a: String(h.a || "").slice(0, 400) })) : [];
-  try { res.json(await ai.consoleQuery(q, history)); } catch (e) { aiError(res, e); }
+  const p = req.body.prefs || {}; // scelte fatte nell'intro: tempo e umore
+  const prefs = { time: ["2", "10", "all"].includes(String(p.time)) ? String(p.time) : null, mood: ["calm", "vivid", "nervous"].includes(p.mood) ? p.mood : null };
+  try { res.json(await ai.consoleQuery(q, history, prefs)); } catch (e) { aiError(res, e); }
 });
 app.post("/api/ai/adapt", limit, async (req, res) => {
   const { itemId, sector, goal, channel } = req.body || {};

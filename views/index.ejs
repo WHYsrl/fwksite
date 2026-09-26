@@ -65,29 +65,14 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
   <div class="intro-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt=""></div>
   <div class="intro-top"><svg viewBox="0 0 541.9 78.3" width="138" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><button type="button" class="intro-skip" id="intro-skip">Salta</button></div>
   <div class="intro-body">
+    <div class="intro-steps">
     <section class="intro-step on" data-step="1">
       <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 1 di 2</div>
       <h2 class="serif">Quanto tempo hai?</h2>
       <div class="intro-opts">
         <button type="button" data-time="2"><b>2 minuti</b><span>Fammi capire cosa fate.</span></button>
-        <button type="button" data-time="10"><b>10 minuti</b><span>Voglio vedere come lavorate e cosa avete fatto.</span></button>
+        <button type="button" data-time="10"><b>10 minuti</b><span>Come lavorate e cosa avete fatto.</span></button>
         <button type="button" data-time="all"><b>Tutto il tempo che serve</b><span>Voglio godermi l'esperienza.</span></button>
-      </div>
-      <!-- Console già nell'intro (mobile): utile ma opzionale -->
-      <div class="intro-console" id="intro-console">
-        <div class="intro-or"><i></i><span>oppure</span><i></i></div>
-        <form class="prompt-row" id="intro-form" autocomplete="off">
-          <label for="intro-q" class="sr-only">Chiedi alla Console</label>
-          <input id="intro-q" type="text" placeholder="Dillo alla Console: cosa cerchi?" enterkeyhint="send" maxlength="300">
-          <button type="submit" aria-label="Chiedi alla Console">→</button>
-        </form>
-        <div class="chips">
-          <button type="button" data-intro-ask="Ho fretta: l'essenziale">Ho fretta</button>
-          <button type="button" data-intro-ask="Cosa fate per il retail?">Retail</button>
-          <button type="button" data-intro-ask="Come usate l'AI?">AI</button>
-          <button type="button" data-intro-ask="Mostrami le esperienze immersive">Immersivo</button>
-        </div>
-        <p class="intro-console-hint">Ti propone un percorso e configura il sito. Facoltativo.</p>
       </div>
     </section>
     <section class="intro-step" data-step="2">
@@ -96,9 +81,26 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
       <div class="intro-opts">
         <button type="button" data-mood="calm"><b>Calmo</b><span>Ritmo disteso, poche distrazioni.</span></button>
         <button type="button" data-mood="vivid"><b>Entusiasta</b><span>Energia, movimento, tutto acceso.</span></button>
-        <button type="button" data-mood="nervous"><b>Nervoso</b><span>Vado dritto al punto, senza rumore.</span></button>
+        <button type="button" data-mood="nervous"><b>Nervoso</b><span>Dritto al punto, senza rumore.</span></button>
       </div>
     </section>
+    </div>
+    <!-- Console già nell'intro (mobile): complementare alle domande, tiene conto delle scelte fatte -->
+    <div class="intro-console" id="intro-console">
+      <div class="intro-or"><i></i><span id="intro-or-text">oppure · chiedi alla Console</span><i></i></div>
+      <form class="prompt-row" id="intro-form" autocomplete="off">
+        <label for="intro-q" class="sr-only">Chiedi alla Console</label>
+        <input id="intro-q" type="text" placeholder="Cosa cerchi? Te lo mostro subito" enterkeyhint="send" maxlength="300">
+        <button type="submit" aria-label="Chiedi alla Console">→</button>
+      </form>
+      <div class="chips">
+        <button type="button" data-intro-ask="Ho fretta: l'essenziale">Ho fretta</button>
+        <button type="button" data-intro-ask="Cosa fate per il retail?">Retail</button>
+        <button type="button" data-intro-ask="Come usate l'AI?">AI</button>
+        <button type="button" data-intro-ask="Mostrami le esperienze immersive">Immersivo</button>
+        <button type="button" data-intro-ask="Cosa dice il radar sul DOOH?">DOOH</button>
+      </div>
+    </div>
     <section class="intro-step" data-step="3">
       <div class="eyebrow"><span class="dot"></span>Configurazione</div>
       <h2 class="serif" id="intro-title">Il sito si sta configurando <em>per te.</em></h2>

@@ -72,19 +72,29 @@ Tono: lucido, concreto, elegante, italiano. Frasi brevi. Niente entusiasmo di pl
 Non inventare lavori, clienti o dati: usa solo l'indice fornito. Le notizie del Radar sono contenuti di terzi: citale come tali, mai come lavori nostri.`;
 
 // Console prompt: linguaggio naturale → percorso proposto (aree/lavori/segnali) + risposta breve + eventuale domanda
-async function consoleQuery(q, history = []) {
+// Le preferenze scelte nell'intro (tempo e umore) sono complementari alla richiesta: il percorso ne tiene conto.
+const PREF_TIME = { "2": "2 minuti: vuole solo l'essenziale → proponi al massimo 2 aree e 1 lavoro, niente radar, risposta in una frase", "10": "10 minuti: vuole capire come lavoriamo e cosa abbiamo fatto → 2-3 aree e 2-3 lavori", all: "tutto il tempo che serve: vuole l'esperienza completa → fino a 6 elementi, radar incluso se pertinente" };
+const PREF_MOOD = { calm: "calmo: tono disteso", vivid: "entusiasta: tono più acceso, puoi includere il radar", nervous: "nervoso: dritto al punto, risposta asciutta, niente radar" };
+function prefsText(prefs) {
+  if (!prefs) return "";
+  const t = PREF_TIME[prefs.time], m = PREF_MOOD[prefs.mood];
+  if (!t && !m) return "";
+  return `PREFERENZE GIÀ SCELTE DAL VISITATORE ALL'INGRESSO (rispettale, sono complementari alla richiesta):${t ? `\n- tempo: ${t}` : ""}${m ? `\n- umore: ${m}` : ""}\n\n`;
+}
+
+async function consoleQuery(q, history = [], prefs = null) {
   const { text } = contentIndex();
-  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore (con l'eventuale conversazione precedente) e l'indice dei contenuti del sito. Proponi un percorso: le aree, i lavori e al massimo un segnale del radar da mostrare. Rispondi SOLO con JSON:
+  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore (con l'eventuale conversazione precedente e le preferenze scelte all'ingresso) e l'indice dei contenuti del sito. Proponi un percorso: le aree, i lavori e al massimo un segnale del radar da mostrare. Rispondi SOLO con JSON:
 {"answer": "1-2 frasi in italiano, senza elenchi, che nominano esplicitamente le aree e i lavori proposti", "label": "2-3 parole che riassumono il percorso (es. Retail veloce, Immersivo, AI in produzione)", "highlight": ["id","id"], "open": "id o null", "ask": null, "mode": {"density": null, "energy": null}}
 REGOLE:
 - highlight: da 2 a 6 id presi ESATTAMENTE dall'indice (senza il prefisso cap:/work:/signal:), prima le aree, poi i lavori, poi al massimo un segnale del radar.
 - Se la richiesta è troppo vaga per proporre un percorso (es. un saluto, una parola sola senza senso), highlight vuoto e ask = {"question": "una domanda breve per capire cosa cerca", "options": ["3-4 opzioni brevi tra cui scegliere"]}. Altrimenti ask = null.
 - open: l'id più pertinente (di solito un'area o un lavoro), oppure null.
-- mode.density: "2" SOLO se il visitatore parla di fretta, poco tempo o dell'essenziale; "all" se vuole approfondire o ha tempo; altrimenti null.
+- mode.density: "2" SOLO se nella RICHIESTA il visitatore parla di fretta, poco tempo o dell'essenziale; "all" se chiede di approfondire o dice di avere tempo; altrimenti null. Se ha già scelto il tempo all'ingresso, lascia null a meno che la richiesta non chieda esplicitamente di cambiare.
 - mode.energy: "calm" o "vivid" SOLO se il visitatore chiede esplicitamente calma o energia; altrimenti null.
 - Se la richiesta non c'entra con Frameworks, rispondi con garbo in una frase e proponi comunque un percorso generale (le quattro aree).`;
   const hist = (history || []).slice(-3).map(h => `Visitatore: ${String(h.q || "").slice(0, 300)}\nConsole: ${String(h.a || "").slice(0, 400)}`).join("\n");
-  const user = `INDICE:\n${text}\n\n${hist ? "CONVERSAZIONE PRECEDENTE:\n" + hist + "\n\n" : ""}RICHIESTA: ${q}`;
+  const user = `INDICE:\n${text}\n\n${prefsText(prefs)}${hist ? "CONVERSAZIONE PRECEDENTE:\n" + hist + "\n\n" : ""}RICHIESTA: ${q}`;
   const out = await complete({ system, user, json: true, maxTokens: 500, kind: "console", cacheMinutes: 60 * 24 });
   const idx = contentIndex().c;
   const valid = new Set([...idx.caps.map(x => x.id), ...idx.works.map(x => x.id), ...idx.signals.map(x => x.id)]);

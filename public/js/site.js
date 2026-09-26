@@ -70,7 +70,10 @@ function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pio
   btn.addEventListener("click", () => { if (Modes.density === "2") { Modes.set("density", "10"); open(false); return; } open(panel.hidden); });
   $("#modes-close").addEventListener("click", () => open(false));
   document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) open(false); });
-  panel.addEventListener("click", e => { const d = e.target.closest(".seg [data-density]"); if (d) Modes.set("density", d.dataset.density); const m = e.target.closest(".seg [data-mood]"); if (m) Modes.set("mood", m.dataset.mood); });
+  panel.addEventListener("click", e => {
+    const d = e.target.closest(".seg [data-density]"); if (d) { Modes.set("density", d.dataset.density); Prefs.set({ ...(Prefs.get() || {}), time: d.dataset.density }); }
+    const m = e.target.closest(".seg [data-mood]"); if (m) { Modes.set("mood", m.dataset.mood); Prefs.set({ ...(Prefs.get() || {}), mood: ["calm", "vivid", "nervous"].includes(m.dataset.mood) ? m.dataset.mood : null }); }
+  });
 })();
 
 function renderContext() {
@@ -94,6 +97,13 @@ function renderContext() {
 /* =========================================================
    AI — server (produzione) o capability "sample" (preview)
    ========================================================= */
+/* scelte fatte nell'intro (tempo, umore): complementari alla Console, che ne tiene conto nel percorso */
+const Prefs = {
+  get() { try { return JSON.parse(sessionStorage.getItem("fw.prefs") || "null"); } catch { return null; } },
+  set(p) { try { sessionStorage.setItem("fw.prefs", JSON.stringify({ time: p.time || null, mood: p.mood || null })); } catch {} },
+  text() { const p = this.get(); if (!p) return ""; const t = { "2": "2 minuti", "10": "10 minuti", all: "tutto il tempo che serve" }[p.time]; const m = { calm: "ritmo calmo", vivid: "ritmo entusiasta", nervous: "dritto al punto" }[p.mood]; return [t, m].filter(Boolean).join(", "); }
+};
+
 const AI = {
   available: null,
   async check() {
@@ -110,9 +120,13 @@ const AI = {
   },
   brand: `Sei la Console di Frameworks (Frame by Frame, Roma): Adaptive Content Systems, "organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto". Tono lucido, concreto, elegante, italiano, frasi brevi, niente elenchi. Non inventare lavori o dati; le notizie del Radar sono di terzi.`,
   async console(q, history = []) {
-    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
+    const prefs = Prefs.get() || {};
+    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history, prefs }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
     const hist = history.length ? `\nCONVERSAZIONE PRECEDENTE:\n${history.map(h => `Visitatore: ${h.q}\nConsole: ${h.a}`).join("\n")}\n` : "";
-    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"1-2 frasi in italiano che nominano le aree e i lavori proposti","label":"2-3 parole che riassumono il percorso proposto","highlight":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nREGOLE: highlight con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; se la richiesta è troppo vaga per proporre qualcosa, highlight vuoto e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null; mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
+    const pt = { "2": "2 minuti: solo l'essenziale → al massimo 2 aree e 1 lavoro, niente radar, una frase", "10": "10 minuti → 2-3 aree e 2-3 lavori", all: "tutto il tempo → fino a 6 elementi, radar incluso se pertinente" }[prefs.time];
+    const pm = { calm: "calmo: tono disteso", vivid: "entusiasta: tono acceso, puoi includere il radar", nervous: "nervoso: asciutto, niente radar" }[prefs.mood];
+    const pref = pt || pm ? `\nPREFERENZE GIÀ SCELTE ALL'INGRESSO (rispettale):${pt ? " tempo = " + pt + ";" : ""}${pm ? " umore = " + pm : ""}\n` : "";
+    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"1-2 frasi in italiano che nominano le aree e i lavori proposti","label":"2-3 parole che riassumono il percorso proposto","highlight":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nREGOLE: highlight con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; se la richiesta è troppo vaga per proporre qualcosa, highlight vuoto e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se nella richiesta il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null (se ha già scelto il tempo, lascia null); mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${pref}${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
     return out;
   },
   async adapt(p) {
@@ -422,7 +436,7 @@ const ConsoleWin = {
   open(q) {
     if (!this.el) return;
     this.el.hidden = false; document.body.classList.add("cwin-open");
-    if (!this.thread.children.length) this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>Dimmi cosa cerchi, o quanto tempo hai: ti propongo un percorso e configuro il sito.</p></div>`;
+    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.</p></div>`; }
     $("#cwin-chips").innerHTML = this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
     if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
   },
@@ -511,12 +525,18 @@ const Intro = {
   },
   // Chiude l'intro con le scelte fatte finora (o i valori di default) e apre la Console con la domanda
   console(q) {
+    Prefs.set({ time: this.time, mood: this.mood });
     Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
     ConsoleWin.open(String(q || "").trim()); // la finestra sta sotto l'intro (z-index) e appare mentre l'intro sfuma
     this.finish();
   },
-  step(n) { $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n))); },
+  step(n) {
+    $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n)));
+    this.el.dataset.step = String(n);
+    const q = $("#intro-q", this.el); if (q && n === 2) q.placeholder = "Cosa cerchi? Terrò conto del tempo scelto";
+  },
   configure() {
+    Prefs.set({ time: this.time, mood: this.mood });
     Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
     const c = Ctx.local(); const w = Ctx.weather;
     const timeTxt = { "2": "ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci", "10": "ti mostro il sistema, le aree, i lavori, il metodo e il radar", all: "apro tutto: l'esperienza completa, con calma" }[this.time] || "";
