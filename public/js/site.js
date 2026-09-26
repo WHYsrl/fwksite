@@ -43,7 +43,7 @@ const Ctx = {
   }
 };
 const Modes = {
-  density: store.get("fw.density") || "10", mood: store.get("fw.mood") || "auto",
+  density: "10", mood: store.get("fw.mood") || "auto",
   apply() {
     html.dataset.density = this.density;
     const w = Ctx.weather; const c = Ctx.local();
@@ -53,19 +53,21 @@ const Modes = {
     if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
     html.dataset.energy = energy;
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
+    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità";
+    const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
     const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
     const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${labelWeather(w.kind)}` : "";
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 50);
   },
-  set(k, v) { this[k] = v; store.set("fw." + k, v); this.apply(); }
+  set(k, v) { this[k] = v; if (k === "mood") store.set("fw." + k, v); this.apply(); }
 };
 function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pioggia", storm: "temporale", snow: "neve", night: "notte", unknown: "" }[k] || ""; }
 (function modesUI() {
   const btn = $("#modes-btn"), panel = $("#modes"); if (!btn || !panel) return;
   if (DATA.site.modes_enabled === false) { btn.hidden = true; return; }
   const open = (o) => { panel.hidden = !o; btn.setAttribute("aria-expanded", String(o)); };
-  btn.addEventListener("click", () => open(panel.hidden));
+  btn.addEventListener("click", () => { if (Modes.density === "2") { Modes.set("density", "10"); open(false); return; } open(panel.hidden); });
   $("#modes-close").addEventListener("click", () => open(false));
   document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) open(false); });
   panel.addEventListener("click", e => { const d = e.target.closest("[data-density]"); if (d) Modes.set("density", d.dataset.density); const m = e.target.closest("[data-mood]"); if (m) Modes.set("mood", m.dataset.mood); });
@@ -145,6 +147,7 @@ function closeDetail() { drawer.dataset.open = "false"; sheet.dataset.open = "fa
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
+  const nav = e.target.closest('.topnav a[href^="#"]'); if (nav && !isMobile()) { const t = $(nav.getAttribute("href")); if (t && getComputedStyle(t).display === "none") { e.preventDefault(); Modes.set("density", "all"); setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60); return; } }
   const b = e.target.closest("[data-open]"); if (b) { openDetail(byId(b.dataset.open)); return; }
   const n = e.target.closest("[data-open-node]"); if (n) { openDetail(byId(n.dataset.openNode)); return; }
   const go = e.target.closest(".adapt .go"); if (go) runAdapt(go.closest(".adapt"));
