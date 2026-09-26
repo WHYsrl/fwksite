@@ -53,7 +53,7 @@ const Modes = {
     if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
     html.dataset.energy = energy; html.dataset.mood = this.mood;
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
-    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità";
+    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? "Essenziale" : "Modalità") : (this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità");
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
     const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
@@ -70,7 +70,7 @@ function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pio
   btn.addEventListener("click", () => { if (Modes.density === "2") { Modes.set("density", "10"); open(false); return; } open(panel.hidden); });
   $("#modes-close").addEventListener("click", () => open(false));
   document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) open(false); });
-  panel.addEventListener("click", e => { const d = e.target.closest("[data-density]"); if (d) Modes.set("density", d.dataset.density); const m = e.target.closest("[data-mood]"); if (m) Modes.set("mood", m.dataset.mood); });
+  panel.addEventListener("click", e => { const d = e.target.closest(".seg [data-density]"); if (d) Modes.set("density", d.dataset.density); const m = e.target.closest(".seg [data-mood]"); if (m) Modes.set("mood", m.dataset.mood); });
 })();
 
 function renderContext() {
@@ -400,8 +400,8 @@ const Intro = {
     if (!this.el || this.seen()) { this.finish(true); return; }
     this.el.hidden = false; document.body.style.overflow = "hidden";
     this.el.addEventListener("click", e => {
-      const t = e.target.closest("[data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
-      const m = e.target.closest("[data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); setTimeout(() => this.configure(), 220); return; }
+      const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
+      const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); setTimeout(() => this.configure(), 220); return; }
       if (e.target.closest("#intro-skip") || e.target.closest("#intro-go")) this.finish();
     });
   },
