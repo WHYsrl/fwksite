@@ -101,8 +101,8 @@ app.post("/api/ai/image", (req, res) => {
   const ip = req.ip || "x"; const now = Date.now(); const b = imgBuckets.get(ip) || { n: 0, t: now };
   if (now - b.t > 60000) { b.n = 0; b.t = now; } b.n++; imgBuckets.set(ip, b);
   if (b.n > 4) return res.status(429).json({ error: "Un attimo: al massimo quattro oggetti al minuto.", code: "rate_limited" });
-  const q = String((req.body || {}).q || "").slice(0, 80); const mood = String((req.body || {}).mood || "");
-  imagegen.generate({ q, mood }).then(out => { res.set("Cache-Control", "no-store"); res.json(out); }).catch(e => {
+  const q = String((req.body || {}).q || "").slice(0, 80); const mood = String((req.body || {}).mood || ""); const format = ["16:9", "9:16", "32:9"].includes((req.body || {}).format) ? req.body.format : null;
+  imagegen.generate({ q, mood, format }).then(out => { res.set("Cache-Control", "no-store"); res.json(out); }).catch(e => {
     const map = { not_configured: 503, disabled: 503, rate_limited: 429, bad_request: 400, rejected: 422, provider_error: 502 };
     res.status(map[e.code] || 500).json({ error: e.message, code: e.code || "error" });
   });

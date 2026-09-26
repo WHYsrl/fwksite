@@ -530,6 +530,11 @@ body.cwin-open{overflow:hidden}
 .dn-chips button{font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--bg);white-space:nowrap}
 .dn-chips button:hover{border-color:var(--accent);color:var(--ink)}
 .dn-lab.done .dn-chips{display:none}
+.dn-regen{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;border-top:1px solid var(--line-2);background:var(--bg-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.dn-regen button{font:inherit;letter-spacing:inherit;text-transform:inherit;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--bg)}
+.dn-regen button:hover{border-color:var(--accent);color:var(--ink)}
+.dn-regen button:disabled{opacity:.6;cursor:wait}
+.dn-regen .dn-replay{margin-left:auto}
 .org-caption{margin-top:12px;font-size:13.5px;color:var(--ink-3);line-height:1.5}
 .org-caption b{color:var(--ink-2);font-weight:600}
 /* ---- TEAM: persone chiave + organico per reparto ---- */

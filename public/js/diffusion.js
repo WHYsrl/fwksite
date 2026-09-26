@@ -50,11 +50,12 @@ window.Diffusion = (() => {
     root.innerHTML = `<div class="org-stage dn-stage" role="button" tabindex="0" aria-label="Un passo di denoising"><canvas></canvas><div class="org-hud dn-hud" aria-live="polite"></div><div class="org-hint dn-hint"></div></div>
       <form class="org-word dn-form" autocomplete="off"><input type="text" maxlength="60" placeholder="Nomina un oggetto, anche impossibile" enterkeyhint="go" aria-label="Nomina un oggetto"><button type="submit">Genera</button></form>
       <div class="dn-chips">${SUGGEST.map(s => `<button type="button" data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>
-      <div class="org-controls formats dn-formats" hidden>${FORMATS.map((f, i) => `<button type="button" data-f="${f.id}" class="${i === 0 ? "on" : ""}"><b>${f.name}</b><small>${f.label}</small></button>`).join("")}</div>`;
-    const stage = root.querySelector(".dn-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".dn-hud"), hint = root.querySelector(".dn-hint"), form = root.querySelector(".dn-form"), input = form.querySelector("input"), fmts = root.querySelector(".dn-formats");
+      <div class="org-controls formats dn-formats" hidden>${FORMATS.map((f, i) => `<button type="button" data-f="${f.id}" class="${i === 0 ? "on" : ""}"><b>${f.name}</b><small>${f.label}</small></button>`).join("")}</div>
+      <div class="dn-regen" hidden><span class="dn-regen-note"></span><button type="button" class="dn-regen-btn"></button><button type="button" class="dn-replay">↻ Rivedi il denoising</button></div>`;
+    const stage = root.querySelector(".dn-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".dn-hud"), hint = root.querySelector(".dn-hint"), form = root.querySelector(".dn-form"), input = form.querySelector("input"), fmts = root.querySelector(".dn-formats"), regen = root.querySelector(".dn-regen"), regenBtn = root.querySelector(".dn-regen-btn"), regenNote = root.querySelector(".dn-regen-note");
     const accent = () => cssVar(root, "--accent", "#BF00FF"), bgCol = () => cssVar(root, "--bg", "#050307");
     if (!tiles.length) makeTiles(accent());
-    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0 };
+    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0, variants: {}, regenBusy: "" };
     const small = document.createElement("canvas"), sctx = small.getContext("2d");
 
     function size() { const r = stage.getBoundingClientRect(); if (!r.width || !r.height) return false; st.dpr = Math.min(1.5, window.devicePixelRatio || 1); st.W = Math.round(r.width); st.H = Math.round(r.height); cv.width = st.W * st.dpr; cv.height = st.H * st.dpr; ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); return true; }
@@ -62,14 +63,72 @@ window.Diffusion = (() => {
     function frameRect() { const pad = 18, top = 50, bottom = 34; const f = FORMATS.find(x => x.id === st.format) || FORMATS[0]; const ratio = f.ratio || 1; const availH = st.H - top - bottom; let fw = st.W - pad * 2, fh = fw / ratio; if (fh > availH) { fh = availH; fw = fh * ratio; } return { x: (st.W - fw) / 2, y: top + (availH - fh) / 2, w: fw, h: fh }; }
     function coverSrc(img, ratio) { const iw = img.width || 512, ih = img.height || 512; let sw = iw, sh = iw / ratio; if (sh > ih) { sh = ih; sw = ih * ratio; } return { sx: (iw - sw) / 2, sy: (ih - sh) / 2, sw, sh }; }
 
+    // ---------- adattamento ai formati: dov'è il soggetto, quanto si può tagliare, dove si estende ----------
+    // Mappa di interesse a bassa risoluzione: bordi + distanza dal colore di sfondo. Ritorna il riquadro del soggetto (0..1).
+    const salCache = new WeakMap();
+    function analyze(img) {
+      if (salCache.has(img)) return salCache.get(img);
+      const S = 48; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.drawImage(img, 0, 0, S, S);
+      const d = x.getImageData(0, 0, S, S).data; const lum = new Float32Array(S * S);
+      let br = 0, bg = 0, bb = 0, bn = 0;
+      for (let i = 0; i < S * S; i++) { lum[i] = (d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11); const px = i % S, py = (i / S) | 0; if (px < 3 || py < 3 || px >= S - 3 || py >= S - 3) { br += d[i * 4]; bg += d[i * 4 + 1]; bb += d[i * 4 + 2]; bn++; } }
+      br /= bn; bg /= bn; bb /= bn;
+      const w = new Float32Array(S * S); let tot = 0;
+      for (let y = 1; y < S - 1; y++) for (let xq = 1; xq < S - 1; xq++) { const i = y * S + xq; const e = Math.abs(lum[i + 1] - lum[i - 1]) + Math.abs(lum[i + S] - lum[i - S]); const cd = (Math.abs(d[i * 4] - br) + Math.abs(d[i * 4 + 1] - bg) + Math.abs(d[i * 4 + 2] - bb)) / 3; const v = e * 1.2 + cd * 0.8; w[i] = v; tot += v; }
+      // riquadro che contiene il 90% dell'interesse, per righe e colonne
+      const col = new Float32Array(S), row = new Float32Array(S); for (let y = 0; y < S; y++) for (let xq = 0; xq < S; xq++) { col[xq] += w[y * S + xq]; row[y] += w[y * S + xq]; }
+      const span = (arr) => { let lo = 0, hi = S - 1, acc = 0; const cut = tot * 0.05; while (lo < S - 1 && acc + arr[lo] < cut) { acc += arr[lo]; lo++; } acc = 0; while (hi > lo && acc + arr[hi] < cut) { acc += arr[hi]; hi--; } return [lo / S, (hi + 1) / S]; };
+      const [x0, x1] = span(col), [y0, y1] = span(row);
+      const out = { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 }; salCache.set(img, out); return out;
+    }
+    // Ritaglio più stretto possibile verso il formato senza tagliare il soggetto (margine 6%); il resto si estende con lo sfondo sfocato.
+    function reframe(img, ratio) {
+      const iw = img.naturalWidth || img.width || 512, ih = img.naturalHeight || img.height || 512; const sal = analyze(img);
+      const m = 0.06; const bx0 = Math.max(0, sal.x0 - m) * iw, bx1 = Math.min(1, sal.x1 + m) * iw, by0 = Math.max(0, sal.y0 - m) * ih, by1 = Math.min(1, sal.y1 + m) * ih;
+      let sx = 0, sy = 0, sw = iw, sh = ih; const cur = iw / ih;
+      if (ratio > cur) { // più largo: si riduce l'altezza fin dove il soggetto lo consente
+        const want = iw / ratio; sh = Math.max(want, by1 - by0); sy = Math.min(Math.max(0, (by0 + by1) / 2 - sh / 2), ih - sh);
+      } else if (ratio < cur) { // più alto: si riduce la larghezza
+        const want = ih * ratio; sw = Math.max(want, bx1 - bx0); sx = Math.min(Math.max(0, (bx0 + bx1) / 2 - sw / 2), iw - sw);
+      }
+      const got = sw / sh; return { sx, sy, sw, sh, extend: Math.abs(got - ratio) / ratio > 0.02 };
+    }
+    // Disegna l'asset nel riquadro: sfondo esteso (copia sfocata e scurita) + soggetto contenuto
+    function drawAdapted(src, fr, ratio) {
+      const r = reframe(src, ratio);
+      ctx.save(); ctx.beginPath(); ctx.rect(fr.x, fr.y, fr.w, fr.h); ctx.clip();
+      if (r.extend) {
+        // soggetto contenuto e centrato; ai lati (o sopra e sotto) lo sfondo continua: bordo specchiato, sfocato e un po' più scuro
+        const cr = r.sw / r.sh; let dw = fr.w, dh = fr.w / cr; if (dh > fr.h) { dh = fr.h; dw = fr.h * cr; }
+        const dx = fr.x + (fr.w - dw) / 2, dy = fr.y + (fr.h - dh) / 2; const wide = dw < fr.w - 1;
+        const strip = (flipX, flipY, sxs, sys, sws, shs, tx, ty, tw, th) => {
+          if (tw < 1 || th < 1) return;
+          const bw = 24, bh = Math.max(2, Math.round(24 * th / Math.max(1, tw))); small.width = bw; small.height = bh; sctx.save(); sctx.imageSmoothingEnabled = true;
+          sctx.translate(flipX ? bw : 0, flipY ? bh : 0); sctx.scale(flipX ? -1 : 1, flipY ? -1 : 1); sctx.drawImage(src, sxs, sys, sws, shs, 0, 0, bw, bh); sctx.restore();
+          ctx.imageSmoothingEnabled = true; ctx.drawImage(small, 0, 0, bw, bh, tx - 2, ty - 2, tw + 4, th + 4);
+          ctx.fillStyle = "rgba(0,0,0,.24)"; ctx.fillRect(tx, ty, tw, th);
+        };
+        if (wide) { const k = Math.min(0.35, (dx - fr.x) / dw); strip(true, false, r.sx, r.sy, r.sw * k, r.sh, fr.x, dy, dx - fr.x, dh); strip(true, false, r.sx + r.sw * (1 - k), r.sy, r.sw * k, r.sh, dx + dw, dy, fr.x + fr.w - dx - dw, dh); }
+        else { const k = Math.min(0.35, (dy - fr.y) / dh); strip(false, true, r.sx, r.sy, r.sw, r.sh * k, dx, fr.y, dw, dy - fr.y); strip(false, true, r.sx, r.sy + r.sh * (1 - k), r.sw, r.sh * k, dx, dy + dh, dw, fr.y + fr.h - dy - dh); }
+        ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, dx, dy, dw, dh);
+        // giunzione morbida
+        const feather = Math.max(10, Math.min(dw, dh) * 0.05);
+        const g = wide ? ctx.createLinearGradient(dx, 0, dx + feather, 0) : ctx.createLinearGradient(0, dy, 0, dy + feather); g.addColorStop(0, "rgba(0,0,0,.28)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; if (wide) ctx.fillRect(dx, dy, feather, dh); else ctx.fillRect(dx, dy, dw, feather);
+        const g2 = wide ? ctx.createLinearGradient(dx + dw - feather, 0, dx + dw, 0) : ctx.createLinearGradient(0, dy + dh - feather, 0, dy + dh); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.28)"); ctx.fillStyle = g2; if (wide) ctx.fillRect(dx + dw - feather, dy, feather, dh); else ctx.fillRect(dx, dy + dh - feather, dw, feather);
+      } else { ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, fr.x, fr.y, fr.w, fr.h); }
+      ctx.restore();
+    }
+
     function draw() {
       if (!st.W) return;
       const t = st.step / N, sigma = Math.pow(1 - t, 1.5), res = Math.max(1, Math.round(Math.pow(1 - t, 2.2) * 40)); // rumore 1→0, blocchi 40px→1px
       ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.fillStyle = bgCol(); ctx.fillRect(0, 0, st.W, st.H);
       const fr = frameRect(); const src = st.img && st.img.complete && st.img.naturalWidth ? st.img : (st.lat || (st.lat = latent(st.subject, accent(), 0)));
       const f = FORMATS.find(x => x.id === st.format) || FORMATS[0];
-      const s = f.ratio ? coverSrc(src, f.ratio) : { sx: 0, sy: 0, sw: src.width || 64, sh: src.height || 64 };
-      if (st.step === 0 && !st.img && st.status !== "loading") { /* seme puro: solo rumore */ }
+      const s = { sx: 0, sy: 0, sw: src.width || 64, sh: src.height || 64 };
+      const done = st.step >= N && st.img;
+      if (done && f.ratio) { const v = st.variants[f.id]; drawAdapted(v && v.complete && v.naturalWidth ? v : src, fr, f.ratio); }
+      else if (st.step === 0 && !st.img && st.status !== "loading") { /* seme puro: solo rumore */ }
       else {
         // sorgente ridotta (macchie/blocchi), poi riportata al formato
         const dw = Math.max(1, Math.round(fr.w / res)), dh = Math.max(1, Math.round(fr.h / res));
@@ -101,22 +160,42 @@ window.Diffusion = (() => {
       const t = st.step / N, sigma = Math.pow(1 - t, 1.5);
       const state = st.status === "loading" ? `<span class="vit">campionamento in corso…</span>` : st.status === "error" ? `<span class="vit">${esc(st.msg)}</span>` : st.step >= N ? `<span class="vit">immagine generata · ${esc(st.model || "modello")}</span>` : st.img ? `<span class="vit">campione pronto · continua a cliccare</span>` : `<span class="vit">nomina un oggetto</span>`;
       hud.innerHTML = `${state}<span><b>DENOISE</b> ${st.subject ? "· «" + esc(st.subject) + "»" : ""}</span><span>passo <b>${st.step}</b>/${N}</span><span>σ <b>${sigma.toFixed(2)}</b></span><span>seed <b>${st.seed}</b></span>`;
-      hint.textContent = st.status === "idle" && !st.subject ? "Scrivi un oggetto (o scegline uno), poi clicca qui: ogni clic è un passo di denoising" : st.status === "loading" ? (st.step < 3 ? "Clicca: intanto il rumore comincia a organizzarsi" : "Il modello sta ancora campionando: un attimo") : st.status === "error" ? "Riprova con un altro oggetto" : st.step >= N ? "Pronto. Clicca ancora per un nuovo seed, o adattalo ai formati qui sotto" : `Clicca: ${N - st.step} ${N - st.step === 1 ? "passo" : "passi"} al risultato`;
+      hint.textContent = st.status === "idle" && !st.subject ? "Scrivi un oggetto (o scegline uno), poi clicca qui: ogni clic è un passo di denoising" : st.status === "loading" ? (st.step < 3 ? "Clicca: intanto il rumore comincia a organizzarsi" : "Il modello sta ancora campionando: un attimo") : st.status === "error" ? "Riprova con un altro oggetto" : st.step >= N ? "Pronto. Ora adattalo ai formati qui sotto" : `Clicca: ${N - st.step} ${N - st.step === 1 ? "passo" : "passi"} al risultato`;
     }
     function reseed() { st.seed = 1000 + Math.floor(Math.random() * 9000); st.tick++; }
     function stepClick() {
       if (!st.subject) { input.focus(); st.tick++; draw(); return; }
       if (st.status === "loading" && st.step >= 3) { reseed(); st.lat = latent(st.subject, accent(), st.tick); updHud(); draw(); return; }
       if (st.status === "error") { input.focus(); return; }
-      if (st.step >= N) { st.step = 0; reseed(); st.format = "free"; syncFormats(); updHud(); draw(); return; } // nuovo seed: si riparte dal rumore
+      if (st.step >= N) { st.tick++; draw(); return; } // al traguardo si ferma: per rivederlo c'è il pulsante
       st.step++; reseed(); if (!st.img) st.lat = latent(st.subject, accent(), st.step);
-      if (st.step >= N) { fmts.hidden = false; root.classList.add("done"); }
+      if (st.step >= N) { fmts.hidden = false; regen.hidden = false; root.classList.add("done"); syncRegen(); }
       updHud(); draw();
     }
-    function syncFormats() { fmts.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.f === st.format)); }
+    function replay() { if (!st.img) return; st.step = 0; reseed(); st.format = "free"; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); updHud(); draw(); }
+    function syncFormats() { fmts.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.f === st.format)); syncRegen(); }
+    // "Rigenera nel formato": il modello ri-inquadra la scena in orizzontale o verticale (una chiamata in più, in cache)
+    const REGEN = { "16:9": "orizzontale", "9:16": "verticale", "32:9": "orizzontale" };
+    function syncRegen() {
+      const f = st.format; const can = st.step >= N && st.img && REGEN[f] && !PREVIEW;
+      regenBtn.hidden = !can || !!st.variants[f]; regenNote.textContent = "";
+      if (can && st.variants[f]) regenNote.textContent = `Scena ri-inquadrata dal modello in ${REGEN[f]}`;
+      else if (can) { regenBtn.disabled = st.regenBusy === f; regenBtn.textContent = st.regenBusy === f ? "Il modello ri-inquadra…" : `Rigenera in ${f} con il modello`; regenNote.textContent = "Adattamento immediato: soggetto intero, sfondo esteso. Oppure:"; }
+      else if (st.step >= N && st.img && f !== "free" && f !== "1:1") regenNote.textContent = "";
+    }
+    async function regenerate(f) {
+      if (!REGEN[f] || st.variants[f] || st.regenBusy) return; st.regenBusy = f; syncRegen(); const subject = st.subject;
+      try {
+        const r = await fetch("/api/ai/image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: subject, mood: document.documentElement.dataset.mood || "", format: f }) });
+        const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Il modello non risponde");
+        const img = new Image(); img.src = j.image; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("Immagine non leggibile")); });
+        if (st.subject !== subject) return; st.variants[f] = img;
+      } catch (e) { if (st.subject === subject) { hint.textContent = e.message || "Errore"; } }
+      st.regenBusy = ""; syncRegen(); draw();
+    }
     async function generate(subject) {
       subject = String(subject || "").trim().slice(0, 60); if (subject.length < 2) { input.focus(); return; }
-      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; syncFormats(); fmts.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
+      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; st.variants = {}; st.regenBusy = ""; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
       try {
         let img;
         if (PREVIEW) { await new Promise(r => setTimeout(r, 1400)); img = previewImage(subject, accent()); st.model = "anteprima"; }
@@ -139,6 +218,8 @@ window.Diffusion = (() => {
     form.addEventListener("submit", e => { e.preventDefault(); generate(input.value); });
     root.querySelector(".dn-chips").addEventListener("click", e => { const b = e.target.closest("[data-s]"); if (!b) return; input.value = b.dataset.s; generate(b.dataset.s); });
     fmts.addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; st.format = b.dataset.f; syncFormats(); draw(); });
+    regenBtn.addEventListener("click", () => regenerate(st.format));
+    root.querySelector(".dn-replay").addEventListener("click", replay);
     document.addEventListener("fw:theme", () => { makeTiles(accent()); st.lat = null; draw(); });
     new ResizeObserver(() => { if (size()) draw(); }).observe(stage);
     new IntersectionObserver(en => en.forEach(x => { st.visible = x.isIntersecting; if (st.visible && st.status === "loading") loop(); }), { threshold: 0.2 }).observe(stage);
