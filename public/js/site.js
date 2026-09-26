@@ -162,17 +162,19 @@ function closeDetail() { drawer.dataset.state = "closed"; sheet.dataset.state = 
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
-  const nav = e.target.closest('.topnav a[href^="#"]'); if (nav && !isMobile()) { const t = $(nav.getAttribute("href")); if (t && getComputedStyle(t).display === "none") { e.preventDefault(); Modes.set("density", "all"); setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60); return; } }
+  const nav = e.target.closest('.topnav a[href^="#"]'); if (nav && !isMobile()) { const t = $(nav.getAttribute("href")); if (t && getComputedStyle(t).display === "none") { e.preventDefault(); if (Focus.ids) Focus.clear(); else Modes.set("density", "all"); setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60); return; } }
   const b = e.target.closest("[data-open]"); if (b) { openDetail(byId(b.dataset.open)); return; }
   const n = e.target.closest("[data-open-node]"); if (n) { openDetail(byId(n.dataset.openNode)); return; }
   const go = e.target.closest(".adapt .go"); if (go) runAdapt(go.closest(".adapt"));
   const c = e.target.closest("[data-copy]"); if (c) copyText(c);
   const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { e.preventDefault(); openContactSheet(); }
-  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") ConsoleWin.open(tab.dataset.q || ""); else App.show(tab.dataset.tab); return; }
+  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") ConsoleWin.open(tab.dataset.q || ""); else if (tab.dataset.tab === "contatti") openContactSheet(); else App.show(tab.dataset.tab); return; }
+  const sn = e.target.closest("[data-story-next]"); if (sn) { Path.go(1); return; }
+  const sp = e.target.closest("[data-story-prev]"); if (sp) { Path.go(-1); return; }
   const chip = e.target.closest("[data-ask]"); if (chip) { ConsoleWin.open(chip.dataset.ask); return; }
   const opt = e.target.closest("[data-opt]"); if (opt) { ConsoleWin.send(opt.dataset.opt); return; }
   const apply = e.target.closest("[data-apply]"); if (apply) { ConsoleWin.apply(apply.dataset.apply); return; }
-  const reset = e.target.closest("#focus-reset, [data-focus-reset]"); if (reset) { Focus.clear(); return; }
+  const reset = e.target.closest("#focus-reset, [data-focus-reset]"); if (reset) { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); return; }
   const filt = e.target.closest("[data-filter]"); if (filt) { $$("[data-filter]", filt.parentElement).forEach(b => b.classList.toggle("on", b === filt)); App.filterWorks(filt.dataset.filter); }
 });
 async function runAdapt(box) {
@@ -318,7 +320,9 @@ const ICONS = {
   sistema: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 4v5M12 15v5M4 12h5M15 12h5"/></svg>',
   console: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>',
   lavori: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 5v14"/></svg>',
-  radar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v9l6 4"/></svg>'
+  radar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v9l6 4"/></svg>',
+  percorso: '<svg viewBox="0 0 24 24"><path d="M4 6h6M4 12h10M4 18h14"/><circle cx="19" cy="6" r="2"/></svg>',
+  contatti: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg>'
 };
 const greet = () => { const h = new Date().getHours(); return h < 6 ? "Buonanotte." : h < 12 ? "Buongiorno." : h < 18 ? "Buon pomeriggio." : "Buonasera."; };
 const App = {
@@ -361,9 +365,15 @@ const App = {
       <div class="news">${Focus.list(DATA.signals).map(sg => news(sg, false)).join("")}</div>
       <p class="paper-note">I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.</p>
     </section>`;
-    app.innerHTML = home + sistema + lavori + radar;
-    $("#tabbar").innerHTML = [["home", "Home"], ["sistema", "Sistema"], ["console", "Console"], ["lavori", "Lavori"], ["radar", "Radar"]].map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
-    AI.check().then(ok => { if (!ok) { const f = $("#tab-console"); if (f) f.remove(); $("#tabbar").classList.add("four"); $$("[data-tab=console]").forEach(el => el.remove()); } });
+    const story = Focus.ids ? Path.renderStory() : "";
+    app.innerHTML = story + home + sistema + lavori + radar;
+    if (story) Path.bindStory();
+    // in modalità percorso la tab bar si riduce a Percorso · Console · Contatti
+    const tabs = Focus.ids ? [["percorso", "Percorso"], ["console", "Console"], ["contatti", "Contatti"]] : [["home", "Home"], ["sistema", "Sistema"], ["console", "Console"], ["lavori", "Lavori"], ["radar", "Radar"]];
+    const bar = $("#tabbar");
+    bar.innerHTML = tabs.map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
+    const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
+    AI.check().then(ok => { if (!ok) { $$("[data-tab=console]").forEach(el => el.remove()); cols(); } });
     this.applyDensity(); this.show(this.current, true);
   },
   show(name, silent) {
@@ -371,6 +381,7 @@ const App = {
     this.current = name;
     $$(".screen").forEach(s => s.classList.toggle("on", s.dataset.screen === name));
     $$("#tabbar [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+    document.body.classList.toggle("story-on", name === "percorso");
     closeDetail(); window.scrollTo({ top: 0, behavior: "auto" }); checkPaper();
     if (!silent) try { history.replaceState(null, "", "#" + name); } catch {}
   },
@@ -381,7 +392,7 @@ function contactHTML() { const site = DATA.site; return `<div class="contact-m" 
 function openSheet(html, eyebrow) { $("#sheet-body").innerHTML = html; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; scrim.dataset.state = "open"; $("#sheet-body").scrollTop = 0; }
 function openContactSheet() { openSheet(`<div class="d-in">${contactHTML().replace('class="contact-m"', 'class="contact-m" style="border:0;padding:0;background:none"')}</div>`, "Contatti"); }
 function renderApp() { if (isMobile()) App.render(); }
-function initialTab() { const h = (location.hash || "").replace("#", ""); const map = { home: "home", sistema: "sistema", aree: "sistema", lavori: "lavori", radar: "radar", metodo: "sistema", contatti: "home", console: "home" }; if (map[h]) App.current = map[h]; if (h === "contatti") setTimeout(openContactSheet, 400); }
+function initialTab() { const h = (location.hash || "").replace("#", ""); const map = { home: "home", sistema: "sistema", aree: "sistema", lavori: "lavori", radar: "radar", metodo: "sistema", contatti: "home", console: "home" }; if (map[h]) App.current = map[h]; if (Focus.ids) App.current = "percorso"; if (h === "contatti") setTimeout(openContactSheet, 400); }
 
 
 /* =========================================================
@@ -389,16 +400,19 @@ function initialTab() { const h = (location.hash || "").replace("#", ""); const 
    (mostra solo aree, lavori e segnali proposti finché non si resetta)
    ========================================================= */
 const Focus = {
-  ids: null, label: "",
-  load() { try { const j = JSON.parse(sessionStorage.getItem("fw.focus") || "null"); if (j && Array.isArray(j.ids) && j.ids.length) { this.ids = new Set(j.ids); this.label = j.label || ""; } } catch {} },
-  save() { try { if (this.ids) sessionStorage.setItem("fw.focus", JSON.stringify({ ids: [...this.ids], label: this.label })); else sessionStorage.removeItem("fw.focus"); } catch {} },
+  ids: null, label: "", text: "", q: "",
+  load() { try { const j = JSON.parse(sessionStorage.getItem("fw.focus") || "null"); if (j && Array.isArray(j.ids) && j.ids.length) { this.ids = new Set(j.ids); this.label = j.label || ""; this.text = j.text || ""; this.q = j.q || ""; } } catch {} },
+  save() { try { if (this.ids) sessionStorage.setItem("fw.focus", JSON.stringify({ ids: [...this.ids], label: this.label, text: this.text, q: this.q })); else sessionStorage.removeItem("fw.focus"); } catch {} },
   has(id) { return !this.ids || this.ids.has(id); },
   list(items) { return this.ids ? items.filter(i => this.ids.has(i.id)) : items; },
-  set(ids, label) { this.ids = new Set(ids); this.label = label || ""; this.save(); this.apply(); },
-  clear() { this.ids = null; this.label = ""; this.save(); if (Modes.density === "2") Modes.set("density", "10"); this.apply(); },
+  // gli elementi del percorso nell'ordine aree → lavori → radar (dentro ogni gruppo, l'ordine proposto dalla Console)
+  items() { if (!this.ids) return []; const rank = { cap: 0, work: 1, signal: 2 }; return [...this.ids].map(byId).filter(i => i && i.kind !== "core").map((i, k) => ({ i, k })).sort((a, b) => (rank[a.i.kind] - rank[b.i.kind]) || (a.k - b.k)).map(x => x.i); },
+  set(ids, label, text, q) { this.ids = new Set(ids); this.label = label || ""; this.text = text || ""; this.q = q || ""; this.save(); this.apply(); },
+  clear() { this.ids = null; this.label = ""; this.text = ""; this.q = ""; this.save(); if (Modes.density === "2") Modes.set("density", "10"); this.apply(); if (!isMobile()) window.scrollTo({ top: 0, behavior: "instant" }); },
   apply() {
     const on = !!this.ids;
     document.body.classList.toggle("has-focus", on);
+    if (!isMobile()) Path.renderDesktop();
     // desktop: nasconde gli elementi fuori percorso e le sezioni rimaste vuote
     $$(".cap[data-open], .work[data-open]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.open));
     $$(".signal[data-id]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.id));
@@ -407,12 +421,74 @@ const Focus = {
     if (Console) Console.setFocus(this.ids);
     // barra
     const bar = $("#focusbar"); if (bar) {
-      if (on) { const n = (k) => [...this.ids].map(byId).filter(i => i && i.kind === k).length; $("#focus-text", bar).innerHTML = `<b>${esc(this.label || "Percorso")}</b> · ${n("cap")} aree · ${n("work")} lavori${n("signal") ? ` · ${n("signal")} radar` : ""}`; bar.hidden = false; }
+      if (on) { const n = this.items().length; $("#focus-text", bar).innerHTML = `<b>${esc(this.label || "Percorso")}</b> · ${n} ${n === 1 ? "tappa" : "tappe"}`; bar.hidden = false; }
       else bar.hidden = true;
     }
-    if (isMobile()) { const cur = App.current; App.render(); App.show(cur, true); }
+    if (isMobile()) { const cur = App.current; App.render(); App.show(on ? "percorso" : (cur === "percorso" ? "home" : cur), true); }
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 80);
   }
+};
+
+/* =========================================================
+   PERCORSO — il sito configurato dalla Console
+   desktop: vista dedicata sotto la mappa (solo gli elementi proposti)
+   mobile: una tappa per elemento, scorrimento orizzontale come le storie
+   ========================================================= */
+const Path = {
+  counts() { const it = Focus.items(); const n = (k) => it.filter(i => i.kind === k).length; return { items: it, caps: n("cap"), works: n("work"), sigs: n("signal") }; },
+  metaText() { const c = this.counts(); const pl = (n, s, p) => `${n} ${n === 1 ? s : p}`; return `${pl(c.items.length, "tappa", "tappe")} · ${pl(c.caps, "area", "aree")} · ${pl(c.works, "lavoro", "lavori")}${c.sigs ? ` · ${pl(c.sigs, "segnale radar", "segnali radar")}` : ""}`; },
+  // DESKTOP: clona le schede già presenti nella pagina (stesso aspetto), nell'ordine del percorso
+  renderDesktop() {
+    const sec = $("#percorso"); if (!sec) return;
+    const c = this.counts();
+    if (!c.items.length) { sec.hidden = true; sec.innerHTML = ""; return; }
+    const clone = (sel) => { const el = $(sel); if (!el) return ""; const x = el.cloneNode(true); x.hidden = false; x.removeAttribute("style"); x.removeAttribute("data-tilt"); [x, ...$$(".rv", x)].forEach(y => { y.classList.remove("rv"); y.removeAttribute("style"); }); return x.outerHTML; };
+    let n = 0; const step = (title, count) => `<div class="path-step"><span class="num">${String(++n).padStart(2, "0")}</span><h3>${title}</h3><span class="count">${count}</span></div>`;
+    const caps = c.items.filter(i => i.kind === "cap"), works = c.items.filter(i => i.kind === "work"), sigs = c.items.filter(i => i.kind === "signal");
+    sec.innerHTML = `
+      <div class="path-head">
+        <div class="eyebrow"><span class="dot"></span>Percorso della Console${Focus.label ? ` · ${esc(Focus.label)}` : ""}</div>
+        ${Focus.q ? `<p class="path-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}
+        <h2 class="serif">${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2>
+        <p class="path-meta">${this.metaText()}</p>
+      </div>
+      ${caps.length ? step("Aree", `${caps.length} ${caps.length === 1 ? "area" : "aree"}`) + `<div class="caps path-caps">${caps.map(x => clone(`#aree .cap[data-open="${x.id}"]`)).join("")}</div>` : ""}
+      ${works.length ? step("Lavori", `${works.length} ${works.length === 1 ? "lavoro" : "lavori"}`) + `<div class="works path-works">${works.map(x => clone(`#lavori .work[data-open="${x.id}"]`)).join("")}</div>` : ""}
+      ${sigs.length ? step("Radar · fonti esterne", `${sigs.length} ${sigs.length === 1 ? "segnale" : "segnali"}`) + `<div class="paper path-paper"><div class="signals">${sigs.map(x => clone(`#radar .signal[data-id="${x.id}"]`)).join("")}</div><p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p></div>` : ""}
+      <div class="path-end">
+        <h3 class="serif">Fine del percorso.</h3>
+        <div class="path-actions"><a class="btn primary" href="#contatti">Parliamone</a><button class="btn" type="button" data-tab="console">Chiedi ancora alla Console</button><button class="btn ghost" type="button" data-focus-reset>Esci dal percorso · tutto il sito</button></div>
+      </div>`;
+    sec.hidden = false;
+  },
+  // MOBILE: le tappe
+  renderStory() {
+    const c = this.counts(); if (!c.items.length) return "";
+    const site = DATA.site; const total = c.items.length + 2; const label = Focus.label ? ` · ${esc(Focus.label)}` : "";
+    const next = (lab) => `<button type="button" class="story-next" data-story-next>${lab} <span>→</span></button>`;
+    const zones = `<div class="tapzones" aria-hidden="true"><span data-story-prev></span><span data-story-next></span></div>`;
+    const tappa = (i, k) => `<div class="eyebrow"><span class="dot"></span>Tappa ${String(i).padStart(2, "0")} di ${c.items.length} · ${k}</div>`;
+    const img = (src, fallback, i) => `<div class="slide-img"><img src="${media(src) || media(fallback)}" alt="" loading="lazy"><span class="num">${String(i).padStart(2, "0")} / ${c.items.length}</span>${zones}</div>`;
+    const intro = `<article class="slide slide-intro"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Percorso della Console${label}</div>${Focus.q ? `<p class="story-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}<h2>${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2><p class="story-meta">${this.metaText()}</p><div class="slide-actions">${next("Inizia")}</div></div></article>`;
+    const body = c.items.map((it, k) => {
+      const i = k + 1, last = i === c.items.length, go = next(last ? "Fine" : "Avanti");
+      if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri l'area</button>${go}</div></div></article>`;
+      if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Lavoro · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri il lavoro</button>${go}</div></div></article>`;
+      return `<article class="slide slide-signal"><div class="slide-in">${tappa(i, "Radar · fonte esterna")}<div class="paper-card"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(it.src)}</b><span>${esc(fmtDate(it.date))} · ${esc(domain(it.url))}</span></div><h2>“${esc(it.title)}”</h2>${it.summary ? `<p class="sum">${esc(it.summary)}</p>` : ""}<p class="why"><small>La nostra lettura</small>${esc(it.why)}</p><p class="ext">Contenuto di terzi: titolo e riassunto appartengono a ${esc(it.src)}. Frameworks lo segnala e lo commenta.</p></div><div class="slide-actions"><a class="btn src-link" href="${esc(it.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a>${go}</div></div></article>`;
+    }).join("");
+    const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Fine del percorso · Parliamone</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><div class="slide-actions col"><button class="btn primary" type="button" data-tab="console">Chiedi ancora alla Console</button><button class="btn" type="button" data-focus-reset>Esci dal percorso · tutto il sito</button></div></div></article>`;
+    return `<section class="screen story" data-screen="percorso" aria-label="Percorso">
+      <div class="story-head"><div class="story-progress" id="story-progress" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div><div class="story-bar"><span class="story-label">Percorso${label}</span><span class="story-count" id="story-count">1 / ${total}</span><button type="button" class="story-exit" data-focus-reset>Esci ✕</button></div></div>
+      <div class="story-track" id="story-track">${intro}${body}${end}</div>
+    </section>`;
+  },
+  bindStory() {
+    const track = $("#story-track"); this.track = track; if (!track) return;
+    const dots = $$("#story-progress i"), count = $("#story-count");
+    const upd = () => { const k = Math.round(track.scrollLeft / track.clientWidth); dots.forEach((d, j) => d.classList.toggle("on", j <= k)); if (count) count.textContent = `${k + 1} / ${dots.length}`; };
+    track.addEventListener("scroll", () => requestAnimationFrame(upd), { passive: true });
+  },
+  go(delta) { const t = this.track; if (!t || !t.isConnected) return; const k = Math.round(t.scrollLeft / t.clientWidth) + delta; t.scrollTo({ left: Math.max(0, Math.min(t.children.length - 1, k)) * t.clientWidth, behavior: reduced ? "auto" : "smooth" }); }
 };
 
 /* id proposti dall'AI: tollera prefissi, nomi al posto degli id e, in mancanza, cerca i nomi nel testo della risposta */
@@ -456,7 +532,7 @@ const ConsoleWin = {
       if (r.ask && r.ask.question) pane1 += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
       let pane2 = "";
       if (items.length) {
-        const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
+        const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", answer: r.answer || "", q, density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
         pane1 += `<button type="button" class="pane-next" data-pane-next>Vedi il percorso <span>→</span></button>`;
         pane2 = `<section class="pane"><div class="proposal"><div class="eyebrow"><span class="dot"></span>Percorso proposto${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">Vai</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div></section>`;
       }
@@ -482,9 +558,9 @@ const ConsoleWin = {
     const p = (this.proposals || {})[id]; if (!p) return;
     if (p.density) Modes.set("density", p.density); else if (Modes.density === "2") Modes.set("density", "10");
     if (p.energy) Modes.set("mood", p.energy);
-    Focus.set(p.ids, p.label);
+    Focus.set(p.ids, p.label, p.answer, p.q);
     this.close(); closeDetail();
-    if (isMobile()) App.show("home"); else window.scrollTo({ top: 0, behavior: "auto" });
+    if (isMobile()) App.show("percorso"); else { const sec = $("#percorso"); window.scrollTo({ top: sec ? sec.offsetTop : 0, behavior: "instant" }); } // "instant": con "auto" varrebbe lo scroll-behavior smooth del css
   }
 };
 (function consoleWinUI() {

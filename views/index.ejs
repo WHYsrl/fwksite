@@ -39,7 +39,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
   </nav>
 </header>
 
-<div class="focusbar" id="focusbar" hidden><span class="eyebrow"><span class="dot"></span>Percorso della Console</span><span id="focus-text"></span><button type="button" id="focus-reset">Mostra tutto</button></div>
+<div class="focusbar" id="focusbar" hidden><span class="eyebrow"><span class="dot"></span>Percorso della Console</span><span id="focus-text"></span><button type="button" id="focus-reset">Esci dal percorso</button></div>
 
 <div class="cwin" id="cwin" hidden role="dialog" aria-modal="true" aria-label="Console">
   <div class="cwin-bg" aria-hidden="true"><img src="/media/particles.jpg" alt=""></div>
@@ -114,7 +114,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 
 <main id="top">
 <!-- ============================ CONSOLE (desktop) ============================ -->
-<section class="console desktop-only" id="console" data-tier="2" aria-label="Console">
+<section class="console desktop-only path-keep" id="console" data-tier="2" aria-label="Console">
   <div class="console-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt="" data-parallax="0.15" fetchpriority="high"></div>
   <div class="console-grid" aria-hidden="true"></div>
   <canvas id="graph" aria-label="Mappa interattiva: aree, lavori e radar"></canvas>
@@ -132,6 +132,9 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
   <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span>Roma <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
   <div class="ticker" aria-label="Radar: titoli da fonti esterne"><div class="label">Radar · fonti esterne</div><div class="track"><div class="row" id="ticker-row"></div></div></div>
 </section>
+
+<!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
+<section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="Percorso"></section>
 
 <!-- ============================ STATEMENT ============================ -->
 <section class="statement purple desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="-0.25"><%= site.statements[0] %></h2></section>
@@ -255,13 +258,13 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 
 <!-- ============================ CHIUSURA + CONTATTI ============================ -->
 <section class="closing desktop-only" data-tier="10" aria-label="Chiusura"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
-<section class="section contact desktop-only" id="contatti" data-tier="2">
+<section class="section contact desktop-only path-keep" id="contatti" data-tier="2">
   <div class="split2">
     <div><div class="eyebrow rv"><span class="dot"></span>Contatti</div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>">Copia</button></div></div>
     <figure class="ph rv" data-tilt><img src="/media/roma.jpg" alt="" loading="lazy" data-parallax="0.08"><figcaption class="address"><%- cx(site.contact_address).replace(/\n/g, "<br>") %></figcaption></figure>
   </div>
 </section>
-<footer class="desktop-only"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
+<footer class="desktop-only path-keep"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
 
 <!-- ============================ MOBILE (app) ============================ -->
 <div class="app-shell mobile-only">
