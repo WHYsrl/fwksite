@@ -449,7 +449,7 @@ const Focus = {
     if (!isMobile()) Path.renderDesktop();
     // desktop: nasconde gli elementi fuori percorso e le sezioni rimaste vuote
     $$(".cap[data-open], .work[data-open]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.open));
-    $$(".signal[data-id]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.id));
+    $$(".signal[data-id]").forEach(el => el.hidden = on ? !this.ids.has(el.dataset.id) : (el.classList.contains("more") && !el.dataset.shown)); // fuori dal percorso, le notizie oltre le prime 5 restano dietro "Leggi ancora"
     [["#aree", ".cap"], ["#lavori", ".work"], ["#radar", ".signal"]].forEach(([sec, item]) => { const el = $(sec); if (el) el.dataset.focusEmpty = on && !$$(item, el).some(x => !x.hidden) ? "1" : ""; });
     const radar = $("#radar"); if (radar) radar.dataset.tier = on && this.list(DATA.signals).length ? "2" : "10"; // il Radar resta visibile se fa parte del percorso
     if (Console) Console.setFocus(this.ids);
@@ -645,6 +645,12 @@ const RadarLive = {
     } catch (e) { box.innerHTML = `<p class="live-status">${esc(e.message || "Ricerca non disponibile adesso.")}</p>`; }
   }
 };
+document.addEventListener("click", e => { // Radar desktop: 5 notizie alla volta
+  const b = e.target.closest("[data-radar-more]"); if (!b) return;
+  const hidden = $$("#radar .signal.more[hidden]"); hidden.slice(0, 5).forEach(el => { el.hidden = false; el.dataset.shown = "1"; if (hasGsap && !reduced) gsap.fromTo(el, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: .7, ease: "power3.out" }); });
+  const left = hidden.length - 5; if (left > 0) $("span", b).textContent = `+${Math.min(5, left)} di ${left}`; else b.closest(".radar-more-row").hidden = true;
+  if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 100);
+});
 document.addEventListener("submit", e => { const f = e.target.closest("[data-radar-search]"); if (!f) return; e.preventDefault(); const i = $("input", f); if (isMobile() && i) i.blur(); RadarLive.search(f, i ? i.value : ""); });
 document.addEventListener("click", e => { const b = e.target.closest("[data-live-q]"); if (!b) return; const f = b.closest(".radar-live") && $("[data-radar-search]", b.closest(".radar-live")); if (f) RadarLive.search(f, b.dataset.liveQ); });
 

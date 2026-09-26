@@ -414,6 +414,10 @@ body.cwin-open{overflow:hidden}
 .live-item .src{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-ink-2);margin-bottom:10px}
 .live-item .src b{color:var(--paper-ink);font-weight:500}
 .live-item h4{font-family:var(--serif);font-style:italic;font-weight:400;font-size:19px;line-height:1.2;letter-spacing:-.01em}
+.radar-more-row{display:flex;justify-content:center;padding:26px 0 0}
+.radar-more{color:var(--paper-ink);border-color:var(--paper-ink);background:transparent}
+.radar-more:hover{background:var(--paper-ink);color:var(--paper)}
+.radar-more span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:inherit;opacity:.7}
 .paper .note{margin-top:22px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--paper-ink-2);text-transform:uppercase}
 
 /* contesto */
@@ -428,7 +432,7 @@ body.cwin-open{overflow:hidden}
 /* chiusura */
 /* ---- ORGANISMO INTERATTIVO (canvas): cresce con i dati, si orienta verso il sole, fiorisce con i media ---- */
 .org-lab{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);overflow:hidden}
-.org-stage{position:relative;height:min(58vh,600px);min-height:360px;background:radial-gradient(120% 70% at 50% 100%,#1a0a24,#050307 70%);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;transition:filter .8s}
+.org-stage{position:relative;contain:strict;isolation:isolate;height:min(58vh,600px);min-height:360px;background:radial-gradient(120% 70% at 50% 100%,#1a0a24,#050307 70%);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;transition:filter .8s}
 .org-lab.dormant .org-stage{filter:saturate(.7) brightness(.85)}
 .org-stage.dragging{cursor:grabbing}
 .org-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -445,7 +449,11 @@ body.cwin-open{overflow:hidden}
 .org-env input[type=range]::-moz-range-track{height:2px;background:var(--line);border-radius:2px}
 .org-env input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--accent);margin-top:-7px}
 .org-env input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
-.org-word{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line-2);background:var(--bg-2)}
+.org-word{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line-2);background:var(--bg-2);align-items:center}
+.org-file{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
+.org-file:hover{border-color:var(--accent);color:var(--ink)}
+.org-file input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.org-file svg{width:16px;height:16px;stroke:var(--accent-ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .org-word input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:11px 16px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .2s}
 .org-word input:focus{border-color:var(--accent)}
 .org-word input::placeholder{color:var(--ink-4)}
@@ -654,7 +662,10 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   /* organismo interattivo */
   .org-stage{height:auto;aspect-ratio:4/5;min-height:0}
   .org-controls.formats{grid-template-columns:repeat(3,1fr)}
-  .org-word{padding:10px 12px}
+  .org-word{padding:10px 12px;flex-wrap:wrap}
+  .org-word input[type=text]{flex:1 1 100%}
+  .org-file span{display:none}
+  .org-file{padding:9px 11px}
   .org-env{gap:10px;padding:10px 12px 8px}
   .org-env label{font-size:9px}
   .org-controls button{padding:12px 4px 10px}

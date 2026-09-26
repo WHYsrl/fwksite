@@ -271,13 +271,14 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
   </div>
   <div class="signals">
     <% content.signals.forEach((s, i) => { %>
-    <article class="signal rv" data-id="<%= s.id %>" style="--i:<%= i %>">
+    <article class="signal<%= i < 5 ? ' rv' : ' more' %>" data-id="<%= s.id %>" style="--i:<%= i % 5 %>"<%= i >= 5 ? ' hidden' : '' %>>
       <div class="src"><span class="chip ext">Fonte esterna</span><b><%= s.src %></b><span><%= fmtDate(s.date) %> · <%= domain(s.url) %></span></div>
       <div class="sig-main"><h3><a href="<%= s.url %>" target="_blank" rel="noopener nofollow">“<%= s.title %>” ↗</a></h3><% if (s.summary) { %><p class="sum"><%= s.summary %></p><% } %></div>
       <div class="why"><small>La nostra lettura</small><%= s.why %><% if (s.caps.length) { %><div class="tags"><% s.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div><% } %></div>
     </article>
     <% }) %>
   </div>
+  <% if (content.signals.length > 5) { %><div class="radar-more-row"><button type="button" class="btn radar-more" data-radar-more>Leggi ancora <span>+<%= Math.min(5, content.signals.length - 5) %> di <%= content.signals.length - 5 %></span></button></div><% } %>
   <p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p>
 </section>
 

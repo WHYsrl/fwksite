@@ -48,6 +48,12 @@ app.get("/api/radar/search", limit, async (req, res) => {
   const q = String(req.query.q || "").trim().slice(0, 80); if (q.length < 2) return res.status(400).json({ error: "Scrivi almeno due lettere" });
   try { res.set("Cache-Control", "public, max-age=600"); res.json({ q, items: await feeds.searchLive(q), at: new Date().toISOString() }); } catch (e) { res.status(502).json({ error: "Ricerca non disponibile adesso" }); }
 });
+// Il logo del sito del visitatore (per il gioco delle particelle)
+const brand = require("./brand");
+app.get("/api/brand", limit, async (req, res) => {
+  try { res.set("Cache-Control", "public, max-age=3600"); res.json(await brand.brandFromSite(String(req.query.url || "").trim().slice(0, 200))); }
+  catch (e) { res.status(422).json({ error: e.message || "Logo non trovato" }); }
+});
 app.get("/api/radar/fresh", (req, res) => res.json({ signals: store.freshSignals(), at: (feeds.lastRun() || {}).at || null }));
 app.get("/api/context", async (req, res) => {
   const w = await weather.getWeather();
