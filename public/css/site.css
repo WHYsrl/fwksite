@@ -348,9 +348,9 @@ body.cwin-open{overflow:hidden}
 .cap-body .tech-tags .tag{color:var(--ink-2);border-color:rgba(255,255,255,.18);background:rgba(5,3,7,.35)}
 .cap-more{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin-top:4px;opacity:.85;transition:opacity .3s}
 .cap:hover .cap-more{opacity:1}
-/* hero · "in pratica" */
-.hero-concrete{margin-top:16px;max-width:52ch;font-size:15px;line-height:1.5;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--accent)}
-.hero-concrete b{color:var(--ink);font-weight:600}
+/* "in pratica" nel dettaglio del sistema */
+.d-concrete-line{margin-top:14px;font-size:15px;line-height:1.5;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--accent)}
+.d-concrete-line b{color:var(--ink);font-weight:600}
 /* dettaglio area · casi d'uso e tecnologie */
 .d-concrete{display:grid;gap:18px;margin:22px 0 6px;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--bg-2)}
 .d-concrete .tags{margin-top:10px}

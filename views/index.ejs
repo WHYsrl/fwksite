@@ -126,7 +126,6 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <div class="eyebrow"><span class="dot"></span><%= site.claim %></div>
     <h1 class="split"><%- em(site.hero_title) %></h1>
     <p class="lead"><%= site.hero_text %></p>
-    <% if (site.hero_concrete) { %><p class="hero-concrete"><b>In pratica:</b> <%= site.hero_concrete %></p><% } %>
     <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
       <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>

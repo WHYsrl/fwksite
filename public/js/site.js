@@ -160,7 +160,7 @@ function detailHTML(item) {
   const list = (items, label) => items.length ? `<div class="list">${items.map(i => `<button type="button" data-open="${i.id}"><span>${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.title : i.name)}</span><small>${label}</small></button>`).join("")}</div>` : "";
   const adapt = (id) => DATA.features.adapt !== false ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>Adatta al tuo contesto</div><h4>Tre idee concrete per il vostro brand.</h4><p class="adapt-hint">Settore, canale e obiettivo: la Console risponde con proposte specifiche, senza giri di parole.</p><div class="grid"><input name="sector" placeholder="Settore (es. automotive, farmaceutico, GDO)" maxlength="60"><input name="channel" placeholder="Canale (es. DOOH aeroporti, TikTok, showroom)" maxlength="60"></div><input name="goal" placeholder="Obiettivo (es. lancio in 12 paesi, traffico in store, formare la rete vendita)" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">Dammi tre idee</button><div class="adapt-out" hidden></div></div>` : "";
   const concrete = (item) => { const uses = item.uses || [], tech = item.tech || []; if (!uses.length && !tech.length) return `<div class="tags">${(item.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`; return `<div class="d-concrete">${uses.length ? `<div><div class="eyebrow"><span class="dot"></span>Casi d'uso</div><ul class="uses">${uses.map(u => `<li>${esc(u)}</li>`).join("")}</ul></div>` : ""}${tech.length ? `<div><div class="eyebrow"><span class="dot"></span>Tecnologie, dispositivi e formati</div><div class="tags">${tech.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div>` : ""}</div>`; };
-  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
+  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${DATA.site.hero_concrete ? `<p class="d-concrete-line"><b>In pratica:</b> ${esc(DATA.site.hero_concrete)}</p>` : ""}${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p>${concrete(item)}${adapt(item.id)}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), "lavoro")}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
   if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">Fonte esterna</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">Contenuto di terzi: titolo e riassunto appartengono a ${esc(item.src)} (${esc(domain(item.url))}). Frameworks lo segnala e lo commenta.</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">La nostra lettura</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
@@ -243,21 +243,55 @@ const Console = (() => {
   const deg = (d) => d * Math.PI / 180;
   const amp = () => parseFloat(getComputedStyle(html).getPropertyValue("--amp")) || 1;
   const speed = () => parseFloat(getComputedStyle(html).getPropertyValue("--speed")) || 1;
-  function build() {
-    const cx = W * 0.64, cy = H * 0.5, s = Math.max(0.68, Math.min(1.25, Math.min(W, H) / 900));
+  // Il grafo vive a destra del testo dell'hero: il lato sinistro del ventaglio viene compresso (kxl) finché
+  // nessun nodo, etichette comprese, finisce sotto il testo; se poi sborda a destra, si riduce la scala.
+  function make(s, cx, cy, kxl) {
     const R_CAP = 215 * s, R_WORK = 345 * s, R_SIG = 430 * s, ky = Math.min(0.86, (H / 2 - 120) / R_SIG);
-    const place = (ang, R) => ({ bx: cx + Math.cos(ang) * R, by: cy + Math.sin(ang) * R * ky });
+    const place = (ang, R) => { const c = Math.cos(ang); return { bx: cx + c * R * (c < 0 ? kxl : 1), by: cy + Math.sin(ang) * R * ky }; };
     nodes = []; edges = [];
     const core = { id: "core", kind: "core", r: 30 * s, bx: cx, by: cy, ox: 0, oy: 0, ph: 0, ang: 0 }; nodes.push(core);
-    const n = DATA.caps.length, a0 = -125, a1 = 125;
+    const n = DATA.caps.length, a0 = -115, a1 = 115, MAXA = deg(138); // il ventaglio non va oltre ±138°: niente nodi dietro il testo
+    // ventaglio di figli attorno all'angolo dell'area, tenuto dentro ±MAXA (verso l'alto/basso, non verso sinistra)
+    const fan = (center, count, step) => { const w = step * (count - 1); let st = center - w / 2; if (st + w > MAXA) st = MAXA - w; if (st < -MAXA) st = -MAXA; return (k) => st + step * k; };
     DATA.caps.forEach((c, i) => { const ang = deg(n > 1 ? a0 + (a1 - a0) * i / (n - 1) : 0); const nd = { ...c, kind: "cap", r: 14 * s, ang, ...place(ang, R_CAP), ox: 0, oy: 0, ph: i * 1.7 }; nodes.push(nd); edges.push({ a: core, b: nd, alpha: .18 }); });
     const capNode = (id) => nodes.find(x => x.id === id && x.kind === "cap") || nodes[1];
-    const perCap = {}; DATA.works.forEach(w => (perCap[w.caps[0]] = perCap[w.caps[0]] || []).push(w));
-    DATA.works.forEach((w, i) => { const cn = capNode(w.caps[0]); const sib = perCap[w.caps[0]] || [w]; const k = sib.indexOf(w); const ang = cn.ang + deg((k - (sib.length - 1) / 2) * 16 + 20); const nd = { ...w, kind: "work", r: 6 * s, ang, ...place(ang, R_WORK), ox: 0, oy: 0, ph: 10 + i * 1.3 }; nodes.push(nd); w.caps.forEach((cid, j) => { const c = capNode(cid); if (c) edges.push({ a: c, b: nd, alpha: j === 0 ? .12 : .06 }); }); });
-    const perCapS = {}; DATA.signals.slice(0, 14).forEach(sg => (perCapS[sg.caps[0]] = perCapS[sg.caps[0]] || []).push(sg));
-    DATA.signals.slice(0, 14).forEach((sg, i) => { const cn = capNode(sg.caps[0]); const sib = perCapS[sg.caps[0]] || [sg]; const k = sib.indexOf(sg); const ang = cn.ang + deg((k - (sib.length - 1) / 2) * 11 - 14); const nd = { ...sg, kind: "signal", r: 3.4 * s, ang, ...place(ang, R_SIG), ox: 0, oy: 0, ph: 30 + i * 2.1 }; nodes.push(nd); edges.push({ a: nd, b: cn, alpha: .07, dash: true, signal: true }); });
+    // nella mappa entrano al massimo 5 lavori e 4 segnali per area (gli altri restano nelle sezioni): il ventaglio resta leggibile.
+    // Ogni lavoro va all'area, tra le sue, che ha meno lavori: la mappa resta bilanciata anche se i casi si concentrano su un'area.
+    const capIds = DATA.caps.map(c => c.id), perCap = {}, works = []; capIds.forEach(id => perCap[id] = []);
+    const mentions = {}; DATA.works.forEach(w => w.caps.forEach(id => mentions[id] = (mentions[id] || 0) + 1));
+    DATA.works.forEach(w => { const opts = w.caps.filter(id => perCap[id] && perCap[id].length < 5); if (!opts.length) return; const home = opts.reduce((a, b) => (perCap[b].length < perCap[a].length || (perCap[b].length === perCap[a].length && mentions[b] < mentions[a])) ? b : a); perCap[home].push(w); works.push({ w, home }); });
+    works.forEach(({ w, home }, i) => { const cn = capNode(home); const sib = perCap[home]; const k = sib.indexOf(w); const ang = fan(cn.ang + deg(6), sib.length, deg(13))(k); const near = Math.abs(ang - cn.ang) < deg(9); const rf = sib.length > 3 ? (near ? 1.22 : ((k + capIds.indexOf(home)) % 2 ? 1.14 : 0.9)) : (near ? 1.1 : 1); const nd = { ...w, kind: "work", r: 6 * s, ang, parent: cn.id, ...place(ang, R_WORK * rf), ox: 0, oy: 0, ph: 10 + i * 1.3 }; nodes.push(nd); [home, ...w.caps.filter(id => id !== home)].forEach((cid, j) => { const c = capNode(cid); if (c) edges.push({ a: c, b: nd, alpha: j === 0 ? .12 : .06 }); }); });
+    // i segnali senza area (fonti in tempo reale non ancora classificate) si distribuiscono a turno tra le aree
+    const perCapS = {}, sigs = []; capIds.forEach(id => perCapS[id] = []); let rr = 0;
+    DATA.signals.forEach(sg => { if (sigs.length >= 14) return; let home = sg.caps.find(id => perCapS[id] && perCapS[id].length < 4); if (!home) { for (let t = 0; t < capIds.length && !home; t++) { const id = capIds[(rr + t) % capIds.length]; if (perCapS[id].length < 4) home = id; } rr++; } if (!home) return; perCapS[home].push(sg); sigs.push({ sg, home }); });
+    sigs.forEach(({ sg, home }, i) => { const cn = capNode(home); const sib = perCapS[home]; const k = sib.indexOf(sg); const ang = fan(cn.ang - deg(12), sib.length, deg(9))(k); const nd = { ...sg, kind: "signal", r: 3.4 * s, ang, parent: cn.id, ...place(ang, R_SIG), ox: 0, oy: 0, ph: 30 + i * 2.1 }; nodes.push(nd); edges.push({ a: nd, b: cn, alpha: .07, dash: true, signal: true }); });
     particles = [];
   }
+  // estensione orizzontale del grafo, etichette comprese (i segnali mostrano l'etichetta solo al passaggio: contano solo i punti)
+  function extents() {
+    let minX = 1e9, maxX = -1e9;
+    nodes.forEach(nd => {
+      let lw = 0, off = 0;
+      if (nd.kind === "cap") { ctx.font = `600 14px ${SANS}`; lw = ctx.measureText(nd.name).width; off = nd.r + 12; }
+      else if (nd.kind === "work") { ctx.font = `500 12px ${SANS}`; lw = ctx.measureText(nd.label || nd.client).width; off = nd.r + 9; }
+      const right = nd.kind === "core" ? null : Math.cos(nd.ang) >= -0.15;
+      const lo = right === null ? nd.bx - 100 : right ? nd.bx - nd.r : nd.bx - off - lw;
+      const hi = right === null ? nd.bx + 100 : right ? nd.bx + off + lw : nd.bx + nd.r;
+      minX = Math.min(minX, lo); maxX = Math.max(maxX, hi);
+    });
+    return { minX, maxX };
+  }
+  function build() {
+    const hc = $(".hero-copy"), cr = cv.getBoundingClientRect();
+    const L = (hc ? hc.getBoundingClientRect().right - cr.left : W * 0.44) + 28, R = W - 28; // spazio disponibile
+    let s = Math.max(0.68, Math.min(1.25, Math.min(W, H) / 900)), cx = W * 0.64, cy = H * 0.5, kxl = 1;
+    make(s, cx, cy, kxl); let e = extents();
+    if (e.minX < L) { kxl = Math.max(0.3, (cx - L) / (cx - e.minX)); make(s, cx, cy, kxl); e = extents(); }
+    if (e.maxX > R) { s *= Math.max(0.55, (R - cx) / (e.maxX - cx)); make(s, cx, cy, kxl); e = extents(); }
+    if (e.minX < L) { const dx = Math.min(L - e.minX, Math.max(0, R - e.maxX)); if (dx > 0) nodes.forEach(nd => nd.bx += dx); }
+  }
+  // trascinando un'area si porta dietro lavori e segnali derivati; trascinando il cubo si muove tutto l'organismo
+  function group(nd) { if (nd.kind === "core") return nodes.filter(x => x !== nd); if (nd.kind === "cap") return nodes.filter(x => x.parent === nd.id); return []; }
   function resize() { const dpr = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); build(); if (!running) draw(performance.now()); }
   function pos(nd, t) { const a = reduced ? 0 : (nd.kind === "core" ? 3 : nd.kind === "cap" ? 7 : 9) * amp(); return { x: nd.bx + nd.ox + Math.sin(t * 0.00035 * speed() + nd.ph) * a, y: nd.by + nd.oy + Math.cos(t * 0.00028 * speed() + nd.ph * 1.3) * a }; }
   function related(nd) { if (!nd) return new Set(); const set = new Set([nd.id]); edges.forEach(e => { if (e.a.id === nd.id) set.add(e.b.id); if (e.b.id === nd.id) set.add(e.a.id); }); return set; }
@@ -267,6 +301,8 @@ const Console = (() => {
   function label(p, nd, main, eyebrow, font, color, off) { const right = Math.cos(nd.ang) >= -0.15; const x = right ? p.x + off : p.x - off; ctx.textAlign = right ? "left" : "right"; ctx.textBaseline = "middle"; if (eyebrow) { ctx.font = `500 9px ${MONO}`; ctx.fillStyle = "rgba(139,129,151,1)"; ctx.letterSpacing = "1.2px"; ctx.fillText(eyebrow, x, p.y - 9); ctx.letterSpacing = "0px"; } ctx.font = font; ctx.fillStyle = color; ctx.fillText(main, x, eyebrow ? p.y + 5 : p.y); }
   function draw(t) {
     ctx.clearRect(0, 0, W, H); if (!nodes.length || !W) return;
+    // i nodi trascinati "a gruppo" inseguono con un leggero ritardo
+    nodes.forEach(nd => { if (nd.tox != null) { nd.ox += (nd.tox - nd.ox) * .22; nd.oy += (nd.toy - nd.oy) * .22; if (Math.abs(nd.tox - nd.ox) < .3 && Math.abs(nd.toy - nd.oy) < .3) { nd.ox = nd.tox; nd.oy = nd.toy; nd.tox = nd.toy = null; } } });
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
     edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? "rgba(191,0,255,.9)" : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
@@ -292,8 +328,8 @@ const Console = (() => {
   function stop() { running = false; cancelAnimationFrame(raf); }
   function hit(x, y) { const t = performance.now(); let best = null, bd = 1e9; nodes.forEach(nd => { const p = pos(nd, t); const d = Math.hypot(p.x - x, p.y - y); const R = Math.max(nd.r + 10, 14); if (d < R && d < bd) { bd = d; best = nd; } }); return best; }
   const xy = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  cv.addEventListener("pointermove", e => { const { x, y } = xy(e); if (drag) { drag.nd.ox = drag.ox0 + (x - drag.x0); drag.nd.oy = drag.oy0 + (y - drag.y0); drag.moved = Math.max(drag.moved, Math.hypot(x - drag.x0, y - drag.y0)); if (reduced) draw(performance.now()); return; } const h = hit(x, y); if (h !== hover) { hover = h; cv.style.cursor = h ? "pointer" : "default"; if (reduced) draw(performance.now()); } });
-  cv.addEventListener("pointerdown", e => { const { x, y } = xy(e); const h = hit(x, y); if (h) { drag = { nd: h, x0: x, y0: y, ox0: h.ox, oy0: h.oy, moved: 0 }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; } });
+  cv.addEventListener("pointermove", e => { const { x, y } = xy(e); if (drag) { const dx = x - drag.x0, dy = y - drag.y0; drag.nd.ox = drag.ox0 + dx; drag.nd.oy = drag.oy0 + dy; drag.group.forEach(g => { g.nd.tox = g.ox0 + dx; g.nd.toy = g.oy0 + dy; if (reduced) { g.nd.ox = g.nd.tox; g.nd.oy = g.nd.toy; g.nd.tox = g.nd.toy = null; } }); drag.moved = Math.max(drag.moved, Math.hypot(dx, dy)); if (reduced) draw(performance.now()); return; } const h = hit(x, y); if (h !== hover) { hover = h; cv.style.cursor = h ? "pointer" : "default"; if (reduced) draw(performance.now()); } });
+  cv.addEventListener("pointerdown", e => { const { x, y } = xy(e); const h = hit(x, y); if (h) { drag = { nd: h, x0: x, y0: y, ox0: h.ox, oy0: h.oy, moved: 0, group: group(h).map(nd => ({ nd, ox0: nd.ox, oy0: nd.oy })) }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; } });
   cv.addEventListener("pointerup", () => { if (drag) { const nd = drag.nd, moved = drag.moved; drag = null; cv.style.cursor = "pointer"; if (moved < 5) openDetail(byId(nd.id)); } });
   cv.addEventListener("pointerleave", () => { if (!drag) { hover = null; if (reduced) draw(performance.now()); } });
   new IntersectionObserver(en => en.forEach(x => { if (x.isIntersecting && !isMobile()) start(); else stop(); }), { threshold: 0.05 }).observe(cv);
@@ -301,8 +337,9 @@ const Console = (() => {
   if (!isMobile()) resize();
   const ready = () => { if (fontsReady) return; fontsReady = true; if (!isMobile()) { resize(); start(); } };
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(ready); setTimeout(ready, 1500); } else ready();
-  return { start, stop, resize, highlight(ids) { hi = new Set(ids); hiUntil = performance.now() + 6000; if (reduced) draw(performance.now()); }, setFocus(ids) { focusSet = ids ? new Set(ids) : null; if (reduced) draw(performance.now()); } };
+  return { start, stop, resize, highlight(ids) { hi = new Set(ids); hiUntil = performance.now() + 6000; if (reduced) draw(performance.now()); }, setFocus(ids) { focusSet = ids ? new Set(ids) : null; if (reduced) draw(performance.now()); }, _nodes: () => nodes.map(nd => ({ id: nd.id, kind: nd.kind, parent: nd.parent || null, ...pos(nd, performance.now()) })) };
 })();
+window.__graph = Console; // posizioni dei nodi in sola lettura (test)
 
 /* =========================================================
    TICKER
