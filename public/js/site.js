@@ -59,6 +59,7 @@ const Modes = {
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
     const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
     const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${labelWeather(w.kind)}` : "";
+    if (isMobile() && typeof App !== "undefined" && App.applyDensity) App.applyDensity(); // su mobile la densità nasconde/mostra i blocchi subito
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 50);
   },
   set(k, v) { this[k] = v; try { sessionStorage.setItem("fw." + k, v); } catch {} this.apply(); }
@@ -532,17 +533,23 @@ const Path = {
 
 /* Sezioni del sito proponibili dalla Console: nome e destinazione su desktop (ancora) e su mobile (schermata + blocco) */
 const SECTIONS = { sistema: { name: "Sistema", m: ["sistema", null] }, aree: { name: "Aree", m: ["sistema", ".list-cards"] }, lavori: { name: "Lavori", m: ["lavori", null] }, metodo: { name: "Metodo", m: ["sistema", ".m-text.metodo-m"] }, team: { name: "Team", m: ["sistema", ".team-m"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: "Contatti", m: ["contatti", null] } };
+// Una sezione chiesta esplicitamente vince sulla densità "2 minuti": se è nascosta, si riapre tutto
+function showAll() { if (Modes.density !== "all") { Modes.set("density", "all"); Prefs.set({ ...(Prefs.get() || {}), time: "all" }); } }
 function goSection(id) {
   const sec = SECTIONS[id]; if (!sec) return;
   if (isMobile()) {
     if (id === "contatti") { openContactSheet(); return; }
-    App.show(sec.m[0]); if (sec.m[1]) setTimeout(() => { const el = $(`.screen[data-screen="${sec.m[0]}"] ${sec.m[1]}`); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 70, behavior: reduced ? "auto" : "smooth" }); }, 80);
+    if (Focus.ids) Focus.clear();
+    App.show(sec.m[0]);
+    const target = () => sec.m[1] ? $(`.screen[data-screen="${sec.m[0]}"] ${sec.m[1]}`) : null;
+    const el = target(); if (el && (el.hidden || el.closest("[hidden]"))) showAll();
+    setTimeout(() => { const t = target(); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - 70, behavior: reduced ? "auto" : "smooth" }); }, 120);
     return;
   }
   if (Focus.ids) Focus.clear();
   const t = $("#" + id); if (!t) return;
-  if (getComputedStyle(t).display === "none") Modes.set("density", "all");
-  setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60);
+  if (getComputedStyle(t).display === "none") showAll();
+  setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 120);
 }
 
 /* id proposti dall'AI: tollera prefissi, nomi al posto degli id e, in mancanza, cerca i nomi nel testo della risposta */
@@ -612,7 +619,7 @@ const ConsoleWin = {
   },
   apply(id) {
     const p = (this.proposals || {})[id]; if (!p) return;
-    if (p.density) Modes.set("density", p.density); else if (Modes.density === "2") Modes.set("density", "10");
+    if (p.density) Modes.set("density", p.density); else if (Modes.density === "2") { Modes.set("density", "10"); Prefs.set({ ...(Prefs.get() || {}), time: "10" }); } // un percorso scelto apre più dei "2 minuti"
     if (p.energy) Modes.set("mood", p.energy);
     if (!p.ids.length) { this.close(); closeDetail(); if (p.sections && p.sections.length) goSection(p.sections[0]); return; } // solo sezioni: niente percorso, si va lì
     Focus.set(p.ids, p.label, p.answer, p.q, p.sections || []);
