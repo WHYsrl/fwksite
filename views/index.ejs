@@ -41,10 +41,45 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 
 <div class="modes" id="modes" hidden>
   <div class="modes-head"><span class="eyebrow"><span class="dot"></span>La pagina si adatta a te</span><button type="button" class="x" id="modes-close" aria-label="Chiudi">✕</button></div>
-  <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto</button></div></div>
-  <div class="modes-row"><span class="k">Che umore hai?</span><div class="seg" role="group" aria-label="Umore"><button type="button" data-mood="calm">Calmo</button><button type="button" data-mood="auto" class="on">Auto</button><button type="button" data-mood="vivid">Vivace</button></div></div>
+  <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto il tempo</button></div></div>
+  <div class="modes-row"><span class="k">Di che umore sei?</span><div class="seg" role="group" aria-label="Umore"><button type="button" data-mood="calm">Calmo</button><button type="button" data-mood="vivid">Entusiasta</button><button type="button" data-mood="nervous">Nervoso</button></div></div>
   <div class="modes-row"><span class="k">Ambiente</span><div class="modes-env" id="modes-env">Roma · in ascolto…</div></div>
   <p class="modes-note">Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.</p>
+</div>
+
+
+<!-- ============================ INTRO ============================ -->
+<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-label="Benvenuto">
+  <div class="intro-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt=""></div>
+  <div class="intro-top"><svg viewBox="0 0 541.9 78.3" width="138" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><button type="button" class="intro-skip" id="intro-skip">Salta</button></div>
+  <div class="intro-body">
+    <section class="intro-step on" data-step="1">
+      <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 1 di 2</div>
+      <h2 class="serif">Quanto tempo hai?</h2>
+      <div class="intro-opts">
+        <button type="button" data-time="2"><b>2 minuti</b><span>Fammi capire cosa fate.</span></button>
+        <button type="button" data-time="10"><b>10 minuti</b><span>Voglio vedere come lavorate e cosa avete fatto.</span></button>
+        <button type="button" data-time="all"><b>Tutto il tempo che serve</b><span>Voglio godermi l'esperienza.</span></button>
+      </div>
+    </section>
+    <section class="intro-step" data-step="2">
+      <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 2 di 2</div>
+      <h2 class="serif">Di che umore sei?</h2>
+      <div class="intro-opts">
+        <button type="button" data-mood="calm"><b>Calmo</b><span>Ritmo disteso, poche distrazioni.</span></button>
+        <button type="button" data-mood="vivid"><b>Entusiasta</b><span>Energia, movimento, tutto acceso.</span></button>
+        <button type="button" data-mood="nervous"><b>Nervoso</b><span>Vado dritto al punto, senza rumore.</span></button>
+      </div>
+    </section>
+    <section class="intro-step" data-step="3">
+      <div class="eyebrow"><span class="dot"></span>Configurazione</div>
+      <h2 class="serif" id="intro-title">Il sito si sta configurando <em>per te.</em></h2>
+      <p class="intro-msg" id="intro-msg"></p>
+      <ul class="intro-log" id="intro-log"></ul>
+      <p class="intro-hint">Puoi cambiare scelta in qualsiasi momento premendo il tasto <b class="modes-pill"><span class="modes-ico"></span>Modalità</b> in alto.</p>
+      <button type="button" class="btn primary" id="intro-go">Via</button>
+    </section>
+  </div>
 </div>
 
 <main id="top">

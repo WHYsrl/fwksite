@@ -74,11 +74,14 @@ Non inventare lavori, clienti o dati: usa solo l'indice fornito. Le notizie del 
 // Console prompt: linguaggio naturale → nodi da evidenziare + risposta breve
 async function consoleQuery(q) {
   const { text } = contentIndex();
-  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore e l'indice dei contenuti. Rispondi con JSON:
-{"answer": "risposta in italiano, massimo 2 frasi, senza elenchi", "highlight": ["id","id"], "open": "id o null", "mode": {"density": "2|10|all|null", "energy": "calm|vivid|null"}}
-- highlight: gli id (senza prefisso) di aree, lavori o segnali pertinenti (max 6).
-- open: l'id più pertinente da aprire, oppure null.
-- mode.density: "2" se il visitatore ha fretta o chiede l'essenziale, "all" se vuole approfondire, altrimenti null. mode.energy: "calm" se chiede calma/meno animazioni, "vivid" se chiede energia, altrimenti null.`;
+  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore e l'indice dei contenuti del sito. Rispondi SOLO con JSON:
+{"answer": "risposta in italiano, massimo 2 frasi, senza elenchi, che nomina esplicitamente le aree o i lavori pertinenti", "highlight": ["id","id"], "open": "id o null", "mode": {"density": null, "energy": null}}
+REGOLE:
+- highlight è OBBLIGATORIO e deve contenere da 2 a 6 id presi ESATTAMENTE dall'indice (senza il prefisso cap:/work:/signal:), scegliendo prima le aree, poi i lavori, poi al massimo un segnale del radar.
+- open: l'id più pertinente da aprire (di solito un'area o un lavoro), mai null se esiste qualcosa di pertinente.
+- mode.density: SOLO se il visitatore parla esplicitamente di tempo o fretta ("ho fretta", "l'essenziale", "in due minuti" → "2"; "voglio approfondire", "ho tempo" → "all"); in tutti gli altri casi null.
+- mode.energy: SOLO se il visitatore chiede esplicitamente calma/meno animazioni ("calm") o più energia ("vivid"); altrimenti null.
+- Se la richiesta non c'entra con Frameworks, rispondi con garbo in una frase e proponi un'area; highlight resta pieno.`;
   const user = `INDICE:\n${text}\n\nRICHIESTA: ${q}`;
   const out = await complete({ system, user, json: true, maxTokens: 400, kind: "console", cacheMinutes: 60 * 24 });
   const valid = new Set([...contentIndex().c.caps.map(x => x.id), ...contentIndex().c.works.map(x => x.id), ...contentIndex().c.signals.map(x => x.id)]);

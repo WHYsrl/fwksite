@@ -43,24 +43,24 @@ const Ctx = {
   }
 };
 const Modes = {
-  density: "10", mood: store.get("fw.mood") || "auto",
+  density: (() => { try { return sessionStorage.getItem("fw.density") || "10"; } catch { return "10"; } })(), mood: (() => { try { return sessionStorage.getItem("fw.mood") || "auto"; } catch { return "auto"; } })(),
   apply() {
     html.dataset.density = this.density;
     const w = Ctx.weather; const c = Ctx.local();
     const kind = w ? w.kind : (c.hour < 7 || c.hour >= 21 ? "night" : "unknown");
     html.dataset.weather = kind;
-    let energy = this.mood;
+    let energy = this.mood === "nervous" ? "calm" : this.mood;
     if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
-    html.dataset.energy = energy;
+    html.dataset.energy = energy; html.dataset.mood = this.mood;
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
     const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità";
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
-    const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
+    const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
     const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${labelWeather(w.kind)}` : "";
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 50);
   },
-  set(k, v) { this[k] = v; if (k === "mood") store.set("fw." + k, v); this.apply(); }
+  set(k, v) { this[k] = v; try { sessionStorage.setItem("fw." + k, v); } catch {} this.apply(); }
 };
 function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pioggia", storm: "temporale", snow: "neve", night: "notte", unknown: "" }[k] || ""; }
 (function modesUI() {
@@ -80,7 +80,7 @@ function renderContext() {
     `Stai leggendo da un <span class="v">${esc(c.device)}</span> di <span class="v">${c.vw}×${c.vh}</span> pixel, in <span class="v">${esc(langName)}</span>, con le animazioni <span class="v">${c.reduced ? "ridotte" : "attive"}</span>, densità <span class="v">${Modes.density === "2" ? "essenziale" : Modes.density === "10" ? "media" : "completa"}</span>.`,
     c.mobile ? `Per questo vedi un feed verticale: su un desktop gli stessi contenuti diventano una console esplorabile.` : `Per questo vedi la Console: su un telefono gli stessi contenuti diventano un feed verticale.`,
     `Un sistema, tante esperienze: è il principio con cui progettiamo ogni organismo di contenuto.`];
-  const kv = [["Ora locale", c.time], ["Giorno", `${c.day} · ${c.slot}`], ["Dispositivo", c.device], ["Schermo", `${c.vw} × ${c.vh}`], ["Lingua", langName], ["Movimento", c.reduced ? "ridotto" : "attivo"], ["Meteo Roma", w && w.temp != null ? `${w.temp}° · ${labelWeather(w.kind)}` : "n.d."], ["Ritmo", html.dataset.energy], ["Densità", Modes.density === "all" ? "tutto" : Modes.density + " min"]];
+  const kv = [["Ora locale", c.time], ["Giorno", `${c.day} · ${c.slot}`], ["Dispositivo", c.device], ["Schermo", `${c.vw} × ${c.vh}`], ["Lingua", langName], ["Movimento", c.reduced ? "ridotto" : "attivo"], ["Meteo Roma", w && w.temp != null ? `${w.temp}° · ${labelWeather(w.kind)}` : "n.d."], ["Ritmo", Modes.mood === "nervous" ? "essenziale" : html.dataset.energy === "calm" ? "calmo" : html.dataset.energy === "vivid" ? "vivace" : "neutro"], ["Densità", Modes.density === "all" ? "tutto" : Modes.density + " min"]];
   if (c.conn) kv.push(["Connessione", c.conn]);
   const kvHTML = kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("");
   const t = $("#context-text"); if (t) t.innerHTML = parts.join(" ");
@@ -111,7 +111,7 @@ const AI = {
   brand: `Sei la Console di Frameworks (Frame by Frame, Roma): Adaptive Content Systems, "organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto". Tono lucido, concreto, elegante, italiano, frasi brevi, niente elenchi. Non inventare lavori o dati; le notizie del Radar sono di terzi.`,
   async console(q) {
     if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
-    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"max 2 frasi","highlight":["id"],"open":"id|null","mode":{"density":"2|10|all|null","energy":"calm|vivid|null"}}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
+    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"max 2 frasi che nominano aree o lavori pertinenti","highlight":["id"],"open":"id|null","mode":{"density":null,"energy":null}}\nREGOLE: highlight obbligatorio con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; open = id più pertinente; mode.density solo se il visitatore parla di tempo/fretta ("2" o "all"), altrimenti null; mode.energy solo se chiede calma o energia, altrimenti null.\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
     return out;
   },
   async adapt(p) {
@@ -388,6 +388,45 @@ function watchPaper() { paperEls = $$(".paper, .paper-screen"); checkPaper(); }
 addEventListener("scroll", () => { if (!paperTick) { paperTick = true; requestAnimationFrame(checkPaper); } }, { passive: true });
 addEventListener("resize", () => requestAnimationFrame(checkPaper));
 
+
+/* =========================================================
+   INTRO — le domande prima del sito (una volta per sessione)
+   ========================================================= */
+const Intro = {
+  el: $("#intro"), time: null, mood: null, done: false,
+  seen() { try { return sessionStorage.getItem("fw.intro") === "1"; } catch { return false; } },
+  start(onDone) {
+    this.onDone = onDone;
+    if (!this.el || this.seen()) { this.finish(true); return; }
+    this.el.hidden = false; document.body.style.overflow = "hidden";
+    this.el.addEventListener("click", e => {
+      const t = e.target.closest("[data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
+      const m = e.target.closest("[data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); setTimeout(() => this.configure(), 220); return; }
+      if (e.target.closest("#intro-skip") || e.target.closest("#intro-go")) this.finish();
+    });
+  },
+  step(n) { $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n))); },
+  configure() {
+    Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
+    const c = Ctx.local(); const w = Ctx.weather;
+    const timeTxt = { "2": "ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci", "10": "ti mostro il sistema, le aree, i lavori, il metodo e il radar", all: "apro tutto: l'esperienza completa, con calma" }[this.time] || "";
+    const moodTxt = { calm: "con un ritmo disteso", vivid: "con tutta l'energia accesa", nervous: "senza rumore, dritto al punto" }[this.mood] || "";
+    $("#intro-msg").textContent = `Va bene: ${timeTxt}, ${moodTxt}.`;
+    const log = $("#intro-log"); log.innerHTML = "";
+    const lines = [`<b>Densità</b> ${this.time === "2" ? "essenziale" : this.time === "all" ? "completa" : "media"}`, `<b>Ritmo</b> ${this.mood === "nervous" ? "essenziale" : this.mood === "vivid" ? "vivace" : "calmo"}`, `<b>Contesto</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · Roma ${w.temp}° ${labelWeather(w.kind)}` : ""}`, `<b>Sistema</b> on air`];
+    this.step(3);
+    lines.forEach((l, i) => { const li = document.createElement("li"); li.innerHTML = l; li.style.animationDelay = (0.35 + i * 0.45) + "s"; log.appendChild(li); });
+    clearTimeout(this.timer); this.timer = setTimeout(() => this.finish(), 4200);
+  },
+  finish(immediate) {
+    if (this.done) return; this.done = true; clearTimeout(this.timer);
+    try { sessionStorage.setItem("fw.intro", "1"); } catch {}
+    if (this.el) { if (immediate) this.el.hidden = true; else { this.el.classList.add("out"); setTimeout(() => { this.el.hidden = true; }, 650); } }
+    document.body.style.overflow = ""; window.scrollTo(0, 0);
+    if (this.onDone) this.onDone();
+  }
+};
+
 /* =========================================================
    BOOT
    ========================================================= */
@@ -398,7 +437,7 @@ initialTab();
 renderApp();
 watchPaper();
 bindPrompt($("#prompt"));
-animateDesktop();
+Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
 Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
