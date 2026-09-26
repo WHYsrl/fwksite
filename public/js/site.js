@@ -300,8 +300,16 @@ function animateDesktop() {
   $$("[data-parallax]").forEach(el => { const f = parseFloat(el.dataset.parallax) || 0.1; gsap.to(el, { yPercent: -f * 60, ease: "none", scrollTrigger: { trigger: el.closest("figure, .console-bg") || el, start: "top bottom", end: "bottom top", scrub: true } }); });
   // statement: scorre in orizzontale con lo scroll
   $$(".drift").forEach(el => { const d = parseFloat(el.dataset.drift) || 0.2; gsap.fromTo(el, { xPercent: d * 40 }, { xPercent: -d * 40, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } }); });
-  // venn: cerchi che si disegnano
-  $$("#venn .vc").forEach((c, i) => gsap.fromTo(c, { strokeDashoffset: 600 }, { strokeDashoffset: 0, duration: 1.8, ease: "power2.out", delay: i * 0.15, scrollTrigger: { trigger: "#venn", start: "top 80%" } }));
+  // venn: il ciclo. I cerchi si disegnano uno dopo l'altro, restano, si cancellano e ricominciano (loop); intanto l'insieme ruota lentamente
+  const vcs = $$("#venn .vc");
+  if (vcs.length) {
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.4, paused: true });
+    vcs.forEach((c, i) => tl.fromTo(c, { strokeDashoffset: 600 }, { strokeDashoffset: 0, duration: 1.6, ease: "power2.out" }, i * 0.35));
+    tl.to("#venn .vi", { opacity: 0.35, duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, ">-0.2");
+    vcs.forEach((c, i) => tl.to(c, { strokeDashoffset: -600, duration: 1.4, ease: "power2.in" }, ">" + (i ? "-1.2" : "+0.8")));
+    gsap.to("#venn svg > g:first-child", { rotation: 360, duration: 90, ease: "none", repeat: -1, transformOrigin: "260px 210px" });
+    ScrollTrigger.create({ trigger: "#venn", start: "top 85%", end: "bottom 15%", onEnter: () => tl.play(), onEnterBack: () => tl.play(), onLeave: () => tl.pause(), onLeaveBack: () => tl.pause() });
+  }
   // frame morph: un asset, tutti i formati
   const mf = $("#morph .morph-frame"); if (mf) { const lab = $(".morph-label", mf); const formats = [["16:9", 180, 101], ["9:16", 72, 128], ["1:1", 110, 110], ["4:5", 96, 120], ["32:9", 200, 56]]; let i = 0; const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.2 }); formats.forEach(([n, w, h]) => tl.to(mf, { width: w, height: h, duration: 0.9, ease: "power3.inOut", onStart: () => lab.textContent = n }, "+=1.2")); }
   // chiusura: On Air · Live · Alive
@@ -359,6 +367,7 @@ const App = {
     const sistema = `<section class="screen" data-screen="sistema">
       <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
       <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
+      <div data-m-tier="10"><div class="org-lab" data-organism></div><p class="org-caption"><b>Provalo.</b> Nutrilo con i dati, sposta il sole (il mercato), aggiungi paid media, innesta una collab: cresce, fiorisce, si riorienta.</p></div>
       <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${c.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>`).join("")}</div></div>
       ${teamHTML()}
       <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
@@ -387,6 +396,7 @@ const App = {
     const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
     AI.check().then(ok => { if (!ok) { $$("[data-tab=console]").forEach(el => el.remove()); cols(); } });
     this.applyDensity(); this.show(this.current, true);
+    if (window.OrganismLab) OrganismLab.mountAll(); // l'organismo interattivo nella schermata Sistema
   },
   show(name, silent) {
     if (!$(`.screen[data-screen="${name}"]`)) name = "home";
@@ -661,6 +671,7 @@ renderApp();
 watchPaper();
 bindPrompt($("#prompt"));
 Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
+if (window.OrganismLab) OrganismLab.mountAll(); // organismo interattivo (desktop: sezione Organismo)
 Focus.apply();
 Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
 let wasMobile = isMobile();

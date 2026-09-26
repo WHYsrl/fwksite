@@ -11,6 +11,7 @@ ejs.renderFile(path.join(__dirname, "..", "views", "index.ejs"), { content, prev
   fs.writeFileSync(path.join(dir, "index.html"), h);
   fs.copyFileSync(path.join(__dirname, "..", "public", "css", "site.css"), path.join(dir, "site.css"));
   fs.copyFileSync(path.join(__dirname, "..", "public", "js", "site.js"), path.join(dir, "site.js"));
+  fs.copyFileSync(path.join(__dirname, "..", "public", "js", "organism.js"), path.join(dir, "organism.js"));
   for (const f of fs.readdirSync(path.join(__dirname, "..", "public", "media"))) fs.copyFileSync(path.join(__dirname, "..", "public", "media", f), path.join(dir, "media", f));
   console.log("preview scritto in", dir, Math.round(h.length / 1024) + "KB");
 });

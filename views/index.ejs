@@ -183,7 +183,10 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
       <p class="lead rv"><%= site.organism_text %></p>
       <div class="morph rv" id="morph" aria-hidden="true"><div class="morph-frame"><span class="morph-label">16:9</span></div><div class="morph-cap">Un asset, tutti i formati: lo stesso sistema si riconfigura.</div></div>
     </div>
-    <figure class="ph tall rv" data-tilt><img src="/media/organism-tall.jpg" alt="" loading="lazy" data-parallax="0.12"></figure>
+    <div class="rv">
+      <div class="org-lab" data-organism></div>
+      <p class="org-caption"><b>Provalo.</b> Nutrilo con i dati, sposta il sole (il mercato), aggiungi paid media, innesta una collab: cresce, fiorisce, si riorienta. Un organismo sintetico vivente, in piccolo.</p>
+    </div>
   </div>
 </section>
 
@@ -300,6 +303,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <script>window.__DATA__ = <%- JSON.stringify(content).replace(/</g, "\\u003c") %>; window.__PREVIEW__ = <%= preview ? 'true' : 'false' %>; window.__AI__ = <%= aiOn ? 'true' : 'false' %>;</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="<%= preview ? 'organism.js' : '/public/js/organism.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'site.js' : '/public/js/site.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 </body>
 </html>
