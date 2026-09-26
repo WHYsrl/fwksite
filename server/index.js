@@ -16,6 +16,7 @@ store.seedTeamIfEmpty();
 store.seedConsoleContext();
 // "In concreto": tecnologie, formati e casi d'uso per area; al primo avvio sostituisce i testi astratti delle aree
 const concrete = require("./concrete");
+const imagegen = require("./imagegen"); // Denoise: immagini generate da un oggetto nominato
 if (concrete.migrate()) console.log("Aree: testi concreti, tecnologie e casi d'uso applicati");
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
 const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
@@ -23,7 +24,7 @@ store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(
 
 // Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
 const fs = require("fs");
-const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/organism.js", "public/css/admin.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
+const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/diffusion.js", "public/css/admin.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
 
 const app = express();
 app.locals.v = ASSET_V;
@@ -42,11 +43,13 @@ app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 // ---------- sito pubblico ----------
 app.get("/", (req, res) => {
   feeds.maybeRefresh(); // se il Radar è vecchio, si aggiorna in background
-  const content = concrete.decorate(store.getContent());
+  const content = withImage(concrete.decorate(store.getContent()));
   res.set("Cache-Control", "no-cache");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured() });
 });
-app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(concrete.decorate(store.getContent())); });
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(withImage(concrete.decorate(store.getContent()))); });
+// il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
+function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; return content; }
 // Radar: ricerca dal vivo per il visitatore (fonti esterne, non curate)
 app.get("/api/radar/search", limit, async (req, res) => {
   const q = String(req.query.q || "").trim().slice(0, 80); if (q.length < 2) return res.status(400).json({ error: "Scrivi almeno due lettere" });
@@ -92,7 +95,19 @@ app.post("/api/ai/adapt", limit, async (req, res) => {
   if (!ai.config().features.adapt) return res.status(503).json({ error: "Funzione disattivata", code: "disabled" });
   try { res.json(await ai.adapt({ itemId: String(itemId || ""), sector: String(sector || "").slice(0, 80), goal: String(goal || "").slice(0, 120), channel: String(channel || "").slice(0, 80) })); } catch (e) { aiError(res, e); }
 });
-app.get("/health", (req, res) => res.json({ ok: true, ai: ai.isConfigured(), radar: feeds.lastRun() }));
+// Denoise: genera l'immagine di un oggetto (limite più stretto per IP: 4 al minuto)
+const imgBuckets = new Map();
+app.post("/api/ai/image", (req, res) => {
+  const ip = req.ip || "x"; const now = Date.now(); const b = imgBuckets.get(ip) || { n: 0, t: now };
+  if (now - b.t > 60000) { b.n = 0; b.t = now; } b.n++; imgBuckets.set(ip, b);
+  if (b.n > 4) return res.status(429).json({ error: "Un attimo: al massimo quattro oggetti al minuto.", code: "rate_limited" });
+  const q = String((req.body || {}).q || "").slice(0, 80); const mood = String((req.body || {}).mood || "");
+  imagegen.generate({ q, mood }).then(out => { res.set("Cache-Control", "no-store"); res.json(out); }).catch(e => {
+    const map = { not_configured: 503, disabled: 503, rate_limited: 429, bad_request: 400, rejected: 422, provider_error: 502 };
+    res.status(map[e.code] || 500).json({ error: e.message, code: e.code || "error" });
+  });
+});
+app.get("/health", (req, res) => res.json({ ok: true, ai: ai.isConfigured(), image: imagegen.isConfigured(), radar: feeds.lastRun() }));
 
 // ---------- backoffice ----------
 app.use("/admin", admin);

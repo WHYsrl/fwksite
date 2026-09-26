@@ -450,7 +450,7 @@ const App = {
     const sistema = `<section class="screen" data-screen="sistema">
       <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
       <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
-      <div data-m-tier="10"><div class="org-lab" data-organism></div><p class="org-caption"><b>Provalo.</b> Scrivi il tuo brand, poi cambia formato: le stesse particelle si riconfigurano per ogni canale. Tocca per farle esplodere: si ricompongono da sole.</p></div>
+      ${DATA.features.image !== false ? `<div data-m-tier="10"><div class="org-lab dn-lab" data-diffusion></div><p class="org-caption"><b>Provalo.</b> Nomina un oggetto, anche impossibile: il modello lo campiona dal rumore. Ogni tocco è un passo di denoising; alla fine, adattalo ai formati.</p></div>` : ""}
       <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${((c.tech && c.tech.length) ? c.tech.slice(0, 5) : c.tags.slice(0, 4)).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><span class="card-more">Casi d'uso e tecnologie →</span></div></button>`).join("")}</div></div>
       ${teamHTML()}
       <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
@@ -481,7 +481,7 @@ const App = {
     const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
     AI.check().then(ok => { if (!ok) { $$("[data-tab=console]").forEach(el => el.remove()); cols(); } });
     this.applyDensity(); this.show(this.current, true);
-    if (window.OrganismLab) OrganismLab.mountAll(); // l'organismo interattivo nella schermata Sistema
+    if (window.Diffusion) Diffusion.mountAll(); // il Denoise nella schermata Sistema
   },
   show(name, silent) {
     if (!$(`.screen[data-screen="${name}"]`)) name = "home";
@@ -808,7 +808,7 @@ renderApp();
 watchPaper();
 bindPrompt($("#prompt"));
 Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
-if (window.OrganismLab) OrganismLab.mountAll(); // organismo interattivo (desktop: sezione Organismo)
+if (window.Diffusion) Diffusion.mountAll(); // Denoise (desktop: sezione Adaptive Content Systems)
 Focus.apply();
 Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
 let wasMobile = isMobile();

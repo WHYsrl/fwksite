@@ -14,7 +14,7 @@ ejs.renderFile(path.join(__dirname, "..", "views", "index.ejs"), { content, prev
   fs.mkdirSync(path.join(dir, "fonts"), { recursive: true });
   for (const f of fs.readdirSync(path.join(__dirname, "..", "public", "fonts"))) fs.copyFileSync(path.join(__dirname, "..", "public", "fonts", f), path.join(dir, "fonts", f));
   fs.copyFileSync(path.join(__dirname, "..", "public", "js", "site.js"), path.join(dir, "site.js"));
-  fs.copyFileSync(path.join(__dirname, "..", "public", "js", "organism.js"), path.join(dir, "organism.js"));
+  fs.copyFileSync(path.join(__dirname, "..", "public", "js", "diffusion.js"), path.join(dir, "diffusion.js"));
   for (const f of fs.readdirSync(path.join(__dirname, "..", "public", "media"))) fs.copyFileSync(path.join(__dirname, "..", "public", "media", f), path.join(dir, "media", f));
   console.log("preview scritto in", dir, Math.round(h.length / 1024) + "KB");
 });

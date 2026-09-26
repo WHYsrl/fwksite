@@ -508,6 +508,7 @@ body.cwin-open{overflow:hidden}
 .org-word button{padding:10px 18px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 .org-word button:hover{background:var(--accent-ink);color:var(--bg)}
 .org-controls.formats{grid-template-columns:repeat(6,1fr)}
+.org-controls.dn-formats{grid-template-columns:repeat(5,1fr)}
 .org-controls button.on{background:var(--bg-3);color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 .org-controls button.on b{color:var(--accent-ink)}
 .org-controls{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-2);border-top:1px solid var(--line-2)}
@@ -520,6 +521,15 @@ body.cwin-open{overflow:hidden}
 .org-controls button small em{font-style:normal;color:var(--accent-ink)}
 .org-controls button.pulse{animation:org-pulse 1.8s infinite}
 @keyframes org-pulse{0%,100%{box-shadow:inset 0 0 0 0 rgba(var(--accent-rgb),0)}50%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.7)}}
+/* Denoise */
+.dn-stage{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.dn-stage:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.dn-stage canvas{display:block;width:100%;height:100%}
+.dn-hud{grid-template-columns:repeat(4,auto)}
+.dn-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px;background:var(--bg-2)}
+.dn-chips button{font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--bg);white-space:nowrap}
+.dn-chips button:hover{border-color:var(--accent);color:var(--ink)}
+.dn-lab.done .dn-chips{display:none}
 .org-caption{margin-top:12px;font-size:13.5px;color:var(--ink-3);line-height:1.5}
 .org-caption b{color:var(--ink-2);font-weight:600}
 /* ---- TEAM: persone chiave + organico per reparto ---- */
@@ -713,6 +723,8 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   /* organismo interattivo */
   .org-stage{height:auto;aspect-ratio:4/5;min-height:0}
   .org-controls.formats{grid-template-columns:repeat(3,1fr)}
+  .org-controls.dn-formats{grid-template-columns:repeat(5,1fr)}
+  .dn-chips{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.dn-chips::-webkit-scrollbar{display:none}
   .org-word{padding:10px 12px;flex-wrap:wrap}
   .org-word input[type=text]{flex:1 1 100%}
   .org-file span{display:none}

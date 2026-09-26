@@ -18,6 +18,15 @@
     <label class="check"><input type="checkbox" name="adapt_enabled" <%= ai.adapt_enabled ? 'checked' : '' %>> "Adatta al tuo contesto" (riscrittura di lavori e aree)</label>
     <label class="check"><input type="checkbox" name="radar_enabled" <%= ai.radar_enabled ? 'checked' : '' %>> Radar: classificazione e bozza della lettura</label>
     <label>Limite chiamate al giorno <input name="daily_call_limit" type="number" value="<%= ai.daily_call_limit %>"></label>
+    <h2 style="margin-top:18px">Denoise · immagini</h2>
+    <label class="check"><input type="checkbox" name="image_enabled" <%= ai.image_enabled === false ? '' : 'checked' %>> Denoise: il visitatore nomina un oggetto e il modello lo genera nello stile del sito (usa la chiave OpenAI)</label>
+    <div class="grid2">
+      <label>Modello immagini <input name="openai_image_model" value="<%= ai.openai_image_model || 'gpt-image-2.5-flare' %>"></label>
+      <label>Qualità <select name="image_quality"><% ['low','medium','high'].forEach(q => { %><option value="<%= q %>" <%= (ai.image_quality || 'medium') === q ? 'selected' : '' %>><%= q %></option><% }) %></select></label>
+      <label>Dimensione <select name="image_size"><% ['1024x1024','1536x1024','1024x1536'].forEach(sz => { %><option value="<%= sz %>" <%= (ai.image_size || '1024x1024') === sz ? 'selected' : '' %>><%= sz %></option><% }) %></select></label>
+      <label>Immagini al giorno (massimo) <input name="image_daily_limit" type="number" value="<%= ai.image_daily_limit || 120 %>"></label>
+    </div>
+    <p class="mono muted">Oggi: <%= imagesToday %> immagini generate. Lo stesso oggetto nello stesso mood resta in cache 30 giorni; il testo passa dalla moderazione OpenAI prima di generare.</p>
     <p class="mono muted">Oggi: <%= today %> chiamate. Le risposte identiche sono in cache (console 24h, adatta 7 giorni).</p>
     <div class="row"><button class="btn primary" name="action" value="save">Salva</button><button class="btn" name="action" value="test">Salva e prova la connessione</button></div>
   </section>

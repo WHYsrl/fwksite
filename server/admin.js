@@ -8,6 +8,7 @@ const store = require("./db");
 const ai = require("./ai");
 const feeds = require("./feeds");
 const concrete = require("./concrete");
+const imagegen = require("./imagegen");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -132,10 +133,11 @@ router.post("/fonti/:id/toggle", (req, res) => { const s = store.getSource(req.p
 router.post("/fonti/:id/delete", (req, res) => { store.deleteSource(req.params.id); flash(req, "Fonte eliminata"); res.redirect("/admin/fonti"); });
 
 // ---------- AI ----------
-router.get("/ai", (req, res) => res.render("admin/ai", { ai: store.getSetting("ai", {}), cfg: ai.config(), env: { anthropic: !!process.env.ANTHROPIC_API_KEY, openai: !!process.env.OPENAI_API_KEY }, stats: store.aiStats(), today: store.aiCallsToday(), test: null }));
+router.get("/ai", (req, res) => res.render("admin/ai", { ai: store.getSetting("ai", {}), cfg: ai.config(), env: { anthropic: !!process.env.ANTHROPIC_API_KEY, openai: !!process.env.OPENAI_API_KEY }, stats: store.aiStats(), today: store.aiCallsToday(), imagesToday: imagegen.imagesToday(), test: null }));
 router.post("/ai", async (req, res) => {
   const b = req.body; const cur = store.getSetting("ai", {});
-  const next = { ...cur, provider: b.provider, anthropic_model: b.anthropic_model, openai_model: b.openai_model, console_enabled: !!b.console_enabled, adapt_enabled: !!b.adapt_enabled, radar_enabled: !!b.radar_enabled, daily_call_limit: +b.daily_call_limit || 400 };
+  const next = { ...cur, provider: b.provider, anthropic_model: b.anthropic_model, openai_model: b.openai_model, console_enabled: !!b.console_enabled, adapt_enabled: !!b.adapt_enabled, radar_enabled: !!b.radar_enabled, daily_call_limit: +b.daily_call_limit || 400,
+    image_enabled: !!b.image_enabled, openai_image_model: String(b.openai_image_model || "").trim() || "gpt-image-2.5-flare", image_quality: b.image_quality, image_size: b.image_size, image_daily_limit: +b.image_daily_limit || 120 };
   if (b.anthropic_key && !b.anthropic_key.includes("•")) next.anthropic_key = b.anthropic_key.trim();
   if (b.openai_key && !b.openai_key.includes("•")) next.openai_key = b.openai_key.trim();
   if (b.clear_keys) { next.anthropic_key = ""; next.openai_key = ""; }
