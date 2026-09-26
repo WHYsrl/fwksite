@@ -58,7 +58,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <div class="modes" id="modes" hidden>
   <div class="modes-head"><span class="eyebrow"><span class="dot"></span>La pagina si adatta a te</span><button type="button" class="x" id="modes-close" aria-label="Chiudi">✕</button></div>
   <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto il tempo</button></div></div>
-  <div class="modes-row"><span class="k">Di che umore sei?</span><div class="seg" role="group" aria-label="Umore"><button type="button" data-mood="calm">Calmo</button><button type="button" data-mood="vivid">Entusiasta</button><button type="button" data-mood="nervous">Nervoso</button></div></div>
+  <div class="modes-row"><span class="k">Che mood preferisci?</span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="vivid">Acceso</button><button type="button" data-mood="calm">Notturno</button><button type="button" data-mood="nervous">Quieto</button><button type="button" data-mood="light">Chiaro</button></div></div>
   <div class="modes-row"><span class="k">Ambiente</span><div class="modes-env" id="modes-env">Roma · in ascolto…</div></div>
   <p class="modes-note">Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.</p>
 </div>
@@ -81,11 +81,12 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     </section>
     <section class="intro-step" data-step="2">
       <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 2 di 2</div>
-      <h2 class="serif">Di che umore sei?</h2>
+      <h2 class="serif">Che mood preferisci?</h2>
       <div class="intro-opts">
-        <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b>Calmo</b><span>Ritmo disteso, blu notte e lavanda.</span></button>
-        <button type="button" data-mood="vivid"><i class="swatch" style="--s1:#050307;--s2:#BF00FF" aria-hidden="true"></i><b>Entusiasta</b><span>Energia, movimento, nero e viola accesi.</span></button>
-        <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b>Nervoso</b><span>Dritto al punto, toni quieti di verde e menta.</span></button>
+        <button type="button" data-mood="vivid"><i class="swatch" style="--s1:#050307;--s2:#BF00FF" aria-hidden="true"></i><b>Acceso</b><span>Nero e viola, energia e movimento.</span></button>
+        <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b>Notturno</b><span>Blu notte e lavanda, ritmo disteso.</span></button>
+        <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b>Quieto</b><span>Verde e menta, dritto al punto, senza rumore.</span></button>
+        <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b>Chiaro</b><span>Fondo chiaro e viola d'inchiostro, tutto in luce.</span></button>
       </div>
     </section>
     </div>

@@ -88,12 +88,12 @@ Non inventare lavori, clienti o dati su Frameworks: per questi usa solo l'indice
 // Console prompt: linguaggio naturale → percorso proposto (aree/lavori/segnali) + risposta breve + eventuale domanda
 // Le preferenze scelte nell'intro (tempo e umore) sono complementari alla richiesta: il percorso ne tiene conto.
 const PREF_TIME = { "2": "2 minuti: vuole solo l'essenziale → proponi al massimo 2 aree e 1 lavoro, niente radar, risposta in 1-2 frasi", "10": "10 minuti: vuole capire come lavoriamo e cosa abbiamo fatto → 2-3 aree e 2-3 lavori", all: "tutto il tempo che serve: vuole l'esperienza completa → fino a 6 elementi, radar incluso se pertinente" };
-const PREF_MOOD = { calm: "calmo: tono disteso", vivid: "entusiasta: tono più acceso, puoi includere il radar", nervous: "nervoso: dritto al punto, risposta asciutta, niente radar" };
+const PREF_MOOD = { calm: "notturno: tono disteso", vivid: "acceso: tono più energico, puoi includere il radar", nervous: "quieto: dritto al punto, risposta asciutta, niente radar", light: "chiaro: tono limpido e leggero" };
 function prefsText(prefs) {
   if (!prefs) return "";
   const t = PREF_TIME[prefs.time], m = PREF_MOOD[prefs.mood];
   if (!t && !m) return "";
-  return `PREFERENZE GIÀ SCELTE DAL VISITATORE ALL'INGRESSO (rispettale, sono complementari alla richiesta):${t ? `\n- tempo: ${t}` : ""}${m ? `\n- umore: ${m}` : ""}\n\n`;
+  return `PREFERENZE GIÀ SCELTE DAL VISITATORE ALL'INGRESSO (rispettale, sono complementari alla richiesta):${t ? `\n- tempo: ${t}` : ""}${m ? `\n- mood: ${m}` : ""}\n\n`;
 }
 
 async function consoleQuery(q, history = [], prefs = null) {
@@ -115,7 +115,7 @@ REGOLE:
 - mode.density: "2" SOLO se nella RICHIESTA il visitatore parla di fretta, poco tempo o dell'essenziale; "all" se chiede di approfondire o dice di avere tempo; altrimenti null. Se ha già scelto il tempo all'ingresso, lascia null a meno che la richiesta non chieda esplicitamente di cambiare.
 - mode.energy: "calm" o "vivid" SOLO se il visitatore chiede esplicitamente calma o energia; altrimenti null.
 - Non inventare fatti su Frameworks: se il contesto non dice qualcosa (una data, un numero, un nome, un cliente), dillo e proponi la sezione o i contatti. Le conoscenze generali del mestiere invece le puoi usare liberamente.
-- Se il visitatore ha scelto "2 minuti" o è nervoso, anche la risposta esperta resta corta (2 frasi).`;
+- Se il visitatore ha scelto "2 minuti" o il mood quieto, anche la risposta esperta resta corta (2 frasi).`;
   const hist = (history || []).slice(-3).map(h => `Visitatore: ${String(h.q || "").slice(0, 300)}\nConsole: ${String(h.a || "").slice(0, 400)}`).join("\n");
   const user = `INDICE:\n${text}\n\n${prefsText(prefs)}${hist ? "CONVERSAZIONE PRECEDENTE:\n" + hist + "\n\n" : ""}RICHIESTA: ${q}`;
   const out = await complete({ system, user, json: true, maxTokens: 700, kind: "console", cacheMinutes: 60 * 24 });

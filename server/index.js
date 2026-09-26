@@ -84,7 +84,7 @@ app.post("/api/ai/console", limit, async (req, res) => {
   if (!ai.config().features.console) return res.status(503).json({ error: "Funzione disattivata", code: "disabled" });
   const history = Array.isArray(req.body.history) ? req.body.history.slice(-3).map(h => ({ q: String(h.q || "").slice(0, 300), a: String(h.a || "").slice(0, 400) })) : [];
   const p = req.body.prefs || {}; // scelte fatte nell'intro: tempo e umore
-  const prefs = { time: ["2", "10", "all"].includes(String(p.time)) ? String(p.time) : null, mood: ["calm", "vivid", "nervous"].includes(p.mood) ? p.mood : null };
+  const prefs = { time: ["2", "10", "all"].includes(String(p.time)) ? String(p.time) : null, mood: ["calm", "vivid", "nervous", "light"].includes(p.mood) ? p.mood : null };
   try { res.json(await ai.consoleQuery(q, history, prefs)); } catch (e) { aiError(res, e); }
 });
 app.post("/api/ai/adapt", limit, async (req, res) => {

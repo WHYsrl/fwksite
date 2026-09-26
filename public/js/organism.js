@@ -153,7 +153,7 @@
     const stage = root.querySelector(".org-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".org-hud"), hint = root.querySelector(".org-hint"), form = root.querySelector(".org-word");
     let W = 0, H = 0, dpr = 1, m = null, visible = false, raf = 0, last = 0, hudAt = 0, press = null;
     // colori dalla palette corrente (cambia con l'umore): accento per le particelle, sfondo per la scia
-    const cssVar = (n, d) => (getComputedStyle(document.documentElement).getPropertyValue(n) || "").trim() || d;
+    const cssVar = (n, d) => (getComputedStyle(root).getPropertyValue(n) || "").trim() || d; // dal contenitore: in "chiaro" il laboratorio resta scuro
     let sp = sprite(cssVar("--accent", "#BF00FF"), 8); const spW = sprite("#FFFFFF", 8);
     const trail = () => { const h = cssVar("--bg", "#050307").replace("#", ""); const n = h.length === 3 ? h.split("").map(c => c + c).join("") : h; const v = parseInt(n, 16); return `rgba(${(v >> 16) & 255},${(v >> 8) & 255},${v & 255},.34)`; };
     let trailFill = trail();

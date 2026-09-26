@@ -34,7 +34,8 @@ const html = document.documentElement;
 // Palette corrente (cambia con l'umore): i canvas leggono i colori dalle variabili CSS, non da costanti
 const Theme = {
   accent: "#BF00FF", accentRgb: "191,0,255", bg: "#050307", paper: "#EEEAF1",
-  read() { const cs = getComputedStyle(html); const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d; this.accent = v("--accent", "#BF00FF"); this.accentRgb = v("--accent-rgb", "191,0,255"); this.bg = v("--bg", "#050307"); this.paper = v("--paper", "#EEEAF1"); return this; },
+  from(el) { const cs = getComputedStyle(el || html); const v = (n, d) => (cs.getPropertyValue(n) || "").trim() || d; const t = { accent: v("--accent", "#BF00FF"), accentRgb: v("--accent-rgb", "191,0,255"), bg: v("--bg", "#050307"), paper: v("--paper", "#EEEAF1") }; t.rgba = (a) => `rgba(${t.accentRgb},${a})`; return t; },
+  read() { Object.assign(this, this.from(html)); return this; },
   rgba(a) { return `rgba(${this.accentRgb},${a})`; }
 };
 Theme.read();
@@ -68,7 +69,7 @@ const Modes = {
     const w = Ctx.weather; const c = Ctx.local();
     const kind = w ? w.kind : (c.hour < 7 || c.hour >= 21 ? "night" : "unknown");
     html.dataset.weather = kind;
-    let energy = this.mood === "nervous" ? "calm" : this.mood;
+    let energy = this.mood === "nervous" ? "calm" : this.mood === "light" ? "auto" : this.mood; // il mood "chiaro" non forza il ritmo
     if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
     html.dataset.energy = energy; html.dataset.mood = this.mood;
     Theme.read(); document.dispatchEvent(new CustomEvent("fw:theme")); // i canvas si adeguano alla palette dell'umore
@@ -93,7 +94,7 @@ function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pio
   document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) open(false); });
   panel.addEventListener("click", e => {
     const d = e.target.closest(".seg [data-density]"); if (d) { Modes.set("density", d.dataset.density); Prefs.set({ ...(Prefs.get() || {}), time: d.dataset.density }); }
-    const m = e.target.closest(".seg [data-mood]"); if (m) { Modes.set("mood", m.dataset.mood); Prefs.set({ ...(Prefs.get() || {}), mood: ["calm", "vivid", "nervous"].includes(m.dataset.mood) ? m.dataset.mood : null }); }
+    const m = e.target.closest(".seg [data-mood]"); if (m) { Modes.set("mood", m.dataset.mood); Prefs.set({ ...(Prefs.get() || {}), mood: ["calm", "vivid", "nervous", "light"].includes(m.dataset.mood) ? m.dataset.mood : null }); }
   });
 })();
 
@@ -122,7 +123,7 @@ function renderContext() {
 const Prefs = {
   get() { try { return JSON.parse(sessionStorage.getItem("fw.prefs") || "null"); } catch { return null; } },
   set(p) { try { sessionStorage.setItem("fw.prefs", JSON.stringify({ time: p.time || null, mood: p.mood || null })); } catch {} },
-  text() { const p = this.get(); if (!p) return ""; const t = { "2": "2 minuti", "10": "10 minuti", all: "tutto il tempo che serve" }[p.time]; const m = { calm: "ritmo calmo", vivid: "ritmo entusiasta", nervous: "dritto al punto" }[p.mood]; return [t, m].filter(Boolean).join(", "); }
+  text() { const p = this.get(); if (!p) return ""; const t = { "2": "2 minuti", "10": "10 minuti", all: "tutto il tempo che serve" }[p.time]; const m = { calm: "mood notturno", vivid: "mood acceso", nervous: "mood quieto, dritto al punto", light: "mood chiaro" }[p.mood]; return [t, m].filter(Boolean).join(", "); }
 };
 
 const AI = {
@@ -145,7 +146,7 @@ const AI = {
     if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history, prefs }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
     const hist = history.length ? `\nCONVERSAZIONE PRECEDENTE:\n${history.map(h => `Visitatore: ${h.q}\nConsole: ${h.a}`).join("\n")}\n` : "";
     const pt = { "2": "2 minuti: solo l'essenziale → al massimo 2 aree e 1 lavoro, niente radar, una frase", "10": "10 minuti → 2-3 aree e 2-3 lavori", all: "tutto il tempo → fino a 6 elementi, radar incluso se pertinente" }[prefs.time];
-    const pm = { calm: "calmo: tono disteso", vivid: "entusiasta: tono acceso, puoi includere il radar", nervous: "nervoso: asciutto, niente radar" }[prefs.mood];
+    const pm = { calm: "notturno: tono disteso", vivid: "acceso: tono energico, puoi includere il radar", nervous: "quieto: asciutto, niente radar", light: "chiaro: tono limpido e leggero" }[prefs.mood];
     const pref = pt || pm ? `\nPREFERENZE GIÀ SCELTE ALL'INGRESSO (rispettale):${pt ? " tempo = " + pt + ";" : ""}${pm ? " umore = " + pm : ""}\n` : "";
     const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"in italiano, senza elenchi: prima la risposta vera, poi cosa proponi di vedere","label":"2-3 parole che riassumono il percorso","highlight":["id"],"sections":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nCOME RISPONDI: domande su Frameworks → fatti dell'indice (tecnologie, formati e casi d'uso compresi), 1-3 frasi; domande generali del nostro campo (comunicazione, media, formati, DOOH, social, retail, CGI, XR, AI creativa, tendenze) → rispondi da esperto in 2-4 frasi specifiche e poi collega a ciò che facciamo; domande fuori campo (ricette, meteo, codice, salute) → una frase gentile e sections sistema, aree. Competente e pertinente, non un assistente universale.\nREGOLE: highlight solo con aree/lavori/segnali davvero legati alla richiesta (id ESATTI, senza prefisso), altrimenti vuoto; sections tra sistema, aree, lavori, metodo, team, radar, contatti (persone → team; chi siamo → sistema; domande generiche → sistema, aree, metodo con label "Scopri Frameworks"); se la richiesta è troppo vaga, highlight e sections vuoti e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se nella richiesta il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null (se ha già scelto il tempo, lascia null); mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${pref}${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
     return out;
@@ -245,7 +246,8 @@ function flashCards(ids) {
 const Console = (() => {
   const cv = $("#graph"); if (!cv) return null;
   const ctx = cv.getContext("2d");
-  let PURPLE = Theme.accent, PAPER = Theme.paper; document.addEventListener("fw:theme", () => { PURPLE = Theme.accent; PAPER = Theme.paper; });
+  // la mappa vive sopra l'immagine dell'hero: legge la palette dal suo contenitore (in "chiaro" resta scura)
+  let T = Theme.from(cv.parentElement), PURPLE = T.accent, PAPER = T.paper; document.addEventListener("fw:theme", () => { T = Theme.from(cv.parentElement); PURPLE = T.accent; PAPER = T.paper; });
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
   let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
   const deg = (d) => d * Math.PI / 180;
@@ -313,7 +315,7 @@ const Console = (() => {
     nodes.forEach(nd => { if (nd.tox != null) { nd.ox += (nd.tox - nd.ox) * .22; nd.oy += (nd.toy - nd.oy) * .22; if (Math.abs(nd.tox - nd.ox) < .3 && Math.abs(nd.toy - nd.oy) < .3) { nd.ox = nd.tox; nd.oy = nd.toy; nd.tox = nd.toy = null; } } });
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
-    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? Theme.rgba(.9) : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
+    edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? T.rgba(.9) : `rgba(255,255,255,${active || hiOn ? e.alpha * .5 : e.alpha})`; ctx.stroke(); });
     ctx.setLineDash([]);
     if (!reduced) {
       if (t > spawnAt && particles.length < 9 * amp()) { const sEdges = edges.filter(e => e.signal); if (sEdges.length) { const e = sEdges[Math.floor(Math.random() * sEdges.length)]; const next = edges.find(x => x.b.id === e.b.id && x.a.kind === "core"); particles.push({ segs: [[e.a.id, e.b.id], next ? [e.b.id, next.a.id] : null].filter(Boolean), i: 0, p: 0, v: (0.00065 + Math.random() * 0.0004) * speed() }); } spawnAt = t + (700 + Math.random() * 900) / speed(); }
@@ -324,7 +326,7 @@ const Console = (() => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
       if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; cube(p.x, p.y, r * 2.1); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
-      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : Theme.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
+      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
       else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#CFC7D8"; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? "#fff" : "#CFC7D8", nd.r + 9); }
       else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, "RADAR · FONTE ESTERNA", `400 11px ${MONO}`, PAPER, nd.r + 8); }
       ctx.restore();
@@ -341,6 +343,8 @@ const Console = (() => {
   cv.addEventListener("pointerup", () => { if (drag) { const nd = drag.nd, moved = drag.moved; drag = null; cv.style.cursor = "pointer"; if (moved < 5) openDetail(byId(nd.id)); } });
   cv.addEventListener("pointerleave", () => { if (!drag) { hover = null; if (reduced) draw(performance.now()); } });
   new IntersectionObserver(en => en.forEach(x => { if (x.isIntersecting && !isMobile()) start(); else stop(); }), { threshold: 0.05 }).observe(cv);
+  // finché l'hero è sotto la barra, il logo resta bianco anche nel mood chiaro
+  new IntersectionObserver(en => en.forEach(x => document.body.classList.toggle("over-hero", x.isIntersecting)), { rootMargin: "-60px 0px -100% 0px", threshold: 0 }).observe(cv);
   window.addEventListener("resize", () => { if (!isMobile()) resize(); });
   if (!isMobile()) resize();
   const ready = () => { if (fontsReady) return; fontsReady = true; if (!isMobile()) { resize(); start(); } };
@@ -775,7 +779,7 @@ const Intro = {
     Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
     const c = Ctx.local(); const w = Ctx.weather;
     const timeTxt = { "2": "ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci", "10": "ti mostro il sistema, le aree, i lavori, il metodo e il radar", all: "apro tutto: l'esperienza completa, con calma" }[this.time] || "";
-    const moodTxt = { calm: "con un ritmo disteso", vivid: "con tutta l'energia accesa", nervous: "senza rumore, dritto al punto" }[this.mood] || "";
+    const moodTxt = { calm: "in blu notte, con un ritmo disteso", vivid: "in nero e viola, con tutta l'energia accesa", nervous: "in verde e menta, senza rumore, dritto al punto", light: "in chiaro, tutto in luce" }[this.mood] || "";
     $("#intro-msg").textContent = `Va bene: ${timeTxt}, ${moodTxt}.`;
     const log = $("#intro-log"); log.innerHTML = "";
     const lines = [`<b>Densità</b> ${this.time === "2" ? "essenziale" : this.time === "all" ? "completa" : "media"}`, `<b>Ritmo</b> ${this.mood === "nervous" ? "essenziale" : this.mood === "vivid" ? "vivace" : "calmo"}`, `<b>Contesto</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · Roma ${w.temp}° ${labelWeather(w.kind)}` : ""}`, `<b>Sistema</b> on air`];
