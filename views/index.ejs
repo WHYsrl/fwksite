@@ -1,0 +1,216 @@
+<%
+const site = content.site;
+const em = (s) => String(s || "").replace(/<em>/g, '<span class="serif">').replace(/<\/em>/g, "</span>");
+const cx = (s) => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const capName = (id) => (content.caps.find(c => c.id === id) || {}).name || id;
+const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
+const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+%><!doctype html>
+<html lang="it" data-energy="auto" data-density="10" data-weather="unknown">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title><%= site.brand %> · <%= site.claim %></title>
+<meta name="description" content="<%= cx(site.tagline) %>">
+<meta property="og:title" content="<%= cx(site.brand) %> · <%= cx(site.claim) %>">
+<meta property="og:description" content="<%= cx(site.tagline) %>">
+<meta property="og:image" content="<%= site.hero_image %>">
+<meta name="theme-color" content="#050307">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300..800&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="<%= preview ? 'site.css' : '/public/css/site.css' %>">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="fw-logo" viewBox="0 0 541.9 78.3"><g fill="currentColor">
+    <path d="M71.4,27.2h6.5v-4.2c0-11.5,9-15.6,21-14.3v9.7c-5.9-.3-8.5.5-8.5,5.4v3.5h8.5v8.7h-8.5v38.7h-12.6v-38.7h-6.5v-8.7Z"/><path d="M115.8,34.7h.3c2.9-5.4,6.1-8.1,11.6-8.1s2.2,0,3,.4v11h-.3c-8.2-.8-14.1,3.5-14.1,13.5v23.1h-12.6V27.2h12.1s0,7.6,0,7.6Z"/><path d="M162.2,69.3h-.2c-2.4,3.6-5.8,6.4-13.9,6.4s-16.5-5.1-16.5-14.5,8.5-13.8,19-15.2c7.8-1.1,11.4-1.8,11.4-5.4s-2.7-5.6-7.9-5.6-8.8,2.1-9.1,6.6h-11.2c.4-8.3,6.6-15.6,20.4-15.6s19.9,6.4,19.9,17.4v24.1c0,3.6.6,5.7,1.7,6.6v.5h-12.1c-.7-.9-1.2-3.1-1.5-5.3ZM162.2,57.8v-7.1c-2.2,1.3-5.6,2-8.8,2.8-6.6,1.5-9.8,3-9.8,7.4s3,6,7.4,6c7.2,0,11.2-4.4,11.2-9Z"/><path d="M181.1,27.2h12.1v6.4h.3c2.6-4.3,7.2-7.7,13.8-7.7s10.8,3.3,13.1,8.3h.2c3.2-5.2,8.2-8.3,14.2-8.3,10,0,15.6,6.5,15.6,16.8v31.8h-12.6v-29.7c0-5.4-2.7-8.1-7.3-8.1s-8.5,4.1-8.5,10.3v27.5h-12.6v-29.7c0-5.4-2.7-8.1-7.3-8.1s-8.5,4.1-8.5,10.3v27.5h-12.6V27.2Z"/><path d="M254.8,50.8c0-14,9.5-24.9,23.4-24.9s23.4,11.6,23.4,28.5h-34.3c.9,7.3,5,11.8,12.1,11.8s7.8-2.2,9.1-5.8h12.4c-1.8,8.4-9.2,15.5-21.4,15.5s-24.6-11-24.6-25.1ZM267.4,45.7h21c-.4-6-4.3-10.2-10.1-10.2s-9.9,4-11,10.2Z"/><path d="M308.2,30.2v-.6h21.4v.7c-6.1.4-7.6,2.1-6.9,9.4l2.1,25.8,19.2-33.5h4.2l2.8,34.1,15-26c4.2-7.3,4.2-9.4-1.6-9.8v-.6h13.9v.6c-4.1.8-6.1,2.1-10.6,9.8l-17.5,30.1c-.9,1.7-1.6,2.8-2,4.4h-4l-3-34.8-17.3,30.5c-1.1,2-1.7,3-2,4.3h-4l-3.2-34c-.7-6.9-2.1-10-6.6-10.3Z"/><path d="M372.5,59.2c0-16.5,13.5-31.1,29.1-31.1s17.2,6.5,17.2,16.7c0,16.6-13.6,31.2-29.1,31.2s-17.2-6.6-17.2-16.8ZM390,74.7c10.9,0,21.3-16,21.3-32.8s-3.4-12.6-10.2-12.6c-11,0-21.3,15.9-21.3,32.7s3.3,12.6,10.2,12.6Z"/><path d="M416.9,73.9c6.2-.8,7.5-3,9.4-11l5.4-21.6c2.2-8.7,1.8-10.2-3.9-11.1v-.6h16.9c-2.3.9-3.4,3.2-5.4,11.7l-.9,3.7c3.3-7.7,11.8-16.2,22.2-16.2l-1.7,6.5c-12.3-1-19.2,6.4-21.4,13.4l-3.7,15c-1.8,7.4-1.5,9.6,5.7,10.4v.6h-22.6v-.6Z"/><path d="M470.1,50.1l-3.1,12.8c-1.9,7.8-1.8,10.2,4.3,11l-.2.6h-21.8v-.6c6.8-.8,8.1-3,10.2-11.1l12-48.5c1.8-7.1.6-8.4-5-8.9l.2-.6,16.4-2.8v.5c-1.1,1-1.9,3-4.2,11.7l-8.5,34.5,16.3-11.6c4.7-3.3,5.3-6.2-.4-7.2v-.5h17.4l-.2.6c-3.7.6-6.8,1.8-13.3,6.5l-14.5,10.2,19.3,27-.2.6h-8.4s-16.4-24.5-16.4-24.5Z"/><path d="M498.7,59.5h6.9c-1.7,9.4,1.8,15.2,10.1,15.2s11.4-3.3,11.4-9.4-3.2-7.7-9.6-11.4c-7.2-4.2-11.3-7.1-11.3-13.1s6.8-12.7,16.7-12.7,16,5,15.5,13.8h-6.6c1-7.8-2.3-12.4-9.1-12.4s-10.1,3.2-10.1,8.4,3.7,7.2,9.3,10.4c6.2,3.8,11.8,6.6,11.8,13.8s-7.6,14-18,14-18.3-6.7-17-16.6Z"/><path d="M6.6,26.2h44c1.7,0,3,1.3,3,3v44c0,1.7-1.3,3-3,3H6.6c-1.7,0-3-1.3-3-3V29.2c0-1.7,1.3-3,3-3Z"/>
+  </g></symbol>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+<div class="glow" id="glow" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 541.9 78.3" width="152" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
+  <nav class="topnav" aria-label="Navigazione">
+    <a href="#sistema">Sistema</a><a href="#aree">Aree</a><a href="#lavori">Lavori</a><a href="#metodo">Metodo</a><a href="#radar">Radar</a>
+    <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl">Modalità</span></button>
+    <a class="cta" href="#contatti">Parliamone</a>
+  </nav>
+</header>
+
+<div class="modes" id="modes" hidden>
+  <div class="modes-head"><span class="eyebrow"><span class="dot"></span>La pagina si adatta a te</span><button type="button" class="x" id="modes-close" aria-label="Chiudi">✕</button></div>
+  <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto</button></div></div>
+  <div class="modes-row"><span class="k">Che umore hai?</span><div class="seg" role="group" aria-label="Umore"><button type="button" data-mood="calm">Calmo</button><button type="button" data-mood="auto" class="on">Auto</button><button type="button" data-mood="vivid">Vivace</button></div></div>
+  <div class="modes-row"><span class="k">Ambiente</span><div class="modes-env" id="modes-env">Roma · in ascolto…</div></div>
+  <p class="modes-note">Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.</p>
+</div>
+
+<main id="top">
+<!-- ============================ CONSOLE (desktop) ============================ -->
+<section class="console desktop-only" id="console" data-tier="2" aria-label="Console">
+  <div class="console-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt="" data-parallax="0.15" fetchpriority="high"></div>
+  <div class="console-grid" aria-hidden="true"></div>
+  <canvas id="graph" aria-label="Mappa interattiva: aree, lavori e radar"></canvas>
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="dot"></span><%= site.claim %></div>
+    <h1 class="split"><%- em(site.hero_title) %></h1>
+    <p class="lead"><%= site.hero_text %></p>
+    <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
+    <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
+      <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · ho fretta, l'essenziale · mostrami l'immersivo"><button type="submit" aria-label="Invia">→</button></div>
+      <div class="prompt-out" id="prompt-out" hidden></div>
+    </form>
+  </div>
+  <div class="hint" aria-hidden="true"><span>trascina i nodi <i></i></span><span>clic per aprire <i></i></span><span>punti chiari = radar, fonti esterne <i></i></span></div>
+  <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span>Roma <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
+  <div class="ticker" aria-label="Radar: titoli da fonti esterne"><div class="label">Radar · fonti esterne</div><div class="track"><div class="row" id="ticker-row"></div></div></div>
+</section>
+
+<!-- ============================ STATEMENT ============================ -->
+<section class="statement purple desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="-0.25"><%= site.statements[0] %></h2></section>
+
+<!-- ============================ CONTESTO ============================ -->
+<section class="section desktop-only" id="sistema" data-tier="10">
+  <div class="split2">
+    <figure class="ph rv" data-tilt><img src="/media/particles.jpg" alt="" loading="lazy" data-parallax="0.08"></figure>
+    <div>
+      <div class="eyebrow rv"><span class="dot"></span>Il contesto</div>
+      <p class="big rv"><%= site.context_text %></p>
+      <p class="serif statement-inline rv"><%= site.statements[1] %></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TRIADE ============================ -->
+<section class="section triad desktop-only" data-tier="all">
+  <div class="eyebrow rv"><span class="dot"></span>Firmitas · Utilitas · Venustas</div>
+  <div class="triad-grid">
+    <% (site.triad || []).forEach((t, i) => { %><div class="triad-item rv" style="--i:<%= i %>"><h3 class="serif"><%= t.la %></h3><p class="k"><%= t.it %></p><p><%= t.text %></p></div><% }) %>
+  </div>
+</section>
+
+<!-- ============================ AREE ============================ -->
+<section class="section desktop-only" id="aree" data-tier="2">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Aree</div><h2 class="rv">Quattro sistemi, un <span class="serif">organismo.</span></h2></div>
+  <div class="caps">
+    <% content.caps.forEach((c, i) => { %>
+    <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
+      <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
+      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></h3><p><%= c.short %></p><div class="tags"><% c.tags.forEach(t => { %><span class="tag"><%= t %></span><% }) %></div></div>
+    </button>
+    <% }) %>
+  </div>
+</section>
+
+<!-- ============================ ORGANISMO ============================ -->
+<section class="section organism desktop-only" data-tier="10">
+  <div class="split2 rev">
+    <div>
+      <div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div>
+      <h2 class="rv"><%- em(site.organism_title) %></h2>
+      <p class="lead rv"><%= site.organism_text %></p>
+      <div class="morph rv" id="morph" aria-hidden="true"><div class="morph-frame"><span class="morph-label">16:9</span></div><div class="morph-cap">Un asset, tutti i formati: lo stesso sistema si riconfigura.</div></div>
+    </div>
+    <figure class="ph tall rv" data-tilt><img src="/media/organism-tall.jpg" alt="" loading="lazy" data-parallax="0.12"></figure>
+  </div>
+</section>
+
+<!-- ============================ STATEMENT ============================ -->
+<section class="statement desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="0.25"><%= site.statements[2] %></h2></section>
+
+<!-- ============================ LAVORI ============================ -->
+<section class="section desktop-only" id="lavori" data-tier="2">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Lavori</div><div><h2 class="rv">Organismi in <span class="serif">azione.</span></h2><p class="rv">Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.</p></div></div>
+  <div class="works">
+    <% content.works.forEach((w, i) => { %>
+    <button class="work rv" type="button" data-open="<%= w.id %>" data-tilt style="--i:<%= i %>">
+      <div class="art"><img src="<%= w.image || '/media/monolith.jpg' %>" alt="" loading="lazy"></div>
+      <div class="meta"><div class="eyebrow"><span><%= w.client %></span><span class="chip ghost"><%= w.status %></span></div><h3><%= w.title %></h3><p><%= w.short %></p><div class="tags"><% w.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div></div>
+    </button>
+    <% }) %>
+  </div>
+</section>
+
+<!-- ============================ METODO ============================ -->
+<section class="section desktop-only" id="metodo" data-tier="10">
+  <div class="split2">
+    <div>
+      <div class="eyebrow rv"><span class="dot"></span>Metodo</div>
+      <h2 class="rv">Cinque fasi, un <span class="serif">ciclo.</span></h2>
+      <p class="lead rv"><%= site.method_intro %></p>
+      <ol class="method-list">
+        <% (site.method || []).forEach((m, i) => { %><li class="rv" style="--i:<%= i %>"><b><%= m.k %></b><span><%= m.text %></span></li><% }) %>
+      </ol>
+    </div>
+    <div class="venn rv" id="venn" aria-hidden="true">
+      <svg viewBox="0 0 520 420">
+        <g fill="none" stroke="currentColor" stroke-width="1.2">
+          <circle class="vc" cx="170" cy="130" r="95"/><circle class="vc" cx="350" cy="130" r="95"/><circle class="vc" cx="260" cy="210" r="95"/><circle class="vc" cx="170" cy="290" r="95"/><circle class="vc" cx="350" cy="290" r="95"/>
+        </g>
+        <g class="vt" font-family="Google Sans Flex, sans-serif" font-size="15" fill="currentColor" text-anchor="middle">
+          <text x="150" y="112">Mapping</text><text x="372" y="112">Production</text><text x="260" y="215" class="vi">Iteration</text><text x="150" y="318">Tailoring</text><text x="372" y="318">Deployment</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TECNOLOGIE ============================ -->
+<section class="section tech desktop-only" data-tier="all">
+  <div class="split2">
+    <h2 class="rv"><%- em(site.tech_title) %></h2>
+    <div class="tech-list">
+      <% (site.tech || []).forEach((t, i) => { %><div class="tech-item rv" style="--i:<%= i %>"><b class="accent"><%= t.k %></b><p><%= t.text %></p></div><% }) %>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
+<section class="section radar paper desktop-only" id="radar" data-tier="10">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Radar · rassegna da fonti esterne</div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
+  <div class="signals">
+    <% content.signals.forEach((s, i) => { %>
+    <article class="signal rv" style="--i:<%= i %>">
+      <div class="src"><span class="chip ext">Fonte esterna</span><b><%= s.src %></b><span><%= fmtDate(s.date) %> · <%= domain(s.url) %></span></div>
+      <div class="sig-main"><h3><a href="<%= s.url %>" target="_blank" rel="noopener nofollow">“<%= s.title %>” ↗</a></h3><% if (s.summary) { %><p class="sum"><%= s.summary %></p><% } %></div>
+      <div class="why"><small>La nostra lettura</small><%= s.why %><% if (s.caps.length) { %><div class="tags"><% s.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div><% } %></div>
+    </article>
+    <% }) %>
+  </div>
+  <p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p>
+</section>
+
+<!-- ============================ CONTESTO PERSONALE ============================ -->
+<section class="section desktop-only" id="contesto" data-tier="10">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Narrowcasting</div><h2 class="rv">Questa pagina si è composta <span class="serif">per te.</span></h2></div>
+  <div class="context"><p class="big" id="context-text"></p><div class="kv" id="context-kv"></div></div>
+</section>
+
+<!-- ============================ CHIUSURA + CONTATTI ============================ -->
+<section class="closing desktop-only" data-tier="10" aria-label="Chiusura"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
+<section class="section contact desktop-only" id="contatti" data-tier="2">
+  <div class="split2">
+    <div><div class="eyebrow rv"><span class="dot"></span>Contatti</div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>">Copia</button></div></div>
+    <figure class="ph rv" data-tilt><img src="/media/roma.jpg" alt="" loading="lazy" data-parallax="0.08"><figcaption class="address"><%- cx(site.contact_address).replace(/\n/g, "<br>") %></figcaption></figure>
+  </div>
+</section>
+<footer class="desktop-only"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
+
+<!-- ============================ MOBILE ============================ -->
+<div class="feed-shell mobile-only"><div id="feed"></div><div class="rail" id="rail" aria-hidden="true"></div><div class="compose" id="compose" aria-hidden="true"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="Chiudi">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
+</div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer desktop-only" id="drawer" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="drawer-head"><span class="eyebrow" id="drawer-eyebrow"></span><button class="x" type="button" id="drawer-close" aria-label="Chiudi">✕</button></div><div class="drawer-body" id="drawer-body"></div></aside>
+
+<script>window.__DATA__ = <%- JSON.stringify(content).replace(/</g, "\\u003c") %>; window.__PREVIEW__ = <%= preview ? 'true' : 'false' %>; window.__AI__ = <%= aiOn ? 'true' : 'false' %>;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="<%= preview ? 'site.js' : '/public/js/site.js' %>"></script>
+</body>
+</html>

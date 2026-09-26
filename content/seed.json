@@ -1,0 +1,475 @@
+{
+  "site": {
+    "brand": "Frameworks",
+    "claim": "Adaptive Content Systems",
+    "tagline": "Organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto.",
+    "hero_title": "Contenuti creati per <em>sopravvivere.</em>",
+    "hero_text": "Frameworks trasforma visioni, campagne e asset in organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto. Contenuti, esperienze e activation per brand che devono muoversi in un mondo instabile, frammentato, mutevole e sempre meno prevedibile.",
+    "hero_cta": "Vedi i lavori",
+    "hero_image": "/media/organism-wide.jpg",
+    "hero_image_mobile": "/media/organism-tall.jpg",
+    "triad": [
+      {
+        "la": "Firmitas.",
+        "it": "Stabilità",
+        "text": "Strutture che reggono il cambiamento di canali, formati e piattaforme senza perdere coerenza."
+      },
+      {
+        "la": "Utilitas.",
+        "it": "Funzione",
+        "text": "Ogni asset nasce per un uso preciso: si misura, si aggiorna, si riconfigura."
+      },
+      {
+        "la": "Venustas.",
+        "it": "Presenza",
+        "text": "Craft alto, forma memorabile. La bellezza è ciò che resta quando tutto il resto scorre."
+      }
+    ],
+    "statements": [
+      "Ciò che è vero non è più reale.",
+      "Non importa quale sia il trend del momento. È già passato.",
+      "Ogni progetto è concepito come un organismo vivente.",
+      "Frameworks nasce per garantire presenza, qualità e continuità. In qualsiasi scenario."
+    ],
+    "context_text": "I formati e gli algoritmi cambiano continuamente, i punti di contatto si moltiplicano, le piattaforme filtrano, gli ambienti digitali e fisici si sovrappongono e gli agenti artificiali sono parte della relazione tra brand e persone.",
+    "organism_title": "Ogni progetto è concepito come un <em>organismo vivente.</em>",
+    "organism_text": "Gli asset sono progettati per estendersi, aggiornarsi e riconfigurarsi. Gli organismi sintetici lavorano con continuità tra i touchpoint, accelerano il refresh dei contenuti e mantengono una struttura coerente. Anche quando cambiano i canali, i formati e il contesto operativo.",
+    "tech_title": "AI, CGI, real-time, XR e ambienti interattivi in una logica di utilizzo <em>selettivo.</em>",
+    "tech": [
+      {
+        "k": "AI",
+        "text": "supporta variation, automation, previsual, sviluppo e accelerazione produttiva."
+      },
+      {
+        "k": "CGI e 3D",
+        "text": "permettono di creare ambienti e prodotti."
+      },
+      {
+        "k": "Real-time",
+        "text": "abilita ecosistemi, asset e avatar dinamici e interattivi."
+      },
+      {
+        "k": "XR",
+        "text": "amplia la qualità della relazione tra brand, spazio e utente in ottica phygital."
+      }
+    ],
+    "method_intro": "Si parte dalla mappatura dei touchpoint, dei vincoli e degli standard di qualità. Si definisce la struttura degli asset, dei formati, delle logiche di aggiornamento e l'ambiente tecnologico.",
+    "method": [
+      {
+        "k": "Mapping",
+        "text": "Touchpoint, vincoli, standard di qualità: la mappa del contesto in cui l'organismo dovrà vivere."
+      },
+      {
+        "k": "Tailoring",
+        "text": "Struttura degli asset, formati, logiche di aggiornamento e ambiente tecnologico su misura."
+      },
+      {
+        "k": "Production",
+        "text": "Produzione ibrida: AI, CGI, real-time e riprese, sotto direzione creativa."
+      },
+      {
+        "k": "Deployment",
+        "text": "Rollout multi-touchpoint, release progressive, ambienti di campagna."
+      },
+      {
+        "k": "Iteration",
+        "text": "Refresh, adaptation, misura. L'organismo continua a evolvere dopo il go-live."
+      }
+    ],
+    "closing": [
+      "On Air",
+      "Live",
+      "Alive"
+    ],
+    "contact_title": "Hai un contenuto che deve <em>sopravvivere?</em>",
+    "contact_email": "frameworks@frame.it",
+    "contact_address": "Frameworks · Frame by Frame S.p.A.\nVia Valadier 42, 00193 Roma",
+    "footer_note": "© 2026 Frame by Frame S.p.A. · Frameworks",
+    "radar_title": "Il contesto <em>cambia.</em> Il Radar lo ascolta.",
+    "radar_text": "Una rassegna di notizie da fonti esterne su media, tecnologia e comunicazione, selezionata dal Radar e commentata dal team. I contenuti appartengono ai rispettivi autori: qui trovi il titolo, la fonte, il link e la nostra lettura.",
+    "modes_enabled": true,
+    "ai_console_enabled": true,
+    "ai_adapt_enabled": true
+  },
+  "caps": [
+    {
+      "id": "content-system",
+      "sort": 1,
+      "name": "Content System",
+      "accent": "System",
+      "short": "CGI, motion, social content, giochi e asset modulari nati per vivere in ecosistemi di distribuzione mutevoli.",
+      "body": "Il contenuto non è un file finito: è un sistema di componenti, regole e varianti. CGI, motion design, social content, giochi e asset modulari progettati per essere declinati su ogni formato e canale, mantenendo coerenza mentre gli ecosistemi di distribuzione cambiano.",
+      "tags": [
+        "CGI",
+        "motion",
+        "social content",
+        "giochi",
+        "asset modulari"
+      ],
+      "image": "/media/frames.jpg",
+      "published": 1
+    },
+    {
+      "id": "activation-system",
+      "sort": 2,
+      "name": "Activation System",
+      "accent": "System",
+      "short": "Rollout multi-touchpoint, campaign environments, release progressive, refresh e adaptation.",
+      "body": "L'attivazione è un processo continuo, non un lancio. Progettiamo ambienti di campagna che si distribuiscono su più touchpoint, con release progressive, refresh programmati e adattamenti guidati dai dati: retail, DOOH e FOOH, eventi, dealer, piattaforme.",
+      "tags": [
+        "rollout",
+        "DOOH / FOOH",
+        "campaign environments",
+        "refresh"
+      ],
+      "image": "/media/dooh.jpg",
+      "published": 1
+    },
+    {
+      "id": "spatial-experiences",
+      "sort": 3,
+      "name": "Spatial Experiences",
+      "accent": "Experiences",
+      "short": "XR, immersive production, installazioni interattive, ambienti phygital, experiences e digital twin.",
+      "body": "Il contenuto esce dallo schermo ed entra nello spazio. Realtà estesa, produzione immersiva, installazioni interattive, ambienti phygital e digital twin per musei, fiere, retail ed eventi: esperienze in cui il visitatore entra nel racconto e ne diventa parte.",
+      "tags": [
+        "XR",
+        "immersive",
+        "installazioni",
+        "phygital",
+        "digital twin"
+      ],
+      "image": "/media/immersive.jpg",
+      "published": 1
+    },
+    {
+      "id": "adaptive-media",
+      "sort": 4,
+      "name": "Adaptive Media",
+      "accent": "Media",
+      "short": "AI-enabled workflows, generative content, avatar, prototipi, variation systems e special projects.",
+      "body": "Flussi di lavoro potenziati dall'intelligenza artificiale: contenuti generativi, avatar, prototipi rapidi e sistemi di variazione che moltiplicano le versioni di un asset per pubblici, lingue e contesti diversi. Sempre con direzione creativa e supervisione umana.",
+      "tags": [
+        "AI workflows",
+        "generative",
+        "avatar",
+        "variation systems",
+        "special projects"
+      ],
+      "image": "/media/screens.jpg",
+      "published": 1
+    }
+  ],
+  "works": [
+    {
+      "id": "boggi",
+      "sort": 1,
+      "client": "Boggi Milano × AC Milan",
+      "label": "Boggi × Milan",
+      "title": "FOOH generativo per una partnership",
+      "year": "2026",
+      "caps": [
+        "adaptive-media",
+        "content-system"
+      ],
+      "short": "Video fake-out-of-home in AI: Milano come palcoscenico, contenuti nativi per i social.",
+      "body": "Un video FOOH realizzato con pipeline generativa per il lancio della partnership tra Boggi Milano e AC Milan: la città diventa scenografia, il prodotto scala oltre il reale, il formato è pensato per vivere sui social e nelle sue varianti. Descrizione segnaposto, da validare con il team di progetto.",
+      "image": "/media/dooh.jpg",
+      "status": "placeholder",
+      "published": 1
+    },
+    {
+      "id": "geely",
+      "sort": 2,
+      "client": "Geely",
+      "label": "Geely",
+      "title": "Dealer Activation AI",
+      "year": "2026",
+      "caps": [
+        "activation-system",
+        "adaptive-media"
+      ],
+      "short": "Attivazione generativa per le aperture dei dealer: ogni visitatore vede il proprio futuro e diventa un contatto.",
+      "body": "Per gli eventi di inaugurazione dei nuovi dealer, i visitatori descrivono il futuro che immaginano e lo vedono realizzato in una fotografia personalizzata a bordo della loro Geely, consegnata via email. L'intrattenimento diventa lead qualificato per il dealer. Descrizione segnaposto, da validare.",
+      "image": "/media/control.jpg",
+      "status": "placeholder",
+      "published": 1
+    },
+    {
+      "id": "reale",
+      "sort": 3,
+      "client": "Reale Mutua",
+      "label": "Reale Mutua",
+      "title": "Esperienza generativa per eventi",
+      "year": "2026",
+      "caps": [
+        "adaptive-media",
+        "activation-system"
+      ],
+      "short": "Attivazione con AI generativa in contesto evento, riferimento del format Frameworks.",
+      "body": "Attivazione con intelligenza artificiale generativa per un contesto evento, diventata il riferimento del format che Frameworks propone ai brand. Descrizione segnaposto: da sostituire con i dati reali del progetto.",
+      "image": "/media/particles.jpg",
+      "status": "placeholder",
+      "published": 1
+    },
+    {
+      "id": "troia",
+      "sort": 4,
+      "client": "Parco archeologico del Colosseo",
+      "label": "Colosseo · Troia e Roma",
+      "title": "Troia e Roma, comparto digitale",
+      "year": "2025",
+      "caps": [
+        "spatial-experiences",
+        "content-system"
+      ],
+      "short": "Contenuti digitali e installazioni per la mostra al Colosseo.",
+      "body": "Progettazione e produzione del comparto digitale della mostra Troia e Roma: contenuti audiovisivi e installazioni per raccontare il mito dentro il monumento. Descrizione segnaposto, da validare.",
+      "image": "/media/immersive.jpg",
+      "status": "placeholder",
+      "published": 1
+    },
+    {
+      "id": "ten",
+      "sort": 5,
+      "client": "Technip Energies",
+      "label": "Technip Energies",
+      "title": "Change management & communication",
+      "year": "2026",
+      "caps": [
+        "content-system",
+        "spatial-experiences"
+      ],
+      "short": "Programma integrato di comunicazione per la relocation della sede italiana: video, esperienza immersiva, app e booklet.",
+      "body": "Un sistema di contenuti per accompagnare le persone nel trasferimento della sede italiana di Technip Energies: video di cantiere e monitoraggio, esperienza immersiva del nuovo headquarters, app e booklet, generati da un'unica architettura narrativa. Proposta tecnica; descrizione segnaposto.",
+      "image": "/media/monolith.jpg",
+      "status": "placeholder",
+      "published": 1
+    },
+    {
+      "id": "serco",
+      "sort": 6,
+      "client": "Serco",
+      "label": "Serco",
+      "title": "Immersive 3D interface",
+      "year": "2025",
+      "caps": [
+        "spatial-experiences",
+        "adaptive-media"
+      ],
+      "short": "Un astrolabio digitale per navigare l'ecosistema di servizi al Living Planet Symposium.",
+      "body": "Interfaccia 3D immersiva ispirata all'astrolabio: geometrie orbitali per orientarsi nell'ecosistema di servizi Serco, pensata come strumento di presentazione a effetto per stakeholder istituzionali. Proposta; descrizione segnaposto.",
+      "image": "/media/torus.jpg",
+      "status": "placeholder",
+      "published": 1
+    }
+  ],
+  "signals": [
+    {
+      "id": "s1",
+      "src": "ExchangeWire",
+      "url": "https://www.exchangewire.com/blog/2026/09/23/viooh-arla-foods-reveal-how-programmatic-dooh-drove-real-world-performance-across-outdoor-campaigns/",
+      "title": "VIOOH & Arla Foods reveal how programmatic DOOH drove real-world performance across outdoor campaigns",
+      "summary": "Nove campagne pDOOH di Arla Foods: visite in negozio entro due giorni dall'esposizione; +71% di visite per Castello a Natale; l'89% dei marketer nordici sposta budget verso il pDOOH.",
+      "date": "2026-09-23",
+      "caps": [
+        "activation-system"
+      ],
+      "why": "Il fuori casa digitale compra contenuti che cambiano per luogo e momento. Servono asset progettati per adattarsi, non file chiusi.",
+      "status": "published"
+    },
+    {
+      "id": "s2",
+      "src": "mean.ceo · AI video news",
+      "url": "https://blog.mean.ceo/ai-video-news-september-2026/",
+      "title": "AI video news, September 2026: multi-model workflows converge into unified workspaces",
+      "summary": "Piattaforme come Higgsfield e Runway riuniscono generazione, editing, doppiaggio e audio in un unico ambiente di lavoro.",
+      "date": "2026-09-14",
+      "caps": [
+        "adaptive-media"
+      ],
+      "why": "La pipeline generativa diventa un sistema unico. Noi la integriamo con la produzione tradizionale, sotto direzione creativa.",
+      "status": "published"
+    },
+    {
+      "id": "s3",
+      "src": "Wyzowl · Video Marketing Statistics 2026",
+      "url": "https://www.wyzowl.com/video-marketing-statistics/",
+      "title": "63% of marketers now use AI video tools in their workflows",
+      "summary": "La survey Wyzowl 2026 citata da Colossyan: quasi due marketer su tre usano già strumenti di AI video.",
+      "date": "2026-09-01",
+      "caps": [
+        "adaptive-media",
+        "content-system"
+      ],
+      "why": "La domanda non è più se usare l'AI, ma come farlo con qualità e coerenza di marca. È il lavoro di un sistema, non di un tool.",
+      "status": "published"
+    },
+    {
+      "id": "s4",
+      "src": "Marketing Dive · IAB",
+      "url": "https://www.marketingdive.com/news/over-half-of-ad-buyers-are-using-generative-ai-for-video-creation-iab/753048/",
+      "title": "Over half of ad buyers are using generative AI for video creation: IAB",
+      "summary": "Il 42% di chi usa la gen-AI per il video vuole versioni diverse dello stesso video per pubblici diversi; il 39% degli spot digitali sarà creato o migliorato con AI nel 2026.",
+      "date": "2025-07-18",
+      "caps": [
+        "content-system",
+        "activation-system"
+      ],
+      "why": "Versioni diverse dello stesso contenuto per pubblici diversi: è la definizione di Adaptive Content System.",
+      "status": "published"
+    },
+    {
+      "id": "s5",
+      "src": "EY · 2026 M&E trends",
+      "url": "https://www.ey.com/en_us/insights/media-entertainment/2026-media-and-entertainment-trends-simplicity-authenticity-and-the-rise-of-experiences",
+      "title": "2026 M&E trends: simplicity, authenticity, and the rise of experiences",
+      "summary": "Autenticità sopra i contenuti generati: la fiducia nelle news al minimo storico (28%); l'intrattenimento branded location-based e le estensioni immersive delle IP diventano priorità strategiche.",
+      "date": "2025-12-17",
+      "caps": [
+        "spatial-experiences",
+        "adaptive-media"
+      ],
+      "why": "Il contenuto esce dallo schermo ed entra negli spazi, e l'AI la guidano le persone. Le due cose insieme sono il nostro terreno.",
+      "status": "published"
+    },
+    {
+      "id": "s6",
+      "src": "Fortune Business Insights",
+      "url": "https://blog.mean.ceo/ai-video-generation-trends-september-2026/",
+      "title": "AI video generator market projected at $847 million in 2026",
+      "summary": "Stima 2026 del mercato dei generatori video AI: 847 milioni di dollari, crescita annua del 18,8%.",
+      "date": "2026-09-01",
+      "caps": [
+        "adaptive-media"
+      ],
+      "why": "Gli strumenti si moltiplicano e si assomigliano. Il valore si sposta su chi sa progettare il sistema che li usa.",
+      "status": "published"
+    },
+    {
+      "id": "s7",
+      "src": "Digital Signage Today",
+      "url": "https://www.digitalsignagetoday.com/blogs/programmatic-dooh-in-2026-from-automated-buying-to-real-world-performance/",
+      "title": "Programmatic DOOH in 2026: from automated buying to real-world performance",
+      "summary": "Il DOOH programmatico matura: dall'acquisto automatizzato alla misurazione della performance nel mondo reale.",
+      "date": "2026-06-01",
+      "caps": [
+        "activation-system"
+      ],
+      "why": "Gli schermi comprano contenuto in tempo reale. Gli asset devono cambiare con il contesto.",
+      "status": "published"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-marketingdive",
+      "name": "Marketing Dive",
+      "url": "https://www.marketingdive.com/feeds/news/",
+      "enabled": 1,
+      "weight": 3
+    },
+    {
+      "id": "src-exchangewire",
+      "name": "ExchangeWire",
+      "url": "https://www.exchangewire.com/feed/",
+      "enabled": 1,
+      "weight": 3
+    },
+    {
+      "id": "src-digiday",
+      "name": "Digiday",
+      "url": "https://digiday.com/feed/",
+      "enabled": 1,
+      "weight": 2
+    },
+    {
+      "id": "src-adexchanger",
+      "name": "AdExchanger",
+      "url": "https://www.adexchanger.com/feed/",
+      "enabled": 1,
+      "weight": 2
+    },
+    {
+      "id": "src-techreview",
+      "name": "MIT Technology Review",
+      "url": "https://www.technologyreview.com/feed/",
+      "enabled": 1,
+      "weight": 1
+    },
+    {
+      "id": "src-ninjamarketing",
+      "name": "Ninja Marketing",
+      "url": "https://www.ninjamarketing.it/feed/",
+      "enabled": 1,
+      "weight": 2
+    },
+    {
+      "id": "src-adweek",
+      "name": "Adweek",
+      "url": "https://www.adweek.com/feed/",
+      "enabled": 1,
+      "weight": 2
+    },
+    {
+      "id": "src-wired-it",
+      "name": "Wired Italia",
+      "url": "https://www.wired.it/feed/rss",
+      "enabled": 1,
+      "weight": 1
+    },
+    {
+      "id": "src-theverge",
+      "name": "The Verge",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "enabled": 0,
+      "weight": 1
+    }
+  ],
+  "radar": {
+    "include": [
+      "AI",
+      "generativ",
+      "DOOH",
+      "out-of-home",
+      "immersive",
+      "XR",
+      "realtà aumentata",
+      "virtual production",
+      "real-time",
+      "content",
+      "video",
+      "brand",
+      "retail media",
+      "streaming",
+      "creator",
+      "CGI",
+      "3D",
+      "avatar",
+      "digital twin",
+      "campaign",
+      "creative"
+    ],
+    "exclude": [
+      "crypto",
+      "bitcoin",
+      "gossip",
+      "calcio",
+      "sport betting",
+      "casino"
+    ],
+    "max_age_days": 21,
+    "max_per_run": 30,
+    "auto_publish": false,
+    "ai_classify": true,
+    "interval_hours": 6
+  },
+  "ai": {
+    "provider": "anthropic",
+    "anthropic_model": "claude-sonnet-4-5",
+    "openai_model": "gpt-4.1-mini",
+    "console_enabled": true,
+    "adapt_enabled": true,
+    "radar_enabled": true,
+    "daily_call_limit": 400
+  }
+}

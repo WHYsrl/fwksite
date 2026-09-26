@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>Frameworks Backoffice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300..800&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/public/css/admin.css">
+</head>
+<body>
+<header class="ab">
+  <a class="ab-logo" href="/admin"><span class="sq"></span>frame<em>works</em> <small>backoffice</small></a>
+  <nav>
+    <a href="/admin" class="<%= path === '/' ? 'on' : '' %>">Dashboard</a>
+    <a href="/admin/testi" class="<%= path.startsWith('/testi') ? 'on' : '' %>">Testi</a>
+    <a href="/admin/capacita" class="<%= path.startsWith('/capacita') ? 'on' : '' %>">Aree</a>
+    <a href="/admin/lavori" class="<%= path.startsWith('/lavori') ? 'on' : '' %>">Lavori</a>
+    <a href="/admin/radar" class="<%= path.startsWith('/radar') ? 'on' : '' %>">Radar</a>
+    <a href="/admin/fonti" class="<%= path.startsWith('/fonti') ? 'on' : '' %>">Fonti e filtri</a>
+    <a href="/admin/ai" class="<%= path.startsWith('/ai') ? 'on' : '' %>">AI <% if (!aiOn) { %><i class="warn" title="chiave API mancante"></i><% } %></a>
+    <a href="/admin/media" class="<%= path.startsWith('/media') ? 'on' : '' %>">Media</a>
+    <a href="/" target="_blank">Sito ↗</a>
+    <form method="post" action="/admin/logout"><button type="submit">Esci</button></form>
+  </nav>
+</header>
+<% if (flash) { %><div class="flash <%= flash.kind %>"><%= flash.msg %></div><% } %>
+<main class="am">

@@ -1,0 +1,9 @@
+<%- include('../partials/admin-head', { title: 'Lavori' }) %>
+<div class="head"><h1>Lavori</h1><a class="btn primary" href="/admin/lavori/new">Nuovo lavoro</a></div>
+<table>
+<tr><th>#</th><th></th><th>Cliente · Titolo</th><th>Aree</th><th>Stato</th><th></th></tr>
+<% works.forEach(w => { %>
+<tr><td class="mono"><%= w.sort %></td><td><% if (w.image) { %><img class="thumb" src="<%= w.image %>" alt=""><% } %></td><td><b><%= w.client %></b><br><%= w.title %> <small class="mono">· <%= w.year %></small></td><td><small><%= w.caps.map(id => (caps.find(c => c.id === id) || {}).name || id).join(', ') %></small></td><td><span class="pill <%= w.status %>"><%= w.status %></span><% if (!w.published) { %> · nascosto<% } %></td><td><a class="btn sm" href="/admin/lavori/<%= w.id %>">Modifica</a></td></tr>
+<% }) %>
+</table>
+<%- include('../partials/admin-foot') %>

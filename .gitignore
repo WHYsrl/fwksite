@@ -1,0 +1,10 @@
+node_modules
+data/
+.env
+preview/
+*.log
+.DS_Store
+# materiali di lavoro non del sito
+Claude outputs/
+*.pdf
+*.zip

@@ -1,0 +1,27 @@
+<%- include('../partials/admin-head', { title: 'AI' }) %>
+<h1>Intelligenza artificiale</h1>
+<p class="muted">Stato: <b><%= cfg.key ? 'configurata · ' + cfg.provider + ' · ' + cfg.model : 'NON configurata (manca la chiave API)' %></b>. Le chiavi nelle variabili d'ambiente hanno la precedenza su quelle salvate qui.<% if (env.anthropic || env.openai) { %> Chiavi da ambiente: <%= [env.anthropic ? 'ANTHROPIC_API_KEY' : '', env.openai ? 'OPENAI_API_KEY' : ''].filter(Boolean).join(', ') %>.<% } %></p>
+<form method="post" action="/admin/ai" class="form">
+<div class="grid2">
+  <section class="card">
+    <h2>Provider</h2>
+    <label>Provider attivo <select name="provider"><option value="anthropic" <%= ai.provider === 'anthropic' ? 'selected' : '' %>>Anthropic (Claude)</option><option value="openai" <%= ai.provider === 'openai' ? 'selected' : '' %>>OpenAI</option></select></label>
+    <label>Chiave Anthropic <input name="anthropic_key" value="<%= ai.anthropic_key ? '••••••••' + ai.anthropic_key.slice(-4) : '' %>" placeholder="sk-ant-…" autocomplete="off"></label>
+    <label>Modello Anthropic <input name="anthropic_model" value="<%= ai.anthropic_model %>"></label>
+    <label>Chiave OpenAI <input name="openai_key" value="<%= ai.openai_key ? '••••••••' + ai.openai_key.slice(-4) : '' %>" placeholder="sk-…" autocomplete="off"></label>
+    <label>Modello OpenAI <input name="openai_model" value="<%= ai.openai_model %>"></label>
+    <label class="check"><input type="checkbox" name="clear_keys"> Cancella le chiavi salvate qui</label>
+  </section>
+  <section class="card">
+    <h2>Funzioni</h2>
+    <label class="check"><input type="checkbox" name="console_enabled" <%= ai.console_enabled ? 'checked' : '' %>> Console prompt (navigazione in linguaggio naturale)</label>
+    <label class="check"><input type="checkbox" name="adapt_enabled" <%= ai.adapt_enabled ? 'checked' : '' %>> "Adatta al tuo contesto" (riscrittura di lavori e aree)</label>
+    <label class="check"><input type="checkbox" name="radar_enabled" <%= ai.radar_enabled ? 'checked' : '' %>> Radar: classificazione e bozza della lettura</label>
+    <label>Limite chiamate al giorno <input name="daily_call_limit" type="number" value="<%= ai.daily_call_limit %>"></label>
+    <p class="mono muted">Oggi: <%= today %> chiamate. Le risposte identiche sono in cache (console 24h, adatta 7 giorni).</p>
+    <div class="row"><button class="btn primary" name="action" value="save">Salva</button><button class="btn" name="action" value="test">Salva e prova la connessione</button></div>
+  </section>
+</div>
+</form>
+<section class="card"><h2>Uso ultimi 30 giorni</h2><table><tr><th>Funzione</th><th>Chiamate</th><th>Token</th></tr><% stats.forEach(s => { %><tr><td><%= s.kind %></td><td><%= s.n %></td><td><%= s.tokens || 0 %></td></tr><% }) %><% if (!stats.length) { %><tr><td colspan="3" class="muted">Nessuna chiamata</td></tr><% } %></table></section>
+<%- include('../partials/admin-foot') %>

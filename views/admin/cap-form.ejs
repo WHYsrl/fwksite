@@ -1,0 +1,25 @@
+<%- include('../partials/admin-head', { title: isNew ? 'Nuova area' : cap.name }) %>
+<div class="head"><h1><%= isNew ? 'Nuova area' : cap.name %></h1><a class="btn" href="/admin/capacita">← Aree</a></div>
+<form method="post" action="/admin/capacita/<%= isNew ? 'new' : cap.id %>" enctype="multipart/form-data" class="form">
+  <section class="card">
+    <div class="grid3">
+      <% if (isNew) { %><label>ID (slug, opzionale) <input name="id" value="" placeholder="es. content-system"></label><% } %>
+      <label>Ordine <input name="sort" type="number" value="<%= cap.sort %>"></label>
+      <label>Nome <input name="name" value="<%= cap.name %>" required></label>
+      <label>Parola in corsivo (accento) <input name="accent" value="<%= cap.accent %>" placeholder="es. System"></label>
+    </div>
+    <label>Sintesi (una riga, mostrata nelle card e usata dall'AI) <input name="short" value="<%= cap.short %>"></label>
+    <label>Descrizione <textarea name="body" rows="6"><%= cap.body %></textarea></label>
+    <label>Tag (separati da virgola) <input name="tags" value="<%= cap.tags.join(', ') %>"></label>
+    <div class="grid2">
+      <label>Immagine (URL) <input name="image" id="cap-image" value="<%= cap.image %>"></label>
+      <label>…oppure scegli dai media <select data-pick="#cap-image" data-preview="#cap-prev"><option value="">—</option><% media.forEach(m => { %><option value="<%= m.path %>"><%= m.filename %></option><% }) %></select></label>
+    </div>
+    <label>…oppure carica un file <input type="file" name="image_file" accept="image/*"></label>
+    <% if (cap.image) { %><img id="cap-prev" class="prev" src="<%= cap.image %>" alt=""><% } else { %><img id="cap-prev" class="prev" alt="" hidden><% } %>
+    <label class="check"><input type="checkbox" name="published" <%= cap.published ? 'checked' : '' %>> Pubblicata</label>
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Salva</button></div>
+</form>
+<% if (!isNew) { %><form method="post" action="/admin/capacita/<%= cap.id %>/delete" data-confirm="Eliminare questa area?"><button class="btn danger" type="submit">Elimina</button></form><% } %>
+<%- include('../partials/admin-foot') %>

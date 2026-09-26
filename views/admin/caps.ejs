@@ -1,0 +1,10 @@
+<%- include('../partials/admin-head', { title: 'Aree' }) %>
+<div class="head"><h1>Aree (capacità)</h1><a class="btn primary" href="/admin/capacita/new">Nuova area</a></div>
+<p class="muted">Sono i nodi principali della Console. Ordine = campo "sort".</p>
+<table>
+<tr><th>#</th><th>Nome</th><th>Sintesi</th><th>Tag</th><th>Stato</th><th></th></tr>
+<% caps.forEach(c => { %>
+<tr><td class="mono"><%= c.sort %></td><td><b><%= c.name %></b><br><small class="mono"><%= c.id %></small></td><td><%= c.short %></td><td><small><%= c.tags.join(', ') %></small></td><td><%= c.published ? 'pubblicata' : 'nascosta' %></td><td><a class="btn sm" href="/admin/capacita/<%= c.id %>">Modifica</a></td></tr>
+<% }) %>
+</table>
+<%- include('../partials/admin-foot') %>

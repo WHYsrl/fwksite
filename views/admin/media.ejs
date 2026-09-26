@@ -1,0 +1,8 @@
+<%- include('../partials/admin-head', { title: 'Media' }) %>
+<div class="head"><h1>Media</h1></div>
+<form method="post" action="/admin/media/upload" enctype="multipart/form-data" class="card row"><input type="file" name="files" multiple accept="image/*,video/mp4,video/webm" required><button class="btn primary" type="submit">Carica</button><span class="muted">JPG, PNG, WebP, MP4 · max 25 MB per file. Le immagini generate con FAC sono in /media/ (cartella public).</span></form>
+<div class="media-grid">
+<% media.forEach(m => { %><figure class="card"><% if (m.mime.startsWith('video')) { %><video src="<%= m.path %>" muted></video><% } else { %><img src="<%= m.path %>" alt=""><% } %><figcaption><code><%= m.path %></code><br><small><%= m.filename %> · <%= Math.round(m.size/1024) %> KB</small><form method="post" action="/admin/media/<%= m.id %>/delete" data-confirm="Eliminare il file?"><button class="btn sm danger">Elimina</button></form></figcaption></figure><% }) %>
+<% if (!media.length) { %><p class="muted">Nessun file caricato.</p><% } %>
+</div>
+<%- include('../partials/admin-foot') %>

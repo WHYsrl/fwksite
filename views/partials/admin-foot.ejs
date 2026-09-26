@@ -1,0 +1,7 @@
+</main>
+<script>
+document.querySelectorAll('[data-confirm]').forEach(f=>f.addEventListener('submit',e=>{ if(!confirm(f.dataset.confirm)) e.preventDefault(); }));
+document.querySelectorAll('[data-pick]').forEach(sel=>sel.addEventListener('change',()=>{ const t=document.querySelector(sel.dataset.pick); if(t){ t.value=sel.value; const p=document.querySelector(sel.dataset.preview); if(p) p.src=sel.value; } }));
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<%- include('../partials/admin-head', { title: 'Radar' }) %>
+<div class="head"><h1>Radar</h1><form method="post" action="/admin/radar/run"><button class="btn primary" type="submit">Esegui il Radar ora</button></form></div>
+<p class="mono muted"><% if (last) { %>Ultimo giro <%= new Date(last.at).toLocaleString('it-IT') %> · lette <%= last.stats.fetched %> · in coda <%= last.stats.added %> · filtrate <%= last.stats.filtered %> · duplicate <%= last.stats.duplicates %><% if (last.stats.errors.length) { %> · errori: <%= last.stats.errors.join(' | ') %><% } %><% } else { %>Nessun giro eseguito.<% } %> · Auto-pubblicazione: <%= radar.auto_publish ? 'sì' : 'no' %> · Classificazione AI: <%= radar.ai_classify ? 'sì' : 'no' %> (<a href="/admin/fonti">filtri</a>)</p>
+
+<h2>In attesa (<%= pending.length %>)</h2>
+<% if (!pending.length) { %><p class="muted">Nessuna notizia in coda.</p><% } %>
+<% pending.forEach(s => { %>
+<form method="post" action="/admin/radar/<%= s.id %>" class="card signal">
+  <div class="sig-head"><span class="mono"><%= s.src %> · <%= s.date %><% if (s.ai) { %> · AI: <%= s.ai.relevant ? 'rilevante' : 'poco rilevante' %> <%= s.ai.score %>/100<% } %></span><a href="<%= s.url %>" target="_blank" rel="noopener">apri la fonte ↗</a></div>
+  <label>Titolo (originale, di terzi) <input name="title" value="<%= s.title %>"></label>
+  <label>Riassunto neutro <textarea name="summary" rows="2"><%= s.summary %></textarea></label>
+  <label>La nostra lettura ("perché ci riguarda") <textarea name="why" rows="2"><%= s.why %></textarea></label>
+  <div class="row wrap"><span class="mono">Aree:</span><% caps.forEach(c => { %><label class="check"><input type="checkbox" name="caps" value="<%= c.id %>" <%= s.caps.includes(c.id) ? 'checked' : '' %>> <%= c.name %></label><% }) %><input type="hidden" name="src" value="<%= s.src %>"><input type="hidden" name="date" value="<%= s.date %>"></div>
+  <div class="row"><button class="btn primary" name="action" value="approve">Pubblica</button><button class="btn" name="action" value="save">Salva</button><button class="btn" name="action" value="reject">Scarta</button><button class="btn danger" name="action" value="delete">Elimina</button></div>
+</form>
+<% }) %>
+
+<h2>Pubblicati (<%= published.length %>)</h2>
+<% published.forEach(s => { %>
+<details class="card"><summary><span class="mono"><%= s.date %> · <%= s.src %></span> — <%= s.title %></summary>
+<form method="post" action="/admin/radar/<%= s.id %>">
+  <label>Titolo <input name="title" value="<%= s.title %>"></label>
+  <label>Riassunto <textarea name="summary" rows="2"><%= s.summary %></textarea></label>
+  <label>La nostra lettura <textarea name="why" rows="2"><%= s.why %></textarea></label>
+  <div class="row wrap"><span class="mono">Aree:</span><% caps.forEach(c => { %><label class="check"><input type="checkbox" name="caps" value="<%= c.id %>" <%= s.caps.includes(c.id) ? 'checked' : '' %>> <%= c.name %></label><% }) %><input type="hidden" name="src" value="<%= s.src %>"><input type="hidden" name="date" value="<%= s.date %>"></div>
+  <div class="row"><button class="btn" name="action" value="save">Salva</button><button class="btn" name="action" value="unpublish">Ritira</button><button class="btn danger" name="action" value="delete">Elimina</button> <a class="mono" href="<%= s.url %>" target="_blank" rel="noopener">fonte ↗</a></div>
+</form></details>
+<% }) %>
+
+<details class="card"><summary>Aggiungi un segnale a mano</summary>
+<form method="post" action="/admin/radar/new">
+  <div class="grid3"><label>Fonte <input name="src" required></label><label>Data (AAAA-MM-GG) <input name="date"></label><label>URL <input name="url" required></label></div>
+  <label>Titolo <input name="title" required></label><label>Riassunto <textarea name="summary" rows="2"></textarea></label><label>La nostra lettura <textarea name="why" rows="2"></textarea></label>
+  <div class="row wrap"><% caps.forEach(c => { %><label class="check"><input type="checkbox" name="caps" value="<%= c.id %>"> <%= c.name %></label><% }) %></div>
+  <button class="btn primary" type="submit">Pubblica</button>
+</form></details>
+<% if (rejected.length) { %><details class="card"><summary>Scartati (<%= rejected.length %>)</summary><% rejected.forEach(s => { %><form method="post" action="/admin/radar/<%= s.id %>" class="row"><span class="mono"><%= s.date %> · <%= s.src %></span> <%= s.title %> <button class="btn sm" name="action" value="unpublish">Rimetti in coda</button><button class="btn sm danger" name="action" value="delete">Elimina</button></form><% }) %></details><% } %>
+<%- include('../partials/admin-foot') %>

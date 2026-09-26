@@ -1,0 +1,30 @@
+<%- include('../partials/admin-head', { title: 'Dashboard' }) %>
+<h1>Dashboard</h1>
+<div class="grid4">
+  <a class="card stat" href="/admin/capacita"><small>Aree</small><b><%= counts.caps %></b></a>
+  <a class="card stat" href="/admin/lavori"><small>Lavori</small><b><%= counts.works %></b></a>
+  <a class="card stat" href="/admin/radar"><small>Radar · in attesa</small><b><%= counts.signals.pending || 0 %></b><span>pubblicati: <%= counts.signals.published || 0 %></span></a>
+  <a class="card stat" href="/admin/ai"><small>AI · chiamate oggi</small><b><%= aiToday %></b><span><%= ai.key ? (ai.provider + ' · ' + ai.model) : 'chiave mancante' %></span></a>
+</div>
+<div class="grid2">
+  <section class="card">
+    <h2>Radar</h2>
+    <% if (radar) { %><p class="mono">Ultimo giro: <%= new Date(radar.at).toLocaleString('it-IT') %> · lette <%= radar.stats.fetched %> · in coda <%= radar.stats.added %> · filtrate <%= radar.stats.filtered %> · duplicate <%= radar.stats.duplicates %><% if (radar.stats.errors.length) { %> · errori <%= radar.stats.errors.length %><% } %></p><% } else { %><p class="mono">Nessun giro ancora eseguito.</p><% } %>
+    <form method="post" action="/admin/radar/run"><button class="btn" type="submit">Esegui il Radar ora</button></form>
+  </section>
+  <section class="card">
+    <h2>Backup dei contenuti</h2>
+    <p><a class="btn" href="/admin/export.json">Scarica export JSON</a></p>
+    <form method="post" action="/admin/import" enctype="multipart/form-data" class="row" data-confirm="Importare questo file? I contenuti con lo stesso id verranno sovrascritti.">
+      <input type="file" name="file" accept="application/json" required><button class="btn" type="submit">Importa</button>
+    </form>
+  </section>
+</div>
+<section class="card">
+  <h2>Uso AI ultimi 30 giorni</h2>
+  <table><tr><th>Funzione</th><th>Chiamate</th><th>Token</th></tr>
+  <% aiStats.forEach(s => { %><tr><td><%= s.kind %></td><td><%= s.n %></td><td><%= s.tokens || 0 %></td></tr><% }) %>
+  <% if (!aiStats.length) { %><tr><td colspan="3" class="muted">Nessuna chiamata registrata</td></tr><% } %>
+  </table>
+</section>
+<%- include('../partials/admin-foot') %>

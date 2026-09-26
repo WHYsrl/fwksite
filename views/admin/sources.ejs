@@ -1,0 +1,28 @@
+<%- include('../partials/admin-head', { title: 'Fonti e filtri' }) %>
+<h1>Fonti e filtri del Radar</h1>
+<div class="grid2">
+<section class="card">
+  <h2>Fonti RSS</h2>
+  <table><tr><th>Fonte</th><th>Peso</th><th>Ultimo giro</th><th></th></tr>
+  <% sources.forEach(s => { %><tr class="<%= s.enabled ? '' : 'off' %>"><td><b><%= s.name %></b><br><small class="mono"><%= s.url %></small></td><td><%= s.weight %></td><td><small class="mono"><%= s.last_status || '—' %></small></td><td class="row"><form method="post" action="/admin/fonti/<%= s.id %>/toggle"><button class="btn sm"><%= s.enabled ? 'Disattiva' : 'Attiva' %></button></form><form method="post" action="/admin/fonti/<%= s.id %>/delete" data-confirm="Eliminare la fonte?"><button class="btn sm danger">×</button></form></td></tr><% }) %>
+  </table>
+  <h3>Aggiungi fonte</h3>
+  <form method="post" action="/admin/fonti" class="grid3"><label>Nome <input name="name" required></label><label>URL RSS <input name="url" required placeholder="https://…/feed"></label><label>Peso (1-5) <input name="weight" type="number" value="1" min="1" max="5"></label><button class="btn primary" type="submit">Aggiungi</button></form>
+</section>
+<section class="card">
+  <h2>Filtri</h2>
+  <form method="post" action="/admin/radar-filtri" class="form">
+    <label>Parole chiave da includere (almeno una deve comparire; una per riga o separate da virgola) <textarea name="include" rows="6"><%= (radar.include || []).join('\n') %></textarea></label>
+    <label>Parole chiave da escludere <textarea name="exclude" rows="4"><%= (radar.exclude || []).join('\n') %></textarea></label>
+    <div class="grid3">
+      <label>Età massima (giorni) <input name="max_age_days" type="number" value="<%= radar.max_age_days %>"></label>
+      <label>Max notizie per giro <input name="max_per_run" type="number" value="<%= radar.max_per_run %>"></label>
+      <label>Intervallo (ore) <input name="interval_hours" type="number" value="<%= radar.interval_hours %>"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="ai_classify" <%= radar.ai_classify ? 'checked' : '' %>> Classificazione AI (rilevanza, aree, bozza della nostra lettura)</label>
+    <label class="check"><input type="checkbox" name="auto_publish" <%= radar.auto_publish ? 'checked' : '' %>> Pubblica automaticamente le notizie con punteggio AI ≥ 70 (altrimenti tutto resta in attesa di approvazione)</label>
+    <button class="btn primary" type="submit">Salva i filtri</button>
+  </form>
+</section>
+</div>
+<%- include('../partials/admin-foot') %>
