@@ -157,6 +157,18 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .adapt .go{margin-top:10px;width:100%;justify-content:center}
 .adapt-out{margin-top:14px;padding:14px 16px;border-left:2px solid var(--accent);background:var(--bg-2);border-radius:0 8px 8px 0;font-size:15px;color:var(--ink-2);white-space:pre-wrap}
 .adapt-out .who{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:6px}
+.adapt-hint{color:var(--ink-3);font-size:13.5px;margin:-4px 0 12px}
+.adapt-out.rich{white-space:normal;padding:16px 18px}
+.adapt-sum{color:var(--ink);font-size:16px;line-height:1.4;margin:0 0 12px}
+.ideas{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:idea}
+.ideas li{counter-increment:idea;position:relative;padding:12px 14px 12px 40px;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:grid;gap:5px}
+.ideas li::before{content:counter(idea,decimal-leading-zero);position:absolute;left:13px;top:13px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--accent-ink)}
+.ideas b{color:var(--ink);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.ideas span{color:var(--ink-2);font-size:14px;line-height:1.45}
+.ideas small{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.adapt-next{margin:14px 0 0;color:var(--ink-2);font-size:14px;line-height:1.45;font-style:italic}
+.adapt-cta{margin-top:12px}
+.adapt-cta .btn{width:100%;justify-content:center}
 
 
 /* ---------- intro ---------- */
@@ -333,6 +345,19 @@ body.cwin-open{overflow:hidden}
 .cap-body h3{font-size:clamp(28px,2.6vw,38px);line-height:1.05;letter-spacing:-.025em}
 .cap-body h3 .serif{font-weight:400;color:var(--accent-ink)}
 .cap-body p{color:var(--ink-2);font-size:15.5px;max-width:48ch}
+.cap-body .tech-tags .tag{color:var(--ink-2);border-color:rgba(255,255,255,.18);background:rgba(5,3,7,.35)}
+.cap-more{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin-top:4px;opacity:.85;transition:opacity .3s}
+.cap:hover .cap-more{opacity:1}
+/* hero · "in pratica" */
+.hero-concrete{margin-top:16px;max-width:52ch;font-size:15px;line-height:1.5;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--accent)}
+.hero-concrete b{color:var(--ink);font-weight:600}
+/* dettaglio area · casi d'uso e tecnologie */
+.d-concrete{display:grid;gap:18px;margin:22px 0 6px;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--bg-2)}
+.d-concrete .tags{margin-top:10px}
+.d-concrete .tag{color:var(--ink-2);border-color:rgba(255,255,255,.16)}
+.uses{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.uses li{position:relative;padding-left:16px;font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+.uses li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
 
 /* organismo · frame morph */
 .morph{margin-top:32px;display:flex;align-items:center;gap:20px}
@@ -618,6 +643,9 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .area-card div{padding:16px}
   .area-card h3{font-size:24px;letter-spacing:-.02em;line-height:1.05}
   .area-card h3 .serif{color:var(--accent-ink);font-weight:400}
+  .card-more{display:block;margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink)}
+  .m-concrete{padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--bg-2);font-size:14.5px;line-height:1.5;color:var(--ink-2);border-left:3px solid var(--accent)}
+  .m-concrete b{color:var(--ink);font-weight:600}
   .area-card p{color:var(--ink-2);font-size:14.5px;margin-top:8px}
   .area-card .tags{margin-top:10px}
   /* statement / testo */

@@ -14,6 +14,9 @@ store.seedIfEmpty();
 store.seedTeamIfEmpty();
 { const applied = store.applyContentPatches(); if (applied.length) console.log("Patch contenuti applicate:", applied.join(", ")); }
 store.seedConsoleContext();
+// "In concreto": tecnologie, formati e casi d'uso per area; al primo avvio sostituisce i testi astratti delle aree
+const concrete = require("./concrete");
+if (concrete.migrate()) console.log("Aree: testi concreti, tecnologie e casi d'uso applicati");
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
 const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
 store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(q, 7, lang) })));
@@ -39,11 +42,11 @@ app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 // ---------- sito pubblico ----------
 app.get("/", (req, res) => {
   feeds.maybeRefresh(); // se il Radar è vecchio, si aggiorna in background
-  const content = store.getContent();
+  const content = concrete.decorate(store.getContent());
   res.set("Cache-Control", "no-cache");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured() });
 });
-app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(store.getContent()); });
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(concrete.decorate(store.getContent())); });
 // Radar: ricerca dal vivo per il visitatore (fonti esterne, non curate)
 app.get("/api/radar/search", limit, async (req, res) => {
   const q = String(req.query.q || "").trim().slice(0, 80); if (q.length < 2) return res.status(400).json({ error: "Scrivi almeno due lettere" });

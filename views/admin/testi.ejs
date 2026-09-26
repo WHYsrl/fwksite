@@ -11,6 +11,7 @@
     <label>Titolo <input name="hero_title" value="<%= site.hero_title %>"></label>
     <label>Tagline (una riga, usata anche dall'AI) <input name="tagline" value="<%= site.tagline %>"></label>
     <label>Testo <textarea name="hero_text" rows="4"><%= site.hero_text %></textarea></label>
+    <label>"In pratica" (una riga concreta sotto il testo: cosa facciamo, con che tecnologie, dove) <textarea name="hero_concrete" rows="2"><%= site.hero_concrete || '' %></textarea></label>
     <div class="grid3">
       <label>Bottone <input name="hero_cta" value="<%= site.hero_cta %>"></label>
       <label>Immagine desktop (URL) <input name="hero_image" value="<%= site.hero_image %>"></label>

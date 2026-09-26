@@ -50,7 +50,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
   <div class="cwin-top"><span class="eyebrow"><span class="dot"></span>Console · <%= site.brand %></span><button type="button" class="x" id="cwin-close" aria-label="Chiudi la Console">✕</button></div>
   <div class="cwin-thread" id="cwin-thread"></div>
   <form class="cwin-form" id="cwin-form" autocomplete="off">
-    <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="Scrivi cosa cerchi, o quanto tempo hai" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div>
+    <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="Una domanda su Frameworks, o sul nostro mestiere" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div>
     <div class="chips" id="cwin-chips"></div>
   </form>
 </div>
@@ -126,10 +126,11 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <div class="eyebrow"><span class="dot"></span><%= site.claim %></div>
     <h1 class="split"><%- em(site.hero_title) %></h1>
     <p class="lead"><%= site.hero_text %></p>
+    <% if (site.hero_concrete) { %><p class="hero-concrete"><b>In pratica:</b> <%= site.hero_concrete %></p><% } %>
     <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
       <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>
-      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · ho fretta · mostrami l'immersivo"><button type="submit" aria-label="Apri la Console">→</button></div>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · quali visori usate? · che formati servono per il DOOH?"><button type="submit" aria-label="Apri la Console">→</button></div>
     </form>
   </div>
   <div class="hint" aria-hidden="true"><span>trascina i nodi <i></i></span><span>clic per aprire <i></i></span><span>punti chiari = radar, fonti esterne <i></i></span></div>
@@ -170,7 +171,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
-      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></h3><p><%= c.short %></p><div class="tags"><% c.tags.forEach(t => { %><span class="tag"><%= t %></span><% }) %></div></div>
+      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></h3><p><%= c.short %></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(t => { %><span class="tag"><%= t %></span><% }) %></div><span class="cap-more">Casi d'uso e tecnologie →</span></div>
     </button>
     <% }) %>
   </div>

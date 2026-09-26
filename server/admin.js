@@ -7,6 +7,7 @@ const multer = require("multer");
 const store = require("./db");
 const ai = require("./ai");
 const feeds = require("./feeds");
+const concrete = require("./concrete");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -48,7 +49,7 @@ router.get("/testi", (req, res) => res.render("admin/testi", { site: store.getSe
 router.post("/testi", (req, res) => {
   const b = req.body; const site = store.getSetting("site", {});
   const s = { ...site,
-    brand: b.brand, claim: b.claim, tagline: b.tagline, hero_title: b.hero_title, hero_text: b.hero_text, hero_cta: b.hero_cta, hero_image: b.hero_image, hero_image_mobile: b.hero_image_mobile,
+    brand: b.brand, claim: b.claim, tagline: b.tagline, hero_title: b.hero_title, hero_text: b.hero_text, hero_concrete: b.hero_concrete, hero_cta: b.hero_cta, hero_image: b.hero_image, hero_image_mobile: b.hero_image_mobile,
     context_text: b.context_text, organism_title: b.organism_title, organism_text: b.organism_text, tech_title: b.tech_title, method_intro: b.method_intro, team_title: b.team_title, team_text: b.team_text,
     contact_title: b.contact_title, contact_email: b.contact_email, contact_address: b.contact_address, footer_note: b.footer_note, radar_title: b.radar_title, radar_text: b.radar_text,
     statements: lines(b.statements), closing: lines(b.closing),
@@ -72,14 +73,15 @@ router.post("/contesto", async (req, res) => {
 
 // ---------- capacità ----------
 router.get("/capacita", (req, res) => res.render("admin/caps", { caps: store.listCaps(true) }));
-router.get("/capacita/new", (req, res) => res.render("admin/cap-form", { cap: { id: "", sort: store.listCaps(true).length + 1, name: "", accent: "", short: "", body: "", tags: [], image: "", published: true }, media: store.listMedia(), isNew: true }));
-router.get("/capacita/:id", (req, res) => { const cap = store.getCap(req.params.id); if (!cap) return res.redirect("/admin/capacita"); res.render("admin/cap-form", { cap, media: store.listMedia(), isNew: false }); });
+router.get("/capacita/new", (req, res) => res.render("admin/cap-form", { cap: { id: "", sort: store.listCaps(true).length + 1, name: "", accent: "", short: "", body: "", tags: [], uses: [], tech: [], image: "", published: true }, media: store.listMedia(), isNew: true }));
+router.get("/capacita/:id", (req, res) => { const cap = store.getCap(req.params.id); if (!cap) return res.redirect("/admin/capacita"); res.render("admin/cap-form", { cap: { ...cap, ...concrete.forCap(cap.id) }, media: store.listMedia(), isNew: false }); });
 router.post("/capacita/:id", upload.single("image_file"), (req, res) => {
   const b = req.body; const image = req.file ? registerUpload(req.file) : b.image;
   const id = store.upsertCap({ id: req.params.id === "new" ? (b.id || undefined) : req.params.id, sort: b.sort, name: b.name, accent: b.accent, short: b.short, body: b.body, tags: b.tags, image, published: !!b.published });
+  concrete.setCap(id, { uses: b.uses, tech: b.tech }); // casi d'uso e tecnologie (una voce per riga)
   flash(req, "Capacità salvata"); res.redirect("/admin/capacita/" + id);
 });
-router.post("/capacita/:id/delete", (req, res) => { store.deleteCap(req.params.id); flash(req, "Capacità eliminata"); res.redirect("/admin/capacita"); });
+router.post("/capacita/:id/delete", (req, res) => { store.deleteCap(req.params.id); concrete.removeCap(req.params.id); flash(req, "Capacità eliminata"); res.redirect("/admin/capacita"); });
 
 // ---------- lavori ----------
 router.get("/lavori", (req, res) => res.render("admin/works", { works: store.listWorks(true), caps: store.listCaps(true) }));
