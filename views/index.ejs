@@ -199,8 +199,10 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 </section>
 <footer class="desktop-only"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
 
-<!-- ============================ MOBILE ============================ -->
-<div class="feed-shell mobile-only"><div id="feed"></div><div class="rail" id="rail" aria-hidden="true"></div><div class="compose" id="compose" aria-hidden="true"></div>
+<!-- ============================ MOBILE (app) ============================ -->
+<div class="app-shell mobile-only">
+  <div class="app" id="app"></div>
+  <nav class="tabbar" id="tabbar" aria-label="Sezioni"></nav>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="Chiudi">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
 </div>
 </main>

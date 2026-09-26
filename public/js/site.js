@@ -149,7 +149,10 @@ document.addEventListener("click", e => {
   const n = e.target.closest("[data-open-node]"); if (n) { openDetail(byId(n.dataset.openNode)); return; }
   const go = e.target.closest(".adapt .go"); if (go) runAdapt(go.closest(".adapt"));
   const c = e.target.closest("[data-copy]"); if (c) copyText(c);
-  const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { const card = $("#feed .kind-contact"); if (card) { e.preventDefault(); card.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }); } }
+  const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { e.preventDefault(); openContactSheet(); }
+  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") openConsoleSheet(); else App.show(tab.dataset.tab); }
+  const chip = e.target.closest("[data-ask]"); if (chip) { const f = chip.closest(".prompt") || $("#prompt-sheet"); if (f) { $("input", f).value = chip.dataset.ask; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })); } }
+  const filt = e.target.closest("[data-filter]"); if (filt) { $$("[data-filter]", filt.parentElement).forEach(b => b.classList.toggle("on", b === filt)); App.filterWorks(filt.dataset.filter); }
 });
 async function runAdapt(box) {
   const out = $(".adapt-out", box), go = $(".go", box);
@@ -179,9 +182,9 @@ function bindPrompt(form) {
     try {
       const r = await AI.console(q);
       out.className = "prompt-out"; out.innerHTML = `<span class="who">Console</span>${esc(r.answer || "")}`;
-      if (r.highlight && r.highlight.length) { if (Console) Console.highlight(r.highlight); flashCards(r.highlight); }
+      if (r.highlight && r.highlight.length) { if (Console) Console.highlight(r.highlight); flashCards(r.highlight); const res = $(".prompt-results", form); if (res) res.innerHTML = r.highlight.map(byId).filter(Boolean).map(i => `<button class="lc" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt=""><div><div class="eyebrow">${i.kind === "cap" ? "Area" : i.kind === "work" ? esc(i.client) : "Radar · fonte esterna"}</div><h3>${esc(i.kind === "work" ? i.title : i.kind === "signal" ? i.title : i.name)}</h3></div></button>`).join(""); }
       if (r.mode) { if (r.mode.density && ["2", "10", "all"].includes(String(r.mode.density))) Modes.set("density", String(r.mode.density)); if (r.mode.energy && ["calm", "vivid"].includes(r.mode.energy)) Modes.set("mood", r.mode.energy); }
-      if (r.open) setTimeout(() => openDetail(byId(r.open)), 900);
+      if (r.open && !isMobile()) setTimeout(() => openDetail(byId(r.open)), 900);
     } catch (err) { out.className = "prompt-out"; out.innerHTML = `<span class="who">Console</span>${esc(err.message || "Non riesco a rispondere adesso.")}`; }
   });
 }
@@ -296,66 +299,89 @@ function animateDesktop() {
 }
 
 /* =========================================================
-   FEED MOBILE — stessi contenuti, composizione diversa
+   APP MOBILE — tab bar, schermate, sheet. Stessi contenuti,
+   esperienza diversa dal desktop.
    ========================================================= */
-function composeFeed() {
-  const c = Ctx.local(); const caps = [...DATA.caps], works = [...DATA.works], sigs = DATA.signals.slice(0, 6);
-  const seq = [{ kind: "manifesto" }, { kind: "prompt" }];
-  const signalsFirst = c.slot === "mattina" || c.slot === "notte";
-  let k = 0;
-  while (caps.length || works.length || sigs.length) {
-    if (caps.length) seq.push({ kind: "cap", item: caps.shift() });
-    const a = signalsFirst ? sigs : works, b = signalsFirst ? works : sigs;
-    if (a.length) seq.push({ kind: a === sigs ? "signal" : "work", item: a.shift() });
-    if (b.length) seq.push({ kind: b === sigs ? "signal" : "work", item: b.shift() });
-    if (k === 0) seq.push({ kind: "statement", i: 0, purple: true }); if (k === 1) seq.push({ kind: "organism" }); if (k === 2) seq.push({ kind: "method" });
-    k++;
-  }
-  seq.push({ kind: "statement", i: 2 }, { kind: "context" }, { kind: "contact" });
-  const tier = { manifesto: 2, prompt: 2, cap: 2, work: 2, contact: 2, signal: 10, statement: 10, organism: 10, method: 10, context: "all" };
-  return { seq: seq.filter(s => { const t = tier[s.kind]; return Modes.density === "all" || (Modes.density === "10" && t !== "all") || (Modes.density === "2" && t === 2); }), c, signalsFirst };
+const ICONS = {
+  home: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>',
+  sistema: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 4v5M12 15v5M4 12h5M15 12h5"/></svg>',
+  console: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>',
+  lavori: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 5v14"/></svg>',
+  radar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v9l6 4"/></svg>'
+};
+const greet = () => { const h = new Date().getHours(); return h < 6 ? "Buonanotte." : h < 12 ? "Buongiorno." : h < 18 ? "Buon pomeriggio." : "Buonasera."; };
+const App = {
+  current: "home", filter: "all",
+  render() {
+    const app = $("#app"); if (!app) return; const site = DATA.site; const w = Ctx.weather;
+    const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>Area</div><h3>${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</h3><p>${esc(i.short)}</p></button>`;
+    const wtile = (x) => `<button class="tile work" type="button" data-open="${x.id}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>${esc(x.client)}</div><h3>${esc(x.title)}</h3></button>`;
+    const news = (sg, mini) => `<button class="nc ${mini ? "mini" : ""}" type="button" data-open="${sg.id}"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(sg.src)}</b><span>${esc(fmtDate(sg.date))}</span></div><h3>“${esc(sg.title)}”</h3>${mini ? "" : `<p>${esc(sg.why)}</p>`}</button>`;
+    const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div><small>${esc(x.client)}</small><h3>${esc(x.title)}</h3></div></button>`;
+    const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>Chiedi alla Console: cosa fate per…</span></button>`;
+    const home = `<section class="screen on" data-screen="home">
+      <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + labelWeather(w.kind) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
+      <div data-m-tier="2">${askBox}<div class="chips"><button type="button" data-tab="console" data-q="Cosa fate per il retail?">Cosa fate per il retail?</button><button type="button" data-tab="console" data-q="Mostrami le esperienze immersive">Esperienze immersive</button><button type="button" data-tab="console" data-q="Ho fretta: l'essenziale">Ho fretta</button><button type="button" data-tab="console" data-q="Come usate l'AI?">Come usate l'AI?</button></div></div>
+      <div><div class="row-head"><h2>Le quattro aree</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${DATA.caps.map(tile).join("")}</div></div>
+      <div><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${DATA.works.slice(0, 6).map(wtile).join("")}</div></div>
+      <div class="m-statement" data-m-tier="10"><h2>${esc((site.statements || [])[0] || "")}</h2></div>
+      <div data-m-tier="10"><div class="row-head"><h2>Radar oggi</h2><button type="button" data-tab="radar">Tutto il radar</button></div><div class="news">${DATA.signals.slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
+      <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><h2 style="margin-top:8px">Cinque fasi, un <span class="serif">ciclo.</span></h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      ${contactHTML()}
+      <p class="app-foot">${esc(site.footer_note)}</p>
+    </section>`;
+    const sistema = `<section class="screen" data-screen="sistema">
+      <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
+      <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
+      <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${DATA.caps.map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${c.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>`).join("")}</div></div>
+      <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
+      <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
+      <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      ${contactHTML()}
+    </section>`;
+    const lavori = `<section class="screen" data-screen="lavori">
+      <div><h2>Organismi in <span class="serif">azione.</span></h2><div class="chips"><button type="button" class="on" data-filter="all">Tutti</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
+      <div class="grid2m" id="works-grid">${DATA.works.map(gc).join("")}</div>
+      <p class="app-foot">Tocca un lavoro per aprirlo e adattarlo al tuo contesto</p>
+      ${contactHTML()}
+    </section>`;
+    const radar = `<section class="screen paper-screen" data-screen="radar">
+      <div><div class="eyebrow"><span class="dot"></span>Radar · rassegna da fonti esterne</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
+      <div class="news">${DATA.signals.map(sg => news(sg, false)).join("")}</div>
+      <p class="paper-note">I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.</p>
+    </section>`;
+    app.innerHTML = home + sistema + lavori + radar;
+    $("#tabbar").innerHTML = [["home", "Home"], ["sistema", "Sistema"], ["console", "Console"], ["lavori", "Lavori"], ["radar", "Radar"]].map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
+    AI.check().then(ok => { if (!ok) { const f = $("#tab-console"); if (f) f.remove(); $("#tabbar").classList.add("four"); $$("[data-tab=console]").forEach(el => el.remove()); } });
+    this.applyDensity(); this.show(this.current, true);
+  },
+  show(name, silent) {
+    if (!$(`.screen[data-screen="${name}"]`)) name = "home";
+    this.current = name;
+    $$(".screen").forEach(s => s.classList.toggle("on", s.dataset.screen === name));
+    $$("#tabbar [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+    closeDetail(); window.scrollTo({ top: 0, behavior: "auto" }); checkPaper();
+    if (!silent) try { history.replaceState(null, "", "#" + name); } catch {}
+  },
+  filterWorks(id) { this.filter = id; $$("#works-grid .gc").forEach(g => g.hidden = !(id === "all" || g.dataset.caps.split(" ").includes(id))); },
+  applyDensity() { const d = Modes.density; $$("[data-m-tier]").forEach(el => { const t = el.dataset.mTier; el.hidden = (d === "2" && t !== "2"); }); }
+};
+function contactHTML() { const site = DATA.site; return `<div class="contact-m" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>Contatti</div><h2 style="margin-top:8px">${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p></div>`; }
+function openSheet(html, eyebrow) { $("#sheet-body").innerHTML = html; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.open = "true"; scrim.dataset.open = "true"; $("#sheet-body").scrollTop = 0; }
+function openContactSheet() { openSheet(`<div class="d-in">${contactHTML().replace('class="contact-m"', 'class="contact-m" style="border:0;padding:0;background:none"')}</div>`, "Contatti"); }
+function openConsoleSheet(q) {
+  openSheet(`<div class="d-in"><h2>Chiedi alla <span class="serif">Console.</span></h2><p>Dimmi cosa cerchi: ti porto ai contenuti giusti e la pagina si riconfigura.</p><form class="prompt" id="prompt-sheet" autocomplete="off"><div class="prompt-row"><input name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail?" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div><div class="chips"><button type="button" data-ask="Cosa fate per il retail?">Retail</button><button type="button" data-ask="Mostrami le esperienze immersive">Immersivo</button><button type="button" data-ask="Ho fretta: l'essenziale">Ho fretta</button><button type="button" data-ask="Come usate l'AI?">AI</button><button type="button" data-ask="Cosa dice il radar sul DOOH?">DOOH</button></div><div class="prompt-out" hidden></div><div class="prompt-results"></div></form></div>`, "Console");
+  const f = $("#prompt-sheet"); bindPrompt(f);
+  if (q) { $("input", f).value = q; setTimeout(() => f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })), 250); } else setTimeout(() => $("input", f).focus(), 450);
 }
-function renderFeed() {
-  const feed = $("#feed"); if (!feed) return;
-  const { seq, c, signalsFirst } = composeFeed(); const site = DATA.site;
-  const card = (kind, id, img, inner, extra = "") => `<section class="card kind-${kind} ${extra}" ${id ? `data-id="${id}"` : ""}><div class="bg">${img ? `<img src="${media(img)}" alt="" loading="lazy">` : ""}</div><div class="fg">${inner}</div></section>`;
-  const ey = (l, r) => `<div class="eyebrow"><span><span class="dot"></span>${l}</span><span>${r || ""}</span></div>`;
-  let i = 0;
-  feed.innerHTML = seq.map(it => {
-    i++; const idx = `${String(i).padStart(2, "0")}/${String(seq.length).padStart(2, "0")}`; const x = it.item;
-    switch (it.kind) {
-      case "manifesto": return card("manifesto", null, site.hero_image_mobile || site.hero_image, `${ey(esc(site.claim), idx)}<h2>${em(site.hero_title)}</h2><p class="body">${esc(site.tagline)}</p><button class="more" type="button" data-open="core">Il sistema</button>`);
-      case "prompt": return card("prompt", null, null, `${ey("Console", idx)}<h2>Chiedi alla <span class="serif">Console.</span></h2><p class="body">Scrivi cosa cerchi: la pagina si riconfigura e ti porta ai contenuti giusti.</p><form class="prompt" id="prompt-m" autocomplete="off"><div class="prompt-row"><input name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail?"><button type="submit" aria-label="Invia">→</button></div><div class="prompt-out" hidden></div></form>`);
-      case "cap": return card("cap", x.id, x.image, `${ey("Area", idx)}<h2>${esc(x.name)}</h2><p class="body">${esc(x.short)}</p><button class="more" type="button" data-open="${x.id}">Approfondisci</button>`);
-      case "work": return card("work", x.id, x.image, `${ey(esc(x.client), idx)}<h2>${esc(x.title)}</h2><p class="body">${esc(x.short)}</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="more" type="button" data-open="${x.id}">Il progetto</button><span class="chip ghost">${esc(x.status)}</span></div>`);
-      case "signal": return card("signal", x.id, null, `${ey("Radar · fonte esterna", idx)}<div class="src"><span class="chip ext">Fonte esterna</span> <b>${esc(x.src)}</b> · ${esc(fmtDate(x.date))}</div><h2>“${esc(x.title)}”</h2><p class="why"><small>La nostra lettura</small>${esc(x.why)}</p><a class="more" href="${esc(x.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte</a>`);
-      case "statement": return card("statement", null, it.purple ? null : "/media/torus.jpg", `<h2>${esc((site.statements || [])[it.i] || "")}</h2>`, it.purple ? "purple" : "");
-      case "organism": return card("organism", null, "/media/organism-tall.jpg", `${ey("Adaptive Content Systems", idx)}<h2>${em(site.organism_title)}</h2><p class="body">${esc(site.organism_text)}</p>`);
-      case "method": return card("method", null, "/media/particles.jpg", `${ey("Metodo", idx)}<h2>Cinque fasi, un <span class="serif">ciclo.</span></h2><p class="body">${(site.method || []).map(m => `<b style="color:var(--ink);font-weight:500">${esc(m.k)}</b>`).join(" · ")}<br><br>${esc(site.method_intro)}</p>`);
-      case "context": { const ctx = renderContext(); return card("context", null, null, `${ey("Narrowcasting", idx)}<h2>Questa pagina si è composta <span class="serif">per te.</span></h2><p class="body">${ctx.text}</p><div class="kv">${ctx.kvHTML}</div>`); }
-      case "contact": return card("contact", null, "/media/roma.jpg", `${ey("Contatti", idx)}<h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button></div><p class="body" style="font-size:14px;color:var(--ink-3)">${esc(site.contact_address).replace(/\n/g, "<br>")}<br>${esc(site.footer_note)}</p>`);
-    }
-    return "";
-  }).join("");
-  bindPrompt($("#prompt-m"));
-  AI.check().then(ok => { if (!ok) { const pc = $("#feed .kind-prompt"); if (pc) { pc.remove(); initRail(); } } });
-  function initRail() {
-    const rail = $("#rail"); const cards = $$("#feed .card"); rail.innerHTML = cards.map(() => "<i></i>").join(""); const dots = $$("i", rail);
-    const io = new IntersectionObserver(en => en.forEach(x => { const k = cards.indexOf(x.target); if (x.isIntersecting && k > -1) dots.forEach((d, j) => { d.classList.toggle("on", j === k); d.classList.toggle("seen", j < k); }); }), { threshold: 0.55 });
-    cards.forEach(cd => io.observe(cd));
-    cards.forEach((cd, i) => { const n = $(".eyebrow > span:last-child", cd); if (n && /\d+\/\d+/.test(n.textContent)) n.textContent = `${String(i + 1).padStart(2, "0")}/${String(cards.length).padStart(2, "0")}`; });
-    $("#compose").textContent = `Composto alle ${c.time} · ${c.day} ${c.slot} · ${c.device} · ${cards.length} schede · ${signalsFirst ? "radar prima dei lavori" : "lavori prima del radar"}`;
-    watchPaper();
-  }
-  initRail();
-  // parallasse leggera dentro le schede
-  if (!reduced) { const imgs = $$("#feed .bg img"); const onScroll = () => { const vh = innerHeight; imgs.forEach(im => { const r = im.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; const p = (r.top + r.height / 2 - vh / 2) / vh; im.style.transform = `translateY(${p * -28}px)`; }); }; addEventListener("scroll", onScroll, { passive: true }); onScroll(); }
-}
+document.addEventListener("click", e => { const b = e.target.closest("[data-tab=console][data-q]"); if (b) { e.stopPropagation(); openConsoleSheet(b.dataset.q); } }, true);
+function renderApp() { if (isMobile()) App.render(); }
+function initialTab() { const h = (location.hash || "").replace("#", ""); const map = { home: "home", sistema: "sistema", aree: "sistema", lavori: "lavori", radar: "radar", metodo: "sistema", contatti: "home", console: "home" }; if (map[h]) App.current = map[h]; if (h === "contatti") setTimeout(openContactSheet, 400); }
 
 /* la barra in alto si inverte quando sotto c'è la "carta" del Radar */
 let paperEls = [], paperTick = false;
-function checkPaper() { paperTick = false; const y = 40; const on = paperEls.some(el => { if (!el.offsetParent) return false; const r = el.getBoundingClientRect(); return r.top <= y && r.bottom >= y; }); document.body.classList.toggle("on-paper", on); }
-function watchPaper() { paperEls = $$(".paper, .card.kind-signal"); checkPaper(); }
+function checkPaper() { paperTick = false; const y = 40; const on = (isMobile() && App.current === "radar") || paperEls.some(el => { if (!el.offsetParent) return false; const r = el.getBoundingClientRect(); return r.top <= y && r.bottom >= y; }); document.body.classList.toggle("on-paper", on); }
+function watchPaper() { paperEls = $$(".paper, .paper-screen"); checkPaper(); }
 addEventListener("scroll", () => { if (!paperTick) { paperTick = true; requestAnimationFrame(checkPaper); } }, { passive: true });
 addEventListener("resize", () => requestAnimationFrame(checkPaper));
 
@@ -365,12 +391,14 @@ addEventListener("resize", () => requestAnimationFrame(checkPaper));
 Modes.apply();
 watchPaper();
 renderContext();
-renderFeed();
+initialTab();
+renderApp();
+watchPaper();
 bindPrompt($("#prompt"));
 animateDesktop();
-Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); });
+Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
 let wasMobile = isMobile();
-matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderFeed(); if (!m && Console) { Console.resize(); Console.start(); } } });
+matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
 // la densità cambia la composizione del feed
-const _set = Modes.set.bind(Modes); Modes.set = (k, v) => { _set(k, v); if (k === "density" && isMobile()) renderFeed(); renderContext(); };
+const _set = Modes.set.bind(Modes); Modes.set = (k, v) => { _set(k, v); if (k === "density" && isMobile()) App.applyDensity(); renderContext(); };
 })();
