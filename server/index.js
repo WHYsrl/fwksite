@@ -12,7 +12,12 @@ const admin = require("./admin");
 
 store.seedIfEmpty();
 
+// Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
+const fs = require("fs");
+const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/css/admin.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
+
 const app = express();
+app.locals.v = ASSET_V;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "..", "views"));
 app.set("trust proxy", 1);
@@ -28,6 +33,7 @@ app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 // ---------- sito pubblico ----------
 app.get("/", (req, res) => {
   const content = store.getContent();
+  res.set("Cache-Control", "no-cache");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured() });
 });
 app.get("/api/content", (req, res) => res.json(store.getContent()));
