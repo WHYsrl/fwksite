@@ -722,3 +722,7 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .drawer,.sheet,.scrim,.cap-img img,.work .art img{transition:none}
   html{scroll-behavior:auto}
 }
+
+/* Video dei lavori nel dettaglio (loop Vimeo o mp4) */
+.drawer-body .d-img.video,.sheet-body .d-img.video{aspect-ratio:16/9}
+.drawer-body .d-img iframe,.drawer-body .d-img video,.sheet-body .d-img iframe,.sheet-body .d-img video{width:100%;height:100%;border:0;display:block;object-fit:cover;background:#000}

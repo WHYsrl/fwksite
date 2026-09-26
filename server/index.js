@@ -12,6 +12,7 @@ const admin = require("./admin");
 
 store.seedIfEmpty();
 store.seedTeamIfEmpty();
+{ const applied = store.applyContentPatches(); if (applied.length) console.log("Patch contenuti applicate:", applied.join(", ")); }
 
 // Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
 const fs = require("fs");
