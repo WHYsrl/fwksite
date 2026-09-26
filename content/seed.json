@@ -632,7 +632,7 @@
       "body": "Un sistema di contenuti per accompagnare le persone nel trasferimento della sede italiana di Technip Energies: video di cantiere e monitoraggio, esperienza immersiva del nuovo headquarters, app e booklet, generati da un'unica architettura narrativa. Proposta tecnica; descrizione segnaposto.",
       "image": "/media/monolith.jpg",
       "status": "placeholder",
-      "published": 1
+      "published": false
     },
     {
       "id": "serco",
@@ -649,7 +649,7 @@
       "body": "Interfaccia 3D immersiva ispirata all'astrolabio: geometrie orbitali per orientarsi nell'ecosistema di servizi Serco, pensata come strumento di presentazione a effetto per stakeholder istituzionali. Proposta; descrizione segnaposto.",
       "image": "/media/torus.jpg",
       "status": "placeholder",
-      "published": 1
+      "published": false
     }
   ],
   "signals": [

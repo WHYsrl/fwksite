@@ -13,6 +13,17 @@ const em = (s) => String(s ?? "").replace(/<em>/g, '<span class="serif">').repla
 const isMobile = () => matchMedia("(max-width: 820px)").matches;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const media = (p) => PREVIEW && p && p.startsWith("/media/") ? p.slice(1) : p;
+// Video dei lavori: link Vimeo (vimeo.com/ID o vimeo.com/ID/HASH) → player in loop muto; file mp4/webm → <video>; altrimenti immagine.
+const vimeoId = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] } : null; };
+function workMedia(item, fallback) {
+  const v = (item.video_url || "").trim();
+  if (v) {
+    const vm = vimeoId(v);
+    if (vm) return `<div class="d-img video"><iframe src="https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}background=1&autoplay=1&loop=1&muted=1&autopause=0&dnt=1" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="Video del progetto"></iframe></div>`;
+    if (/\.(mp4|webm|mov)(\?|$)/i.test(v)) return `<div class="d-img video"><video src="${esc(v)}" autoplay muted loop playsinline preload="metadata"${item.image ? ` poster="${esc(media(item.image))}"` : ""}></video></div>`;
+  }
+  return `<div class="d-img"><img src="${media(item.image) || media(fallback)}" alt=""></div>`;
+}
 const capById = (id) => DATA.caps.find(c => c.id === id);
 const capName = (id) => (capById(id) || {}).name || id;
 const worksFor = (id) => DATA.works.filter(w => w.caps.includes(id));
@@ -145,7 +156,7 @@ function detailHTML(item) {
   const adapt = (id) => DATA.features.adapt !== false ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>Adatta al tuo contesto</div><h4>Come si riconfigurerebbe per il vostro brand?</h4><div class="grid"><input name="sector" placeholder="Settore (es. moda, energia, cultura)" maxlength="60"><input name="channel" placeholder="Canale principale (es. retail, social, evento)" maxlength="60"></div><input name="goal" placeholder="Obiettivo (es. lancio prodotto, employer branding)" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">Genera la variante</button><div class="adapt-out" hidden></div></div>` : "";
   if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p><div class="tags">${item.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>${adapt(item.id)}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), "lavoro")}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
-  if (item.kind === "work") return `<div class="d-img"><img src="${media(item.image) || media("/media/monolith.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
+  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">Fonte esterna</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">Contenuto di terzi: titolo e riassunto appartengono a ${esc(item.src)} (${esc(domain(item.url))}). Frameworks lo segnala e lo commenta.</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">La nostra lettura</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   return "";
 }

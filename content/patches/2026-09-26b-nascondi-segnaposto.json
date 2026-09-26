@@ -1,0 +1,40 @@
+{
+  "id": "2026-09-26b-nascondi-segnaposto",
+  "note": "Nasconde i due segnaposto rimasti (Technip Energies, Serco Immersive 3D interface) finché non hanno una scheda vera; riattivabili dal backoffice.",
+  "works": [
+    {
+      "id": "ten",
+      "sort": 30,
+      "client": "Technip Energies",
+      "label": "Technip Energies",
+      "title": "Change management & communication",
+      "year": "2026",
+      "caps": [
+        "content-system",
+        "spatial-experiences"
+      ],
+      "short": "Programma integrato di comunicazione per la relocation della sede italiana: video, esperienza immersiva, app e booklet.",
+      "body": "Un sistema di contenuti per accompagnare le persone nel trasferimento della sede italiana di Technip Energies: video di cantiere e monitoraggio, esperienza immersiva del nuovo headquarters, app e booklet, generati da un'unica architettura narrativa. Proposta tecnica; descrizione segnaposto.",
+      "image": "/media/monolith.jpg",
+      "status": "placeholder",
+      "published": false
+    },
+    {
+      "id": "serco",
+      "sort": 31,
+      "client": "Serco",
+      "label": "Serco",
+      "title": "Immersive 3D interface",
+      "year": "2025",
+      "caps": [
+        "spatial-experiences",
+        "adaptive-media"
+      ],
+      "short": "Un astrolabio digitale per navigare l'ecosistema di servizi al Living Planet Symposium.",
+      "body": "Interfaccia 3D immersiva ispirata all'astrolabio: geometrie orbitali per orientarsi nell'ecosistema di servizi Serco, pensata come strumento di presentazione a effetto per stakeholder istituzionali. Proposta; descrizione segnaposto.",
+      "image": "/media/torus.jpg",
+      "status": "placeholder",
+      "published": false
+    }
+  ]
+}
