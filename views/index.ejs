@@ -39,6 +39,18 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
   </nav>
 </header>
 
+<div class="focusbar" id="focusbar" hidden><span class="eyebrow"><span class="dot"></span>Percorso della Console</span><span id="focus-text"></span><button type="button" id="focus-reset">Mostra tutto</button></div>
+
+<div class="cwin" id="cwin" hidden role="dialog" aria-modal="true" aria-label="Console">
+  <div class="cwin-bg" aria-hidden="true"><img src="/media/particles.jpg" alt=""></div>
+  <div class="cwin-top"><span class="eyebrow"><span class="dot"></span>Console · <%= site.brand %></span><button type="button" class="x" id="cwin-close" aria-label="Chiudi la Console">✕</button></div>
+  <div class="cwin-thread" id="cwin-thread"></div>
+  <form class="cwin-form" id="cwin-form" autocomplete="off">
+    <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="Scrivi cosa cerchi, o quanto tempo hai" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div>
+    <div class="chips" id="cwin-chips"></div>
+  </form>
+</div>
+
 <div class="modes" id="modes" hidden>
   <div class="modes-head"><span class="eyebrow"><span class="dot"></span>La pagina si adatta a te</span><button type="button" class="x" id="modes-close" aria-label="Chiudi">✕</button></div>
   <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto il tempo</button></div></div>
@@ -95,8 +107,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
     <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
       <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>
-      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · ho fretta, l'essenziale · mostrami l'immersivo"><button type="submit" aria-label="Invia">→</button></div>
-      <div class="prompt-out" id="prompt-out" hidden></div>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · ho fretta · mostrami l'immersivo"><button type="submit" aria-label="Apri la Console">→</button></div>
     </form>
   </div>
   <div class="hint" aria-hidden="true"><span>trascina i nodi <i></i></span><span>clic per aprire <i></i></span><span>punti chiari = radar, fonti esterne <i></i></span></div>
@@ -208,7 +219,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Radar · rassegna da fonti esterne</div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
   <div class="signals">
     <% content.signals.forEach((s, i) => { %>
-    <article class="signal rv" style="--i:<%= i %>">
+    <article class="signal rv" data-id="<%= s.id %>" style="--i:<%= i %>">
       <div class="src"><span class="chip ext">Fonte esterna</span><b><%= s.src %></b><span><%= fmtDate(s.date) %> · <%= domain(s.url) %></span></div>
       <div class="sig-main"><h3><a href="<%= s.url %>" target="_blank" rel="noopener nofollow">“<%= s.title %>” ↗</a></h3><% if (s.summary) { %><p class="sum"><%= s.summary %></p><% } %></div>
       <div class="why"><small>La nostra lettura</small><%= s.why %><% if (s.caps.length) { %><div class="tags"><% s.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div><% } %></div>

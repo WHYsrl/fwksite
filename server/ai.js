@@ -71,22 +71,28 @@ const BRAND_SYSTEM = `Sei la Console di Frameworks, l'unit di Frame by Frame S.p
 Tono: lucido, concreto, elegante, italiano. Frasi brevi. Niente entusiasmo di plastica, niente elenchi puntati nelle risposte al visitatore.
 Non inventare lavori, clienti o dati: usa solo l'indice fornito. Le notizie del Radar sono contenuti di terzi: citale come tali, mai come lavori nostri.`;
 
-// Console prompt: linguaggio naturale → nodi da evidenziare + risposta breve
-async function consoleQuery(q) {
+// Console prompt: linguaggio naturale → percorso proposto (aree/lavori/segnali) + risposta breve + eventuale domanda
+async function consoleQuery(q, history = []) {
   const { text } = contentIndex();
-  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore e l'indice dei contenuti del sito. Rispondi SOLO con JSON:
-{"answer": "risposta in italiano, massimo 2 frasi, senza elenchi, che nomina esplicitamente le aree o i lavori pertinenti", "highlight": ["id","id"], "open": "id o null", "mode": {"density": null, "energy": null}}
+  const system = BRAND_SYSTEM + `\nRicevi una richiesta del visitatore (con l'eventuale conversazione precedente) e l'indice dei contenuti del sito. Proponi un percorso: le aree, i lavori e al massimo un segnale del radar da mostrare. Rispondi SOLO con JSON:
+{"answer": "1-2 frasi in italiano, senza elenchi, che nominano esplicitamente le aree e i lavori proposti", "label": "2-3 parole che riassumono il percorso (es. Retail veloce, Immersivo, AI in produzione)", "highlight": ["id","id"], "open": "id o null", "ask": null, "mode": {"density": null, "energy": null}}
 REGOLE:
-- highlight è OBBLIGATORIO e deve contenere da 2 a 6 id presi ESATTAMENTE dall'indice (senza il prefisso cap:/work:/signal:), scegliendo prima le aree, poi i lavori, poi al massimo un segnale del radar.
-- open: l'id più pertinente da aprire (di solito un'area o un lavoro), mai null se esiste qualcosa di pertinente.
-- mode.density: SOLO se il visitatore parla esplicitamente di tempo o fretta ("ho fretta", "l'essenziale", "in due minuti" → "2"; "voglio approfondire", "ho tempo" → "all"); in tutti gli altri casi null.
-- mode.energy: SOLO se il visitatore chiede esplicitamente calma/meno animazioni ("calm") o più energia ("vivid"); altrimenti null.
-- Se la richiesta non c'entra con Frameworks, rispondi con garbo in una frase e proponi un'area; highlight resta pieno.`;
-  const user = `INDICE:\n${text}\n\nRICHIESTA: ${q}`;
-  const out = await complete({ system, user, json: true, maxTokens: 400, kind: "console", cacheMinutes: 60 * 24 });
-  const valid = new Set([...contentIndex().c.caps.map(x => x.id), ...contentIndex().c.works.map(x => x.id), ...contentIndex().c.signals.map(x => x.id)]);
+- highlight: da 2 a 6 id presi ESATTAMENTE dall'indice (senza il prefisso cap:/work:/signal:), prima le aree, poi i lavori, poi al massimo un segnale del radar.
+- Se la richiesta è troppo vaga per proporre un percorso (es. un saluto, una parola sola senza senso), highlight vuoto e ask = {"question": "una domanda breve per capire cosa cerca", "options": ["3-4 opzioni brevi tra cui scegliere"]}. Altrimenti ask = null.
+- open: l'id più pertinente (di solito un'area o un lavoro), oppure null.
+- mode.density: "2" SOLO se il visitatore parla di fretta, poco tempo o dell'essenziale; "all" se vuole approfondire o ha tempo; altrimenti null.
+- mode.energy: "calm" o "vivid" SOLO se il visitatore chiede esplicitamente calma o energia; altrimenti null.
+- Se la richiesta non c'entra con Frameworks, rispondi con garbo in una frase e proponi comunque un percorso generale (le quattro aree).`;
+  const hist = (history || []).slice(-3).map(h => `Visitatore: ${String(h.q || "").slice(0, 300)}\nConsole: ${String(h.a || "").slice(0, 400)}`).join("\n");
+  const user = `INDICE:\n${text}\n\n${hist ? "CONVERSAZIONE PRECEDENTE:\n" + hist + "\n\n" : ""}RICHIESTA: ${q}`;
+  const out = await complete({ system, user, json: true, maxTokens: 500, kind: "console", cacheMinutes: 60 * 24 });
+  const idx = contentIndex().c;
+  const valid = new Set([...idx.caps.map(x => x.id), ...idx.works.map(x => x.id), ...idx.signals.map(x => x.id)]);
   out.highlight = (out.highlight || []).map(String).filter(id => valid.has(id)).slice(0, 6);
   out.open = valid.has(out.open) ? out.open : null;
+  out.label = String(out.label || "").slice(0, 40);
+  out.ask = out.ask && out.ask.question ? { question: String(out.ask.question).slice(0, 160), options: (out.ask.options || []).map(String).slice(0, 4) } : null;
+  out.mode = { density: ["2", "10", "all"].includes(String(out.mode && out.mode.density)) ? String(out.mode.density) : null, energy: ["calm", "vivid"].includes(out.mode && out.mode.energy) ? out.mode.energy : null };
   return out;
 }
 

@@ -109,9 +109,10 @@ const AI = {
     return `AREE:\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi):\n${sig}`;
   },
   brand: `Sei la Console di Frameworks (Frame by Frame, Roma): Adaptive Content Systems, "organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto". Tono lucido, concreto, elegante, italiano, frasi brevi, niente elenchi. Non inventare lavori o dati; le notizie del Radar sono di terzi.`,
-  async console(q) {
-    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
-    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"max 2 frasi che nominano aree o lavori pertinenti","highlight":["id"],"open":"id|null","mode":{"density":null,"energy":null}}\nREGOLE: highlight obbligatorio con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; open = id più pertinente; mode.density solo se il visitatore parla di tempo/fretta ("2" o "all"), altrimenti null; mode.energy solo se chiede calma o energia, altrimenti null.\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
+  async console(q, history = []) {
+    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
+    const hist = history.length ? `\nCONVERSAZIONE PRECEDENTE:\n${history.map(h => `Visitatore: ${h.q}\nConsole: ${h.a}`).join("\n")}\n` : "";
+    const out = await this.sample.json(`${this.brand}\nRispondi SOLO con JSON: {"answer":"1-2 frasi in italiano che nominano le aree e i lavori proposti","label":"2-3 parole che riassumono il percorso proposto","highlight":["id"],"ask":null,"mode":{"density":null,"energy":null}}\nREGOLE: highlight con 2-6 id ESATTI dall'indice (senza prefisso), prima aree poi lavori poi al massimo un segnale; se la richiesta è troppo vaga per proporre qualcosa, highlight vuoto e ask = {"question":"una domanda breve","options":["3-4 opzioni brevi"]}; mode.density "2" solo se il visitatore parla di fretta/poco tempo, "all" se vuole approfondire, altrimenti null; mode.energy "calm" o "vivid" solo se lo chiede, altrimenti null.${hist}\nINDICE:\n${this.index()}\n\nRICHIESTA: ${q}`, { modelTier: "quick" });
     return out;
   },
   async adapt(p) {
@@ -138,12 +139,12 @@ const drawer = $("#drawer"), scrim = $("#scrim"), sheet = $("#sheet");
 function openDetail(item) {
   if (!item) return;
   const h = detailHTML(item); const eyebrow = item.kind === "core" ? "Frameworks" : item.kind === "cap" ? "Area" : item.kind === "work" ? "Lavoro" : "Radar";
-  if (isMobile()) { $("#sheet-body").innerHTML = h; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.open = "true"; }
-  else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.open = "true"; drawer.querySelector(".drawer-body").scrollTop = 0; }
-  scrim.dataset.open = "true";
+  if (isMobile()) { $("#sheet-body").innerHTML = h; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; }
+  else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.state = "open"; drawer.querySelector(".drawer-body").scrollTop = 0; }
+  scrim.dataset.state = "open";
   AI.check().then(ok => { if (!ok) $$(".adapt").forEach(a => a.hidden = true); });
 }
-function closeDetail() { drawer.dataset.open = "false"; sheet.dataset.open = "false"; scrim.dataset.open = "false"; }
+function closeDetail() { drawer.dataset.state = "closed"; sheet.dataset.state = "closed"; scrim.dataset.state = "closed"; }
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
@@ -153,8 +154,11 @@ document.addEventListener("click", e => {
   const go = e.target.closest(".adapt .go"); if (go) runAdapt(go.closest(".adapt"));
   const c = e.target.closest("[data-copy]"); if (c) copyText(c);
   const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { e.preventDefault(); openContactSheet(); }
-  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") openConsoleSheet(); else App.show(tab.dataset.tab); }
-  const chip = e.target.closest("[data-ask]"); if (chip) { const f = chip.closest(".prompt") || $("#prompt-sheet"); if (f) { $("input", f).value = chip.dataset.ask; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })); } }
+  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") ConsoleWin.open(tab.dataset.q || ""); else App.show(tab.dataset.tab); return; }
+  const chip = e.target.closest("[data-ask]"); if (chip) { ConsoleWin.open(chip.dataset.ask); return; }
+  const opt = e.target.closest("[data-opt]"); if (opt) { ConsoleWin.send(opt.dataset.opt); return; }
+  const apply = e.target.closest("[data-apply]"); if (apply) { ConsoleWin.apply(apply.dataset.apply); return; }
+  const reset = e.target.closest("#focus-reset, [data-focus-reset]"); if (reset) { Focus.clear(); return; }
   const filt = e.target.closest("[data-filter]"); if (filt) { $$("[data-filter]", filt.parentElement).forEach(b => b.classList.toggle("on", b === filt)); App.filterWorks(filt.dataset.filter); }
 });
 async function runAdapt(box) {
@@ -177,19 +181,9 @@ function copyText(b) {
    ========================================================= */
 function bindPrompt(form) {
   if (!form) return;
-  const input = $("input", form), out = $(".prompt-out", form);
+  const input = $("input", form);
   AI.check().then(ok => { if (!ok) form.hidden = true; });
-  form.addEventListener("submit", async e => {
-    e.preventDefault(); const q = input.value.trim(); if (!q) return;
-    out.hidden = false; out.className = "prompt-out thinking"; out.innerHTML = `<span class="who">Console</span>sto leggendo il sistema…`;
-    try {
-      const r = await AI.console(q);
-      out.className = "prompt-out"; out.innerHTML = `<span class="who">Console</span>${esc(r.answer || "")}`;
-      if (r.highlight && r.highlight.length) { if (Console) Console.highlight(r.highlight); flashCards(r.highlight); const res = $(".prompt-results", form); if (res) res.innerHTML = r.highlight.map(byId).filter(Boolean).map(i => `<button class="lc" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt=""><div><div class="eyebrow">${i.kind === "cap" ? "Area" : i.kind === "work" ? esc(i.client) : "Radar · fonte esterna"}</div><h3>${esc(i.kind === "work" ? i.title : i.kind === "signal" ? i.title : i.name)}</h3></div></button>`).join(""); }
-      if (r.mode) { if (r.mode.density && ["2", "10", "all"].includes(String(r.mode.density))) Modes.set("density", String(r.mode.density)); if (r.mode.energy && ["calm", "vivid"].includes(r.mode.energy)) Modes.set("mood", r.mode.energy); }
-      if (r.open && !isMobile()) setTimeout(() => openDetail(byId(r.open)), 900);
-    } catch (err) { out.className = "prompt-out"; out.innerHTML = `<span class="who">Console</span>${esc(err.message || "Non riesco a rispondere adesso.")}`; }
-  });
+  form.addEventListener("submit", e => { e.preventDefault(); const q = input.value.trim(); input.value = ""; ConsoleWin.open(q); });
 }
 function flashCards(ids) {
   ids.forEach(id => { const el = $(`.cap[data-open="${id}"], .work[data-open="${id}"], .card[data-id="${id}"]`); if (el && hasGsap && !reduced) gsap.fromTo(el, { boxShadow: "0 0 0 0 rgba(190,0,255,.9)" }, { boxShadow: "0 0 0 14px rgba(190,0,255,0)", duration: 1.4, ease: "power2.out" }); });
@@ -203,7 +197,7 @@ const Console = (() => {
   const ctx = cv.getContext("2d");
   const PURPLE = "#BE00FF", PAPER = "#EEEAF1";
   const SANS = '"Google Sans Flex","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
-  let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false;
+  let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
   const deg = (d) => d * Math.PI / 180;
   const amp = () => parseFloat(getComputedStyle(html).getPropertyValue("--amp")) || 1;
   const speed = () => parseFloat(getComputedStyle(html).getPropertyValue("--speed")) || 1;
@@ -239,7 +233,7 @@ const Console = (() => {
       particles = particles.filter(pt => { pt.p += pt.v * dt; if (pt.p >= 1) { pt.i++; pt.p = 0; if (pt.i >= pt.segs.length) return false; } const [ia, ib] = pt.segs[pt.i]; const a = P[ia], b = P[ib]; if (!a || !b) return false; const x = a.x + (b.x - a.x) * pt.p, y = a.y + (b.y - a.y) * pt.p; const q = Math.max(0, pt.p - 0.12); const tx = a.x + (b.x - a.x) * q, ty = a.y + (b.y - a.y) * q; const g = ctx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, "rgba(238,234,241,0)"); g.addColorStop(1, "rgba(238,234,241,.9)"); ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = pt.i === 0 ? PAPER : PURPLE; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill(); return true; });
     }
     nodes.forEach(nd => {
-      const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const dim = inRel ? 1 : .3;
+      const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
       if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : "#fff"; roundRect(p.x - r, p.y - r, r * 2, r * 2, r * .18); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
       else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : "#050307"; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : "#fff"; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, "#fff", nd.r + 12); }
@@ -263,7 +257,7 @@ const Console = (() => {
   if (!isMobile()) resize();
   const ready = () => { if (fontsReady) return; fontsReady = true; if (!isMobile()) { resize(); start(); } };
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(ready); setTimeout(ready, 1500); } else ready();
-  return { start, stop, resize, highlight(ids) { hi = new Set(ids); hiUntil = performance.now() + 6000; if (reduced) draw(performance.now()); } };
+  return { start, stop, resize, highlight(ids) { hi = new Set(ids); hiUntil = performance.now() + 6000; if (reduced) draw(performance.now()); }, setFocus(ids) { focusSet = ids ? new Set(ids) : null; if (reduced) draw(performance.now()); } };
 })();
 
 /* =========================================================
@@ -325,10 +319,10 @@ const App = {
     const home = `<section class="screen on" data-screen="home">
       <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + labelWeather(w.kind) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
       <div data-m-tier="2">${askBox}<div class="chips"><button type="button" data-tab="console" data-q="Cosa fate per il retail?">Cosa fate per il retail?</button><button type="button" data-tab="console" data-q="Mostrami le esperienze immersive">Esperienze immersive</button><button type="button" data-tab="console" data-q="Ho fretta: l'essenziale">Ho fretta</button><button type="button" data-tab="console" data-q="Come usate l'AI?">Come usate l'AI?</button></div></div>
-      <div><div class="row-head"><h2>Le quattro aree</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${DATA.caps.map(tile).join("")}</div></div>
-      <div><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${DATA.works.slice(0, 6).map(wtile).join("")}</div></div>
+      <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? "Le aree del tuo percorso" : "Le quattro aree"}</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
+      <div ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
       <div class="m-statement" data-m-tier="10"><h2>${esc((site.statements || [])[0] || "")}</h2></div>
-      <div data-m-tier="10"><div class="row-head"><h2>Radar oggi</h2><button type="button" data-tab="radar">Tutto il radar</button></div><div class="news">${DATA.signals.slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
+      <div data-m-tier="${Focus.ids && Focus.list(DATA.signals).length ? "2" : "10"}" ${Focus.list(DATA.signals).length ? "" : "hidden"}><div class="row-head"><h2>Radar oggi</h2><button type="button" data-tab="radar">Tutto il radar</button></div><div class="news">${Focus.list(DATA.signals).slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
       <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><h2 style="margin-top:8px">Cinque fasi, un <span class="serif">ciclo.</span></h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
       ${contactHTML()}
       <p class="app-foot">${esc(site.footer_note)}</p>
@@ -336,7 +330,7 @@ const App = {
     const sistema = `<section class="screen" data-screen="sistema">
       <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
       <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
-      <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${DATA.caps.map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${c.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>`).join("")}</div></div>
+      <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${c.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>`).join("")}</div></div>
       <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
       <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
       <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
@@ -344,13 +338,13 @@ const App = {
     </section>`;
     const lavori = `<section class="screen" data-screen="lavori">
       <div><h2>Organismi in <span class="serif">azione.</span></h2><div class="chips"><button type="button" class="on" data-filter="all">Tutti</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
-      <div class="grid2m" id="works-grid">${DATA.works.map(gc).join("")}</div>
+      <div class="grid2m" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
       <p class="app-foot">Tocca un lavoro per aprirlo e adattarlo al tuo contesto</p>
       ${contactHTML()}
     </section>`;
     const radar = `<section class="screen paper-screen" data-screen="radar">
       <div><div class="eyebrow"><span class="dot"></span>Radar · rassegna da fonti esterne</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
-      <div class="news">${DATA.signals.map(sg => news(sg, false)).join("")}</div>
+      <div class="news">${Focus.list(DATA.signals).map(sg => news(sg, false)).join("")}</div>
       <p class="paper-note">I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.</p>
     </section>`;
     app.innerHTML = home + sistema + lavori + radar;
@@ -370,16 +364,97 @@ const App = {
   applyDensity() { const d = Modes.density; $$("[data-m-tier]").forEach(el => { const t = el.dataset.mTier; el.hidden = (d === "2" && t !== "2"); }); }
 };
 function contactHTML() { const site = DATA.site; return `<div class="contact-m" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>Contatti</div><h2 style="margin-top:8px">${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p></div>`; }
-function openSheet(html, eyebrow) { $("#sheet-body").innerHTML = html; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.open = "true"; scrim.dataset.open = "true"; $("#sheet-body").scrollTop = 0; }
+function openSheet(html, eyebrow) { $("#sheet-body").innerHTML = html; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; scrim.dataset.state = "open"; $("#sheet-body").scrollTop = 0; }
 function openContactSheet() { openSheet(`<div class="d-in">${contactHTML().replace('class="contact-m"', 'class="contact-m" style="border:0;padding:0;background:none"')}</div>`, "Contatti"); }
-function openConsoleSheet(q) {
-  openSheet(`<div class="d-in"><h2>Chiedi alla <span class="serif">Console.</span></h2><p>Dimmi cosa cerchi: ti porto ai contenuti giusti e la pagina si riconfigura.</p><form class="prompt" id="prompt-sheet" autocomplete="off"><div class="prompt-row"><input name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail?" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div><div class="chips"><button type="button" data-ask="Cosa fate per il retail?">Retail</button><button type="button" data-ask="Mostrami le esperienze immersive">Immersivo</button><button type="button" data-ask="Ho fretta: l'essenziale">Ho fretta</button><button type="button" data-ask="Come usate l'AI?">AI</button><button type="button" data-ask="Cosa dice il radar sul DOOH?">DOOH</button></div><div class="prompt-out" hidden></div><div class="prompt-results"></div></form></div>`, "Console");
-  const f = $("#prompt-sheet"); bindPrompt(f);
-  if (q) { $("input", f).value = q; setTimeout(() => f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })), 250); } else setTimeout(() => $("input", f).focus(), 450);
-}
-document.addEventListener("click", e => { const b = e.target.closest("[data-tab=console][data-q]"); if (b) { e.stopPropagation(); openConsoleSheet(b.dataset.q); } }, true);
 function renderApp() { if (isMobile()) App.render(); }
 function initialTab() { const h = (location.hash || "").replace("#", ""); const map = { home: "home", sistema: "sistema", aree: "sistema", lavori: "lavori", radar: "radar", metodo: "sistema", contatti: "home", console: "home" }; if (map[h]) App.current = map[h]; if (h === "contatti") setTimeout(openContactSheet, 400); }
+
+
+/* =========================================================
+   FOCUS — il percorso configurato dalla Console
+   (mostra solo aree, lavori e segnali proposti finché non si resetta)
+   ========================================================= */
+const Focus = {
+  ids: null, label: "",
+  load() { try { const j = JSON.parse(sessionStorage.getItem("fw.focus") || "null"); if (j && Array.isArray(j.ids) && j.ids.length) { this.ids = new Set(j.ids); this.label = j.label || ""; } } catch {} },
+  save() { try { if (this.ids) sessionStorage.setItem("fw.focus", JSON.stringify({ ids: [...this.ids], label: this.label })); else sessionStorage.removeItem("fw.focus"); } catch {} },
+  has(id) { return !this.ids || this.ids.has(id); },
+  list(items) { return this.ids ? items.filter(i => this.ids.has(i.id)) : items; },
+  set(ids, label) { this.ids = new Set(ids); this.label = label || ""; this.save(); this.apply(); },
+  clear() { this.ids = null; this.label = ""; this.save(); if (Modes.density === "2") Modes.set("density", "10"); this.apply(); },
+  apply() {
+    const on = !!this.ids;
+    document.body.classList.toggle("has-focus", on);
+    // desktop: nasconde gli elementi fuori percorso e le sezioni rimaste vuote
+    $$(".cap[data-open], .work[data-open]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.open));
+    $$(".signal[data-id]").forEach(el => el.hidden = on && !this.ids.has(el.dataset.id));
+    [["#aree", ".cap"], ["#lavori", ".work"], ["#radar", ".signal"]].forEach(([sec, item]) => { const el = $(sec); if (el) el.dataset.focusEmpty = on && !$$(item, el).some(x => !x.hidden) ? "1" : ""; });
+    const radar = $("#radar"); if (radar) radar.dataset.tier = on && this.list(DATA.signals).length ? "2" : "10"; // il Radar resta visibile se fa parte del percorso
+    if (Console) Console.setFocus(this.ids);
+    // barra
+    const bar = $("#focusbar"); if (bar) {
+      if (on) { const n = (k) => [...this.ids].map(byId).filter(i => i && i.kind === k).length; $("#focus-text", bar).innerHTML = `<b>${esc(this.label || "Percorso")}</b> · ${n("cap")} aree · ${n("work")} lavori${n("signal") ? ` · ${n("signal")} radar` : ""}`; bar.hidden = false; }
+      else bar.hidden = true;
+    }
+    if (isMobile()) { const cur = App.current; App.render(); App.show(cur, true); }
+    if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 80);
+  }
+};
+
+/* =========================================================
+   CONSOLE WINDOW — la finestra che copre il sito
+   ========================================================= */
+const ConsoleWin = {
+  el: $("#cwin"), thread: $("#cwin-thread"), history: [], last: null, busy: false,
+  suggestions: ["Ho fretta: l'essenziale", "Cosa fate per il retail?", "Mostrami le esperienze immersive", "Come usate l'AI?", "Cosa dice il radar sul DOOH?", "Voglio approfondire tutto"],
+  open(q) {
+    if (!this.el) return;
+    this.el.hidden = false; document.body.classList.add("cwin-open");
+    if (!this.thread.children.length) this.thread.innerHTML = `<div class="msg console"><span class="who">Console</span><p>Dimmi cosa cerchi o quanto tempo hai. Ti propongo un percorso e configuro il sito di conseguenza.</p></div>`;
+    $("#cwin-chips").innerHTML = this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
+    if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
+  },
+  close() { if (!this.el) return; this.el.hidden = true; document.body.classList.remove("cwin-open"); },
+  add(html) { const d = document.createElement("div"); d.innerHTML = html; const node = d.firstElementChild; this.thread.appendChild(node); this.thread.scrollTop = this.thread.scrollHeight; return node; },
+  async send(q) {
+    q = String(q || "").trim(); if (!q || this.busy) return; this.busy = true;
+    this.add(`<div class="msg user"><p>${esc(q)}</p></div>`);
+    const think = this.add(`<div class="msg console thinking"><span class="who">Console</span><p>sto leggendo il sistema…</p></div>`);
+    try {
+      const r = await AI.console(q, this.history.slice(-3));
+      this.history.push({ q, a: r.answer || "" }); this.last = r;
+      const items = (r.highlight || []).map(byId).filter(Boolean);
+      const group = (k, label) => { const l = items.filter(i => i.kind === k); return l.length ? `<div class="prop-group"><small>${label}</small>${l.map(i => `<button type="button" class="prop-item" data-open="${i.id}">${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.src + " · " + i.title : i.name)}</button>`).join("")}</div>` : ""; };
+      let html = `<div class="msg console"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
+      if (r.ask && r.ask.question) html += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
+      if (items.length) {
+        const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
+        html += `<div class="proposal"><div class="eyebrow"><span class="dot"></span>Percorso proposto${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">Vai</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div>`;
+      }
+      html += `</div>`;
+      const d = document.createElement("div"); d.innerHTML = html; think.replaceWith(d.firstElementChild);
+      this.thread.scrollTop = this.thread.scrollHeight;
+      if (Console && items.length) Console.highlight(items.map(i => i.id));
+    } catch (err) {
+      think.className = "msg console"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
+    }
+    this.busy = false;
+  },
+  apply(id) {
+    const p = (this.proposals || {})[id]; if (!p) return;
+    if (p.density) Modes.set("density", p.density); else if (Modes.density === "2") Modes.set("density", "10");
+    if (p.energy) Modes.set("mood", p.energy);
+    Focus.set(p.ids, p.label);
+    this.close(); closeDetail();
+    if (isMobile()) App.show("home"); else window.scrollTo({ top: 0, behavior: "auto" });
+  }
+};
+(function consoleWinUI() {
+  const f = $("#cwin-form"); if (!f) return;
+  f.addEventListener("submit", e => { e.preventDefault(); const i = $("#cwin-q"); const q = i.value.trim(); i.value = ""; ConsoleWin.send(q); });
+  $("#cwin-close").addEventListener("click", () => ConsoleWin.close());
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !ConsoleWin.el.hidden) ConsoleWin.close(); });
+})();
 
 /* la barra in alto si inverte quando sotto c'è la "carta" del Radar */
 let paperEls = [], paperTick = false;
@@ -431,6 +506,7 @@ const Intro = {
    BOOT
    ========================================================= */
 Modes.apply();
+Focus.load();
 watchPaper();
 renderContext();
 initialTab();
@@ -438,6 +514,7 @@ renderApp();
 watchPaper();
 bindPrompt($("#prompt"));
 Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
+Focus.apply();
 Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
