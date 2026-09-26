@@ -6,7 +6,10 @@
   <table><tr><th>Fonte</th><th>Peso</th><th>Ultimo giro</th><th></th></tr>
   <% sources.forEach(s => { %><tr class="<%= s.enabled ? '' : 'off' %>"><td><b><%= s.name %></b><br><small class="mono"><%= s.url %></small></td><td><%= s.weight %></td><td><small class="mono"><%= s.last_status || '—' %></small></td><td class="row"><form method="post" action="/admin/fonti/<%= s.id %>/toggle"><button class="btn sm"><%= s.enabled ? 'Disattiva' : 'Attiva' %></button></form><form method="post" action="/admin/fonti/<%= s.id %>/delete" data-confirm="Eliminare la fonte?"><button class="btn sm danger">×</button></form></td></tr><% }) %>
   </table>
-  <h3>Aggiungi fonte</h3>
+  <h3>Aggiungi una ricerca in tempo reale</h3>
+  <p class="muted">Una parola chiave diventa una fonte Google News (ultimi 7 giorni, aggiornata a ogni giro): il Radar resta in tempo reale senza dipendere dai feed delle testate.</p>
+  <form method="post" action="/admin/fonti/ricerca" class="grid3"><label>Parola chiave <input name="q" required placeholder="es. retail media"></label><label>Lingua <select name="lang"><option value="it">Italiano</option><option value="en">Inglese</option></select></label><label>&nbsp;<button class="btn primary" type="submit">Aggiungi ricerca</button></label></form>
+  <h3>Aggiungi fonte RSS</h3>
   <form method="post" action="/admin/fonti" class="grid3"><label>Nome <input name="name" required></label><label>URL RSS <input name="url" required placeholder="https://…/feed"></label><label>Peso (1-5) <input name="weight" type="number" value="1" min="1" max="5"></label><button class="btn primary" type="submit">Aggiungi</button></form>
 </section>
 <section class="card">
@@ -20,7 +23,7 @@
       <label>Intervallo (ore) <input name="interval_hours" type="number" value="<%= radar.interval_hours %>"></label>
     </div>
     <label class="check"><input type="checkbox" name="ai_classify" <%= radar.ai_classify ? 'checked' : '' %>> Classificazione AI (rilevanza, aree, bozza della nostra lettura)</label>
-    <label class="check"><input type="checkbox" name="auto_publish" <%= radar.auto_publish ? 'checked' : '' %>> Pubblica automaticamente le notizie con punteggio AI ≥ 70 (altrimenti tutto resta in attesa di approvazione)</label>
+    <label class="check"><input type="checkbox" name="auto_publish" <%= radar.auto_publish ? 'checked' : '' %>> Pubblica automaticamente: con l'AI le notizie che giudica pertinenti (punteggio ≥ 60); senza AI, quelle delle ricerche in tempo reale che passano i filtri (altrimenti tutto resta in attesa di approvazione)</label>
     <button class="btn primary" type="submit">Salva i filtri</button>
   </form>
 </section>

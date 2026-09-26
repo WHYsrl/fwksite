@@ -5,6 +5,7 @@ const cx = (s) => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": 
 const capName = (id) => (content.caps.find(c => c.id === id) || {}).name || id;
 const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
 const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
 const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 3).toUpperCase();
 const team = content.team || []; const keyPeople = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
 %><!doctype html>
@@ -261,7 +262,13 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 
 <!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
 <section class="section radar paper desktop-only" id="radar" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Radar · rassegna da fonti esterne</div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Radar · rassegna da fonti esterne<% if (content.radar_at) { %><span class="radar-at"> · aggiornato <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
+  <div class="radar-live rv">
+    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span>Cerca nel mondo, adesso</div><p>Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi.</p></div>
+    <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="es. retail media, DOOH, AI generativa…" maxlength="80" aria-label="Cerca nel radar"><button type="submit">Cerca</button></form>
+    <div class="radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="AI generativa pubblicità">AI generativa</button><button type="button" data-live-q="virtual production">Virtual production</button><button type="button" data-live-q="musei esperienze immersive">Musei immersivi</button></div>
+    <div class="radar-results" data-radar-results hidden></div>
+  </div>
   <div class="signals">
     <% content.signals.forEach((s, i) => { %>
     <article class="signal rv" data-id="<%= s.id %>" style="--i:<%= i %>">

@@ -63,6 +63,18 @@ function seedIfEmpty() {
   });
   tx();
 }
+// Radar in tempo reale (v2): fonti di ricerca Google News per parola chiave, pubblicazione automatica, intervallo più corto.
+// Si applica una volta sola anche ai database già esistenti (flag radar_v2), senza toccare le fonti aggiunte a mano.
+function migrateRadarV2(queries) {
+  if (getSetting("radar_v2", false)) return;
+  const tx = db.transaction(() => {
+    const radar = getSetting("radar", {});
+    setSetting("radar", { ...radar, auto_publish: true, ai_classify: radar.ai_classify !== false, max_age_days: 14, interval_hours: 3, max_per_run: 40, live_queries: queries.map(q => q.q) });
+    queries.forEach(q => upsertSource({ id: "q-" + slug(q.q), name: "Ricerca · " + q.q, url: q.url, enabled: true, weight: 2 }));
+    setSetting("radar_v2", true);
+  });
+  tx();
+}
 // Il team è arrivato dopo il primo seed: si popola se la tabella è vuota (anche su database già esistenti), e i testi della sezione se mancano.
 function seedTeamIfEmpty() {
   const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "seed.json"), "utf8"));
@@ -162,12 +174,20 @@ function aiCallsToday() { return db.prepare("SELECT COUNT(*) n FROM ai_log WHERE
 function aiStats() { return db.prepare("SELECT kind, COUNT(*) n, SUM(tokens) tokens FROM ai_log WHERE created_at > datetime('now','-30 day') GROUP BY kind").all(); }
 
 // ---------- contenuto pubblico ----------
+// Solo notizie recenti (max_age_days, di default 14); se sono meno di 5, si tengono comunque le ultime 5
+function freshSignals() {
+  const radar = getSetting("radar", {}); const days = Math.max(1, +radar.max_age_days || 14);
+  const all = listSignals("published", 80); const limit = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const fresh = all.filter(s => s.date && s.date >= limit);
+  return (fresh.length >= 5 ? fresh : all.slice(0, 5)).slice(0, 40);
+}
 function getContent() {
   return {
     site: getSetting("site", {}),
     caps: listCaps(),
     works: listWorks(),
-    signals: listSignals("published", 40),
+    signals: freshSignals(),
+    radar_at: (getSetting("radar_last_run", null) || {}).at || null,
     team: listTeam(),
     features: (() => { const ai = getSetting("ai", {}); return { console: !!ai.console_enabled, adapt: !!ai.adapt_enabled }; })()
   };
@@ -187,28 +207,7 @@ function importAll(data) {
   tx();
 }
 
-// ---------- patch di contenuto ----------
-// I file in content/patches/*.json (stesso formato dell'export/import: { works, caps, sources, signals })
-// vengono applicati una sola volta ciascuno, in ordine alfabetico, a ogni avvio: così un deploy può
-// aggiornare i contenuti anche su un database già popolato. I file applicati sono ricordati in settings.
-function applyContentPatches() {
-  const dir = path.join(__dirname, "..", "content", "patches");
-  if (!fs.existsSync(dir)) return [];
-  const done = getSetting("patches_applied", []);
-  const applied = [];
-  fs.readdirSync(dir).filter(f => f.endsWith(".json")).sort().forEach(f => {
-    if (done.includes(f)) return;
-    try {
-      const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
-      importAll(data);
-      done.push(f); applied.push(f);
-    } catch (e) { console.error("Patch contenuti non applicata:", f, e.message); }
-  });
-  if (applied.length) setSetting("patches_applied", done);
-  return applied;
-}
-
-module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, applyContentPatches, seedTeamIfEmpty,
+module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, seedTeamIfEmpty, migrateRadarV2, freshSignals,
   listTeam, getMember, upsertMember, deleteMember,
   listCaps, getCap, upsertCap, deleteCap, listWorks, getWork, upsertWork, deleteWork,
   listSignals, getSignal, signalByUrl, upsertSignal, setSignalStatus, deleteSignal, countSignals,

@@ -13,17 +13,6 @@ const em = (s) => String(s ?? "").replace(/<em>/g, '<span class="serif">').repla
 const isMobile = () => matchMedia("(max-width: 820px)").matches;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const media = (p) => PREVIEW && p && p.startsWith("/media/") ? p.slice(1) : p;
-// Video dei lavori: link Vimeo (vimeo.com/ID o vimeo.com/ID/HASH) → player in loop muto; file mp4/webm → <video>; altrimenti immagine.
-const vimeoId = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] } : null; };
-function workMedia(item, fallback) {
-  const v = (item.video_url || "").trim();
-  if (v) {
-    const vm = vimeoId(v);
-    if (vm) return `<div class="d-img video"><iframe src="https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}background=1&autoplay=1&loop=1&muted=1&autopause=0&dnt=1" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="Video del progetto"></iframe></div>`;
-    if (/\.(mp4|webm|mov)(\?|$)/i.test(v)) return `<div class="d-img video"><video src="${esc(v)}" autoplay muted loop playsinline preload="metadata"${item.image ? ` poster="${esc(media(item.image))}"` : ""}></video></div>`;
-  }
-  return `<div class="d-img"><img src="${media(item.image) || media(fallback)}" alt=""></div>`;
-}
 const capById = (id) => DATA.caps.find(c => c.id === id);
 const capName = (id) => (capById(id) || {}).name || id;
 const worksFor = (id) => DATA.works.filter(w => w.caps.includes(id));
@@ -36,6 +25,7 @@ if (hasGsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
 const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
 
 /* =========================================================
    CONTESTO E MODALITÀ AMBIENTALI
@@ -156,7 +146,7 @@ function detailHTML(item) {
   const adapt = (id) => DATA.features.adapt !== false ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>Adatta al tuo contesto</div><h4>Come si riconfigurerebbe per il vostro brand?</h4><div class="grid"><input name="sector" placeholder="Settore (es. moda, energia, cultura)" maxlength="60"><input name="channel" placeholder="Canale principale (es. retail, social, evento)" maxlength="60"></div><input name="goal" placeholder="Obiettivo (es. lancio prodotto, employer branding)" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">Genera la variante</button><div class="adapt-out" hidden></div></div>` : "";
   if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p><div class="tags">${item.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>${adapt(item.id)}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), "lavoro")}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
-  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
+  if (item.kind === "work") return `<div class="d-img"><img src="${media(item.image) || media("/media/monolith.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">Fonte esterna</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">Contenuto di terzi: titolo e riassunto appartengono a ${esc(item.src)} (${esc(domain(item.url))}). Frameworks lo segnala e lo commenta.</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">La nostra lettura</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
   return "";
 }
@@ -401,7 +391,9 @@ const App = {
       ${contactHTML()}
     </section>`;
     const radar = `<section class="screen paper-screen" data-screen="radar">
-      <div><div class="eyebrow"><span class="dot"></span>Radar · rassegna da fonti esterne</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
+      <div><div class="eyebrow"><span class="dot"></span>Radar · fonti esterne${DATA.radar_at ? ` · ${fmtWhen(DATA.radar_at)}` : ""}</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="radar-intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
+      <div class="radar-live"><div class="eyebrow"><span class="dot"></span>Cerca nel mondo, adesso</div><form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="Un tema: DOOH, retail media…" maxlength="80" aria-label="Cerca nel radar" enterkeyhint="search"><button type="submit">Cerca</button></form><div class="chips radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="AI generativa pubblicità">AI generativa</button><button type="button" data-live-q="virtual production">Virtual production</button></div><div class="radar-results" data-radar-results hidden></div></div>
+      <div class="row-head" style="margin-top:22px"><h2>Selezione del Radar</h2></div>
       <div class="news">${Focus.list(DATA.signals).map(sg => news(sg, false)).join("")}</div>
       <p class="paper-note">I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.</p>
     </section>`;
@@ -614,6 +606,27 @@ const ConsoleWin = {
   $("#cwin-close").addEventListener("click", () => ConsoleWin.close());
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !ConsoleWin.el.hidden) ConsoleWin.close(); });
 })();
+
+/* =========================================================
+   RADAR LIVE — ricerca in tempo reale per il visitatore (Google News via server)
+   ========================================================= */
+const RadarLive = {
+  async search(form, q) {
+    q = String(q || "").trim(); if (q.length < 2) return;
+    const box = $("[data-radar-results]", form.parentElement); if (!box) return;
+    $$(".radar-chips button", form.parentElement).forEach(b => b.classList.toggle("on", b.dataset.liveQ === q));
+    const input = $("input", form); if (input && input.value !== q) input.value = q;
+    box.hidden = false; box.innerHTML = `<p class="live-status">Cerco “${esc(q)}” nelle notizie degli ultimi 14 giorni…</p>`;
+    if (PREVIEW) { box.innerHTML = `<p class="live-status">La ricerca dal vivo funziona sul sito pubblicato (qui è solo l'anteprima).</p>`; return; }
+    try {
+      const r = await fetch(`/api/radar/search?q=${encodeURIComponent(q)}`); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore");
+      if (!j.items.length) { box.innerHTML = `<p class="live-status">Nessuna notizia recente su “${esc(q)}”. Prova un tema più ampio.</p>`; return; }
+      box.innerHTML = `<div class="live-list">${j.items.map(i => `<a class="live-item" href="${esc(i.url)}" target="_blank" rel="noopener nofollow"><span class="src"><span class="chip ext">Fonte esterna</span><b>${esc(i.src)}</b><span>${esc(fmtDate(i.date))}${i.lang === "en" ? " · en" : ""}</span></span><h4>“${esc(i.title)}”</h4></a>`).join("")}</div><p class="live-status">${j.items.length} risultati in tempo reale da Google News · fonti esterne, non curate da Frameworks · ${esc(fmtWhen(j.at))}</p>`;
+    } catch (e) { box.innerHTML = `<p class="live-status">${esc(e.message || "Ricerca non disponibile adesso.")}</p>`; }
+  }
+};
+document.addEventListener("submit", e => { const f = e.target.closest("[data-radar-search]"); if (!f) return; e.preventDefault(); const i = $("input", f); if (isMobile() && i) i.blur(); RadarLive.search(f, i ? i.value : ""); });
+document.addEventListener("click", e => { const b = e.target.closest("[data-live-q]"); if (!b) return; const f = b.closest(".radar-live") && $("[data-radar-search]", b.closest(".radar-live")); if (f) RadarLive.search(f, b.dataset.liveQ); });
 
 /* la barra in alto si inverte quando sotto c'è la "carta" del Radar */
 let paperEls = [], paperTick = false;

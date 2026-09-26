@@ -12,7 +12,9 @@ const admin = require("./admin");
 
 store.seedIfEmpty();
 store.seedTeamIfEmpty();
-{ const applied = store.applyContentPatches(); if (applied.length) console.log("Patch contenuti applicate:", applied.join(", ")); }
+// Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
+const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
+store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(q, 7, lang) })));
 
 // Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
 const fs = require("fs");
@@ -34,11 +36,18 @@ app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 
 // ---------- sito pubblico ----------
 app.get("/", (req, res) => {
+  feeds.maybeRefresh(); // se il Radar è vecchio, si aggiorna in background
   const content = store.getContent();
   res.set("Cache-Control", "no-cache");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured() });
 });
-app.get("/api/content", (req, res) => res.json(store.getContent()));
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(store.getContent()); });
+// Radar: ricerca dal vivo per il visitatore (fonti esterne, non curate)
+app.get("/api/radar/search", limit, async (req, res) => {
+  const q = String(req.query.q || "").trim().slice(0, 80); if (q.length < 2) return res.status(400).json({ error: "Scrivi almeno due lettere" });
+  try { res.set("Cache-Control", "public, max-age=600"); res.json({ q, items: await feeds.searchLive(q), at: new Date().toISOString() }); } catch (e) { res.status(502).json({ error: "Ricerca non disponibile adesso" }); }
+});
+app.get("/api/radar/fresh", (req, res) => res.json({ signals: store.freshSignals(), at: (feeds.lastRun() || {}).at || null }));
 app.get("/api/context", async (req, res) => {
   const w = await weather.getWeather();
   res.json({ weather: w, server_time: new Date().toISOString(), rome_time: new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" }).format(new Date()) });

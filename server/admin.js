@@ -114,6 +114,7 @@ router.post("/radar-filtri", (req, res) => {
 // ---------- fonti ----------
 router.get("/fonti", (req, res) => res.render("admin/sources", { sources: store.listSources(), radar: store.getSetting("radar", {}) }));
 router.post("/fonti", (req, res) => { const b = req.body; if (b.name && b.url) store.upsertSource({ id: b.id || undefined, name: b.name, url: b.url, enabled: b.enabled !== "0", weight: b.weight }); flash(req, "Fonte salvata"); res.redirect("/admin/fonti"); });
+router.post("/fonti/ricerca", (req, res) => { const q = String(req.body.q || "").trim().slice(0, 60); if (q) store.upsertSource({ id: "q-" + store.slug(q), name: "Ricerca · " + q, url: feeds.gnewsUrl(q, 7, req.body.lang === "en" ? "en" : "it"), enabled: true, weight: 2 }); flash(req, q ? "Ricerca aggiunta: parte al prossimo giro del Radar" : "Parola chiave mancante", q ? "ok" : "err"); res.redirect("/admin/fonti"); });
 router.post("/fonti/:id/toggle", (req, res) => { const s = store.getSource(req.params.id); if (s) store.upsertSource({ ...s, enabled: !s.enabled }); res.redirect("/admin/fonti"); });
 router.post("/fonti/:id/delete", (req, res) => { store.deleteSource(req.params.id); flash(req, "Fonte eliminata"); res.redirect("/admin/fonti"); });
 
