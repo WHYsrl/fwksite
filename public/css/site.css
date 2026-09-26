@@ -428,7 +428,7 @@ body.cwin-open{overflow:hidden}
 /* chiusura */
 /* ---- ORGANISMO INTERATTIVO (canvas): cresce con i dati, si orienta verso il sole, fiorisce con i media ---- */
 .org-lab{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);overflow:hidden}
-.org-stage{position:relative;height:min(54vh,560px);min-height:340px;background:radial-gradient(120% 70% at 50% 100%,#1a0a24,#050307 70%);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;transition:filter .8s}
+.org-stage{position:relative;height:min(58vh,600px);min-height:360px;background:radial-gradient(120% 70% at 50% 100%,#1a0a24,#050307 70%);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;transition:filter .8s}
 .org-lab.dormant .org-stage{filter:saturate(.7) brightness(.85)}
 .org-stage.dragging{cursor:grabbing}
 .org-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -445,6 +445,15 @@ body.cwin-open{overflow:hidden}
 .org-env input[type=range]::-moz-range-track{height:2px;background:var(--line);border-radius:2px}
 .org-env input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--accent);margin-top:-7px}
 .org-env input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.org-word{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line-2);background:var(--bg-2)}
+.org-word input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:11px 16px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .2s}
+.org-word input:focus{border-color:var(--accent)}
+.org-word input::placeholder{color:var(--ink-4)}
+.org-word button{padding:10px 18px;border-radius:999px;background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.org-word button:hover{background:var(--accent-ink);color:#000}
+.org-controls.formats{grid-template-columns:repeat(6,1fr)}
+.org-controls button.on{background:var(--bg-3);color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.org-controls button.on b{color:var(--accent-ink)}
 .org-controls{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-2);border-top:1px solid var(--line-2)}
 .org-controls button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px 12px;background:var(--bg-2);color:var(--ink-2);text-align:center;transition:background .2s,color .2s;position:relative}
 .org-controls button:hover{background:var(--bg-3);color:var(--ink)}
@@ -644,6 +653,8 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .paper-note{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--paper-ink-2);margin-top:14px}
   /* organismo interattivo */
   .org-stage{height:auto;aspect-ratio:4/5;min-height:0}
+  .org-controls.formats{grid-template-columns:repeat(3,1fr)}
+  .org-word{padding:10px 12px}
   .org-env{gap:10px;padding:10px 12px 8px}
   .org-env label{font-size:9px}
   .org-controls button{padding:12px 4px 10px}
