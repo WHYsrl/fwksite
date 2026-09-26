@@ -1,7 +1,7 @@
 // Genera preview/index.html: versione statica del sito (contenuti dal seed) per l'artifact di anteprima.
 const fs = require("fs"), path = require("path"), ejs = require("ejs");
 const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "seed.json"), "utf8"));
-const content = { site: seed.site, caps: seed.caps.filter(c => c.published), works: seed.works.filter(w => w.published), signals: seed.signals, features: { console: true, adapt: true } };
+const content = { site: seed.site, caps: seed.caps.filter(c => c.published), works: seed.works.filter(w => w.published), signals: seed.signals, team: (seed.team || []).filter(m => m.published), features: { console: true, adapt: true } };
 ejs.renderFile(path.join(__dirname, "..", "views", "index.ejs"), { content, preview: true, aiOn: false }, {}, (err, out) => {
   if (err) throw err;
   let h = out.replace(/^[\s\S]*?<head>/, "").replace(/<\/head>\s*<body>/, "").replace(/<\/body>\s*<\/html>\s*$/, "");

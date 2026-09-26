@@ -22,7 +22,7 @@
     </div>
     <label>…oppure carica un file <input type="file" name="image_file" accept="image/*"></label>
     <img id="w-prev" class="prev" src="<%= work.image %>" alt="" <%= work.image ? '' : 'hidden' %>>
-    <label>Video (URL mp4/webm, opzionale) <input name="video_url" value="<%= work.video_url %>"></label>
+    <label>Video (link Vimeo tipo https://vimeo.com/123456789 oppure URL mp4/webm; va in loop muto nel dettaglio del lavoro) <input name="video_url" value="<%= work.video_url %>" placeholder="https://vimeo.com/…"></label>
     <label class="check"><input type="checkbox" name="published" <%= work.published ? 'checked' : '' %>> Pubblicato</label>
   </section>
   <div class="actions"><button class="btn primary" type="submit">Salva</button></div>

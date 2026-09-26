@@ -3,6 +3,7 @@
 <div class="grid4">
   <a class="card stat" href="/admin/capacita"><small>Aree</small><b><%= counts.caps %></b></a>
   <a class="card stat" href="/admin/lavori"><small>Lavori</small><b><%= counts.works %></b></a>
+  <a class="card stat" href="/admin/team"><small>Team</small><b><%= counts.team %></b></a>
   <a class="card stat" href="/admin/radar"><small>Radar · in attesa</small><b><%= counts.signals.pending || 0 %></b><span>pubblicati: <%= counts.signals.published || 0 %></span></a>
   <a class="card stat" href="/admin/ai"><small>AI · chiamate oggi</small><b><%= aiToday %></b><span><%= ai.key ? (ai.provider + ' · ' + ai.model) : 'chiave mancante' %></span></a>
 </div>

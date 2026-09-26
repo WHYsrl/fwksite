@@ -38,7 +38,7 @@ router.use(requireAdmin);
 
 // ---------- dashboard ----------
 router.get("/", (req, res) => {
-  res.render("admin/dashboard", { counts: { caps: store.listCaps(true).length, works: store.listWorks(true).length, signals: store.countSignals(), sources: store.listSources().length }, radar: feeds.lastRun(), ai: ai.config(), aiStats: store.aiStats(), aiToday: store.aiCallsToday() });
+  res.render("admin/dashboard", { counts: { caps: store.listCaps(true).length, works: store.listWorks(true).length, team: store.listTeam(true).length, signals: store.countSignals(), sources: store.listSources().length }, radar: feeds.lastRun(), ai: ai.config(), aiStats: store.aiStats(), aiToday: store.aiCallsToday() });
 });
 
 // ---------- testi ----------
@@ -49,7 +49,7 @@ router.post("/testi", (req, res) => {
   const b = req.body; const site = store.getSetting("site", {});
   const s = { ...site,
     brand: b.brand, claim: b.claim, tagline: b.tagline, hero_title: b.hero_title, hero_text: b.hero_text, hero_cta: b.hero_cta, hero_image: b.hero_image, hero_image_mobile: b.hero_image_mobile,
-    context_text: b.context_text, organism_title: b.organism_title, organism_text: b.organism_text, tech_title: b.tech_title, method_intro: b.method_intro,
+    context_text: b.context_text, organism_title: b.organism_title, organism_text: b.organism_text, tech_title: b.tech_title, method_intro: b.method_intro, team_title: b.team_title, team_text: b.team_text,
     contact_title: b.contact_title, contact_email: b.contact_email, contact_address: b.contact_address, footer_note: b.footer_note, radar_title: b.radar_title, radar_text: b.radar_text,
     statements: lines(b.statements), closing: lines(b.closing),
     triad: arr(b.triad).filter(t => t.la || t.it).map(t => ({ la: t.la, it: t.it, text: t.text })),
@@ -80,6 +80,18 @@ router.post("/lavori/:id", upload.single("image_file"), (req, res) => {
   flash(req, "Lavoro salvato"); res.redirect("/admin/lavori/" + id);
 });
 router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
+
+// ---------- team ----------
+const UNITS = ["Direzione e supervisione", "Produzione", "Design, 3D & Motion", "AI & Interactive"];
+router.get("/team", (req, res) => res.render("admin/team", { team: store.listTeam(true) }));
+router.get("/team/new", (req, res) => res.render("admin/team-form", { m: { id: "", sort: store.listTeam(true).length + 1, name: "", role: "", unit: UNITS[0], bio: "", photo: "", is_key: false, published: true }, units: UNITS, media: store.listMedia(), isNew: true }));
+router.get("/team/:id", (req, res) => { const m = store.getMember(req.params.id); if (!m) return res.redirect("/admin/team"); res.render("admin/team-form", { m, units: UNITS, media: store.listMedia(), isNew: false }); });
+router.post("/team/:id", upload.single("photo_file"), (req, res) => {
+  const b = req.body; const photo = req.file ? registerUpload(req.file) : b.photo;
+  const id = store.upsertMember({ id: req.params.id === "new" ? (b.id || undefined) : req.params.id, sort: b.sort, name: b.name, role: b.role, unit: b.unit_custom || b.unit, bio: b.bio, photo, is_key: !!b.is_key, published: !!b.published });
+  flash(req, "Persona salvata"); res.redirect("/admin/team/" + id);
+});
+router.post("/team/:id/delete", (req, res) => { store.deleteMember(req.params.id); flash(req, "Persona eliminata"); res.redirect("/admin/team"); });
 
 // ---------- radar ----------
 router.get("/radar", (req, res) => res.render("admin/radar", { pending: store.listSignals("pending", 200), published: store.listSignals("published", 200), rejected: store.listSignals("rejected", 50), caps: store.listCaps(true), radar: store.getSetting("radar", {}), last: feeds.lastRun(), counts: store.countSignals() }));

@@ -63,7 +63,8 @@ function contentIndex() {
   const caps = c.caps.map(x => `- [cap:${x.id}] ${x.name}: ${x.short}`).join("\n");
   const works = c.works.map(x => `- [work:${x.id}] ${x.client} — ${x.title} (${x.year}) · aree: ${x.caps.join(", ")}: ${x.short}`).join("\n");
   const sig = c.signals.slice(0, 20).map(x => `- [signal:${x.id}] ${x.src} (${x.date}): ${x.title} · aree: ${x.caps.join(", ")}`).join("\n");
-  return { c, text: `AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}` };
+  const team = (c.team || []).filter(m => m.is_key).map(m => `- ${m.name}: ${m.role}${m.unit ? " (" + m.unit + ")" : ""}`).join("\n");
+  return { c, text: `AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}${team ? `\n\nTEAM (persone chiave, solo per rispondere a domande sulle persone; non sono id da proporre):\n${team}` : ""}` };
 }
 
 const BRAND_SYSTEM = `Sei la Console di Frameworks, l'unit di Frame by Frame S.p.A. (Roma) che progetta Adaptive Content Systems:

@@ -394,6 +394,22 @@ body.cwin-open{overflow:hidden}
 .kv b{font-weight:500;font-size:16px;font-variant-numeric:tabular-nums}
 
 /* chiusura */
+/* ---- TEAM: persone chiave + organico per reparto ---- */
+.people{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.person{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);padding:22px;display:flex;flex-direction:column;gap:16px;transition:border-color .3s,transform .3s}
+.person:hover{border-color:var(--accent);transform:translateY(-2px)}
+.face{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#000;flex:none}
+.face.gram{display:grid;place-items:center;font-family:var(--mono);font-size:15px;letter-spacing:.06em;color:#fff;background:radial-gradient(circle at 30% 30%,var(--accent-ink),var(--accent) 55%,#3a0050);border:1px solid rgba(255,255,255,.14)}
+.person h3{font-size:20px;letter-spacing:-.02em;line-height:1.1}
+.person .role{color:var(--accent-ink);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:6px;line-height:1.5}
+.person .bio{color:var(--ink-3);font-size:14px;margin-top:10px;line-height:1.45}
+.person .unit{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+.roster{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:clamp(36px,4vw,56px);padding-top:28px;border-top:1px solid var(--line-2)}
+.roster-col .lead-line{font-size:13px;color:var(--ink-3);margin-top:8px}
+.roster ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.roster li{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line-2);padding-bottom:8px}
+.roster li b{font-weight:500;font-size:15px}
+.roster li span{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:right}
 /* ---- PERCORSO (desktop): il sito configurato dalla Console. In modalità percorso resta solo mappa + percorso + contatti ---- */
 body.has-focus main>.desktop-only:not(.path-keep){display:none!important}
 .percorso{padding-top:clamp(110px,10vw,150px)}
@@ -411,7 +427,12 @@ body.has-focus main>.desktop-only:not(.path-keep){display:none!important}
 .path-paper .signals{border-top:0}
 .path-end{margin-top:clamp(48px,6vw,90px);padding-top:32px;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
 .path-end h3{font-size:clamp(28px,3vw,44px);font-weight:400}
+.path-end p{color:var(--ink-3);font-size:15px;margin-top:8px;max-width:48ch}
 .path-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.accent span{font-size:17px;line-height:1}
+.btn.accent:hover{background:var(--accent-ink);border-color:var(--accent-ink);color:#000}
+body.has-focus{overflow-anchor:none}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--ink-3)}
 .btn.ghost:hover{color:var(--ink);border-color:var(--line)}
 .closing{padding:clamp(80px,14vw,200px) var(--gutter);border-top:1px solid var(--line-2);overflow:hidden}
@@ -545,6 +566,21 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .nc p{color:var(--paper-ink-2);font-size:13.5px;margin-top:8px;padding-left:12px;border-left:2px solid var(--accent)}
   .nc.mini h3{font-size:16px}
   .paper-note{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--paper-ink-2);margin-top:14px}
+  /* team */
+  .people-m{display:grid;gap:8px;margin-top:14px}
+  .pm{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+  .pm .face{width:44px;height:44px;font-size:11px}
+  .pm b{display:block;font-size:15px;line-height:1.15}
+  .pm small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-top:3px}
+  .roster-m{margin-top:14px}
+  .roster-m summary{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);cursor:pointer;padding:10px 0;list-style:none;display:flex;justify-content:space-between}
+  .roster-m summary::-webkit-details-marker{display:none}
+  .roster-m summary::after{content:"+";color:var(--accent-ink)}
+  .roster-m[open] summary::after{content:"–"}
+  .roster-m .eyebrow{margin-top:14px}
+  .roster-m ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+  .roster-m li{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-bottom:1px solid var(--line-2);padding-bottom:6px}
+  .roster-m li span{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:right}
   /* contatti */
   .contact-m{padding:20px;border-radius:18px;background:var(--bg-2);border:1px solid var(--line)}
   .contact-m h2{font-size:26px}
@@ -607,6 +643,8 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .slide-end .slide-in{padding-top:26px}
   .slide-end code{display:block;font-family:var(--mono);font-size:16px;color:var(--ink);background:var(--bg-2);border:1px solid var(--line);padding:13px;border-radius:10px;user-select:all;word-break:break-all;margin:14px 0 10px}
   .slide-end .addr{color:var(--ink-3);font-size:13.5px;line-height:1.6;margin-top:14px}
+  .slide-end .more{color:var(--ink-2);font-size:15px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-2)}
+  .slide-actions .btn.accent{justify-content:center}
   .tabbar.three{grid-template-columns:repeat(3,1fr)}
   .tabbar.two{grid-template-columns:repeat(2,1fr)}
 
@@ -641,6 +679,7 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .signal{grid-template-columns:160px 1fr}.signal .why{grid-column:2}
   .hero-copy{width:min(46vw,520px)}
   .section-head,.split2,.context{grid-template-columns:1fr}
+  .people{grid-template-columns:repeat(2,1fr)}.roster{grid-template-columns:repeat(2,1fr)}
   .triad-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){

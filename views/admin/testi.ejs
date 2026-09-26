@@ -38,6 +38,12 @@
     <label>Testo <textarea name="organism_text" rows="4"><%= site.organism_text %></textarea></label>
   </section>
   <section class="card">
+    <h2>Team</h2>
+    <label>Titolo (usa &lt;em&gt; per il corsivo) <input name="team_title" value="<%= site.team_title || '' %>"></label>
+    <label>Testo <textarea name="team_text" rows="3"><%= site.team_text || '' %></textarea></label>
+    <p class="muted">Le persone si gestiscono nella pagina <a href="/admin/team">Team</a>.</p>
+  </section>
+  <section class="card">
     <h2>Tecnologie in logica selettiva</h2>
     <label>Titolo <input name="tech_title" value="<%= site.tech_title %>"></label>
     <% (site.tech || []).concat([{}, {}, {}, {}]).slice(0, 4).forEach((t, i) => { %>

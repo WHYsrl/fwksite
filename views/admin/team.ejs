@@ -1,0 +1,10 @@
+<%- include('../partials/admin-head', { title: 'Team' }) %>
+<div class="head"><h1>Team</h1><a class="btn primary" href="/admin/team/new">Nuova persona</a></div>
+<p class="muted">Le <b>persone chiave</b> compaiono come schede nella sezione Team del sito; le altre nell'elenco per reparto. Ordine = campo "sort". La foto è opzionale: senza, il sito mostra le iniziali.</p>
+<table>
+<tr><th>#</th><th>Nome</th><th>Ruolo</th><th>Reparto</th><th>Chiave</th><th>Stato</th><th></th></tr>
+<% team.forEach(m => { %>
+<tr><td class="mono"><%= m.sort %></td><td><b><%= m.name %></b><br><small class="mono"><%= m.id %></small></td><td><%= m.role %></td><td><small><%= m.unit %></small></td><td><%= m.is_key ? '★' : '' %></td><td><%= m.published ? 'pubblicata' : 'nascosta' %></td><td><a class="btn sm" href="/admin/team/<%= m.id %>">Modifica</a></td></tr>
+<% }) %>
+</table>
+<%- include('../partials/admin-foot') %>

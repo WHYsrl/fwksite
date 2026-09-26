@@ -5,6 +5,8 @@ const cx = (s) => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": 
 const capName = (id) => (content.caps.find(c => c.id === id) || {}).name || id;
 const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
 const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 3).toUpperCase();
+const team = content.team || []; const keyPeople = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
 %><!doctype html>
 <html lang="it" data-energy="auto" data-density="10" data-weather="unknown">
 <head>
@@ -33,7 +35,7 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 541.9 78.3" width="152" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <nav class="topnav" aria-label="Navigazione">
-    <a href="#sistema">Sistema</a><a href="#aree">Aree</a><a href="#lavori">Lavori</a><a href="#metodo">Metodo</a><a href="#radar">Radar</a>
+    <a href="#sistema">Sistema</a><a href="#aree">Aree</a><a href="#lavori">Lavori</a><a href="#metodo">Metodo</a><a href="#team">Team</a><a href="#radar">Radar</a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl">Modalità</span></button>
     <a class="cta" href="#contatti">Parliamone</a>
   </nav>
@@ -222,6 +224,24 @@ const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); 
         </g>
       </svg>
     </div>
+  </div>
+</section>
+
+<!-- ============================ TEAM ============================ -->
+<section class="section team desktop-only" id="team" data-tier="10" <%= team.length ? '' : 'hidden' %>>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Team · <%= team.length %> persone</div><div><h2 class="rv"><%- em(site.team_title || 'Un sistema è fatto di <em>persone.</em>') %></h2><p class="rv"><%= site.team_text || '' %></p></div></div>
+  <div class="people">
+    <% keyPeople.forEach((m, i) => { %>
+    <div class="person rv" style="--i:<%= i %>">
+      <% if (m.photo) { %><img class="face" src="<%= m.photo %>" alt="" loading="lazy"><% } else { %><span class="face gram" aria-hidden="true"><%= initials(m.name) %></span><% } %>
+      <div class="who"><h3><%= m.name %></h3><p class="role"><%= m.role %></p><% if (m.bio) { %><p class="bio"><%= m.bio %></p><% } %><span class="unit"><%= m.unit %></span></div>
+    </div>
+    <% }) %>
+  </div>
+  <div class="roster rv">
+    <% units.forEach(u => { const list = team.filter(m => m.unit === u && !m.is_key); if (!list.length) return; const leads = keyPeople.filter(m => m.unit === u); %>
+    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line">con <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
+    <% }) %>
   </div>
 </section>
 

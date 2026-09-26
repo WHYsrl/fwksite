@@ -175,6 +175,7 @@ document.addEventListener("click", e => {
   const opt = e.target.closest("[data-opt]"); if (opt) { ConsoleWin.send(opt.dataset.opt); return; }
   const apply = e.target.closest("[data-apply]"); if (apply) { ConsoleWin.apply(apply.dataset.apply); return; }
   const reset = e.target.closest("#focus-reset, [data-focus-reset]"); if (reset) { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); return; }
+  const disc = e.target.closest("[data-discover]"); if (disc) { Path.discover(); return; }
   const filt = e.target.closest("[data-filter]"); if (filt) { $$("[data-filter]", filt.parentElement).forEach(b => b.classList.toggle("on", b === filt)); App.filterWorks(filt.dataset.filter); }
 });
 async function runAdapt(box) {
@@ -293,7 +294,8 @@ function animateDesktop() {
   gsap.from(".console-bg img", { scale: 1.12, opacity: 0, duration: 2.2, ease: "power2.out" });
   gsap.from("#graph", { opacity: 0, duration: 1.6, delay: 0.4 });
   // reveal
-  ScrollTrigger.batch(".rv", { start: "top 88%", onEnter: b => gsap.fromTo(b, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: "power3.out", stagger: 0.09, overwrite: true }), once: true });
+  // batchMax: con un salto lungo (voce di menu, ancora) entrano decine di elementi insieme e lo stagger li farebbe aspettare secondi
+  ScrollTrigger.batch(".rv", { start: "top 88%", batchMax: 8, onEnter: b => gsap.fromTo(b, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: "power3.out", stagger: 0.09, overwrite: true }), once: true });
   // parallasse immagini
   $$("[data-parallax]").forEach(el => { const f = parseFloat(el.dataset.parallax) || 0.1; gsap.to(el, { yPercent: -f * 60, ease: "none", scrollTrigger: { trigger: el.closest("figure, .console-bg") || el, start: "top bottom", end: "bottom top", scrub: true } }); });
   // statement: scorre in orizzontale con lo scroll
@@ -324,6 +326,15 @@ const ICONS = {
   percorso: '<svg viewBox="0 0 24 24"><path d="M4 6h6M4 12h10M4 18h14"/><circle cx="19" cy="6" r="2"/></svg>',
   contatti: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg>'
 };
+const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 3).toUpperCase();
+function teamHTML() {
+  const team = DATA.team || []; if (!team.length) return "";
+  const site = DATA.site; const key = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
+  const face = (m) => m.photo ? `<img class="face" src="${media(m.photo)}" alt="" loading="lazy">` : `<span class="face gram" aria-hidden="true">${esc(initials(m.name))}</span>`;
+  return `<div class="m-text team-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Team · ${team.length} persone</div><h2 style="margin-top:8px">${em(site.team_title || "Un sistema è fatto di <em>persone.</em>")}</h2><p>${esc(site.team_text || "")}</p>
+    <div class="people-m">${key.map(m => `<div class="pm">${face(m)}<div><b>${esc(m.name)}</b><small>${esc(m.role)}</small></div></div>`).join("")}</div>
+    <details class="roster-m"><summary>Tutto il team · ${team.length}</summary>${units.map(u => { const l = team.filter(m => m.unit === u && !m.is_key); return l.length ? `<div class="eyebrow"><span class="dot"></span>${esc(u)}</div><ul>${l.map(m => `<li><b>${esc(m.name)}</b><span>${esc(m.role)}</span></li>`).join("")}</ul>` : ""; }).join("")}</details></div>`;
+}
 const greet = () => { const h = new Date().getHours(); return h < 6 ? "Buonanotte." : h < 12 ? "Buongiorno." : h < 18 ? "Buon pomeriggio." : "Buonasera."; };
 const App = {
   current: "home", filter: "all",
@@ -349,6 +360,7 @@ const App = {
       <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
       <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
       <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${c.tags.slice(0, 4).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>`).join("")}</div></div>
+      ${teamHTML()}
       <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
       <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
       <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
@@ -456,8 +468,8 @@ const Path = {
       ${works.length ? step("Lavori", `${works.length} ${works.length === 1 ? "lavoro" : "lavori"}`) + `<div class="works path-works">${works.map(x => clone(`#lavori .work[data-open="${x.id}"]`)).join("")}</div>` : ""}
       ${sigs.length ? step("Radar · fonti esterne", `${sigs.length} ${sigs.length === 1 ? "segnale" : "segnali"}`) + `<div class="paper path-paper"><div class="signals">${sigs.map(x => clone(`#radar .signal[data-id="${x.id}"]`)).join("")}</div><p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p></div>` : ""}
       <div class="path-end">
-        <h3 class="serif">Fine del percorso.</h3>
-        <div class="path-actions"><a class="btn primary" href="#contatti">Parliamone</a><button class="btn" type="button" data-tab="console">Chiedi ancora alla Console</button><button class="btn ghost" type="button" data-focus-reset>Esci dal percorso · tutto il sito</button></div>
+        <div><h3 class="serif">Questo era il percorso su misura per te.</h3><p>Frameworks è un sistema più grande: il contesto, il metodo, il radar, l'organismo intero.</p></div>
+        <div class="path-actions"><button class="btn accent" type="button" data-discover>Scopri tutta Frameworks <span>→</span></button><a class="btn primary" href="#contatti">Parliamone</a><button class="btn ghost" type="button" data-tab="console">Chiedi ancora alla Console</button></div>
       </div>`;
     sec.hidden = false;
   },
@@ -476,7 +488,7 @@ const Path = {
       if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Lavoro · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri il lavoro</button>${go}</div></div></article>`;
       return `<article class="slide slide-signal"><div class="slide-in">${tappa(i, "Radar · fonte esterna")}<div class="paper-card"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(it.src)}</b><span>${esc(fmtDate(it.date))} · ${esc(domain(it.url))}</span></div><h2>“${esc(it.title)}”</h2>${it.summary ? `<p class="sum">${esc(it.summary)}</p>` : ""}<p class="why"><small>La nostra lettura</small>${esc(it.why)}</p><p class="ext">Contenuto di terzi: titolo e riassunto appartengono a ${esc(it.src)}. Frameworks lo segnala e lo commenta.</p></div><div class="slide-actions"><a class="btn src-link" href="${esc(it.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a>${go}</div></div></article>`;
     }).join("");
-    const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Fine del percorso · Parliamone</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><div class="slide-actions col"><button class="btn primary" type="button" data-tab="console">Chiedi ancora alla Console</button><button class="btn" type="button" data-focus-reset>Esci dal percorso · tutto il sito</button></div></div></article>`;
+    const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Fine del percorso · Parliamone</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><p class="more">Questo era il percorso su misura per te. Frameworks è un sistema più grande.</p><div class="slide-actions col"><button class="btn accent" type="button" data-discover>Scopri tutta Frameworks <span>→</span></button><button class="btn" type="button" data-tab="console">Chiedi ancora alla Console</button></div></div></article>`;
     return `<section class="screen story" data-screen="percorso" aria-label="Percorso">
       <div class="story-head"><div class="story-progress" id="story-progress" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div><div class="story-bar"><span class="story-label">Percorso${label}</span><span class="story-count" id="story-count">1 / ${total}</span><button type="button" class="story-exit" data-focus-reset>Esci ✕</button></div></div>
       <div class="story-track" id="story-track">${intro}${body}${end}</div>
@@ -488,6 +500,10 @@ const Path = {
     const upd = () => { const k = Math.round(track.scrollLeft / track.clientWidth); dots.forEach((d, j) => d.classList.toggle("on", j <= k)); if (count) count.textContent = `${k + 1} / ${dots.length}`; };
     track.addEventListener("scroll", () => requestAnimationFrame(upd), { passive: true });
   },
+  // desktop: porta la pagina all'inizio della sezione Percorso, e lo ripete dopo che layout, font e ScrollTrigger si sono assestati
+  scrollToTop() { const go = () => { const sec = $("#percorso"); if (sec && !sec.hidden) window.scrollTo({ top: sec.offsetTop, behavior: "instant" }); }; go(); [120, 450, 900].forEach(t => setTimeout(go, t)); }, // "instant": con "auto" varrebbe lo scroll-behavior smooth del css
+  // "Scopri tutta Frameworks": esce dal percorso e porta all'inizio del racconto completo
+  discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = $("main > .statement"); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
   go(delta) { const t = this.track; if (!t || !t.isConnected) return; const k = Math.round(t.scrollLeft / t.clientWidth) + delta; t.scrollTo({ left: Math.max(0, Math.min(t.children.length - 1, k)) * t.clientWidth, behavior: reduced ? "auto" : "smooth" }); }
 };
 
@@ -560,7 +576,7 @@ const ConsoleWin = {
     if (p.energy) Modes.set("mood", p.energy);
     Focus.set(p.ids, p.label, p.answer, p.q);
     this.close(); closeDetail();
-    if (isMobile()) App.show("percorso"); else { const sec = $("#percorso"); window.scrollTo({ top: sec ? sec.offsetTop : 0, behavior: "instant" }); } // "instant": con "auto" varrebbe lo scroll-behavior smooth del css
+    if (isMobile()) App.show("percorso"); else Path.scrollToTop();
   }
 };
 (function consoleWinUI() {

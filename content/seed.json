@@ -89,7 +89,9 @@
     "radar_text": "Una rassegna di notizie da fonti esterne su media, tecnologia e comunicazione, selezionata dal Radar e commentata dal team. I contenuti appartengono ai rispettivi autori: qui trovi il titolo, la fonte, il link e la nostra lettura.",
     "modes_enabled": true,
     "ai_console_enabled": true,
-    "ai_adapt_enabled": true
+    "ai_adapt_enabled": true,
+    "team_title": "Un sistema è fatto di <em>persone.</em>",
+    "team_text": "Direzione e supervisione, produzione, design 3D & motion, AI & interactive: i nodi umani dell'organismo. Una pipeline sola, dalla scrittura alla messa in onda."
   },
   "caps": [
     {
@@ -471,5 +473,271 @@
     "adapt_enabled": true,
     "radar_enabled": true,
     "daily_call_limit": 400
-  }
+  },
+  "team": [
+    {
+      "id": "filippo-bonifati",
+      "sort": 1,
+      "name": "Filippo Maria Bonifati",
+      "role": "General Manager",
+      "unit": "Direzione e supervisione",
+      "is_key": true,
+      "bio": "Guida l'unit: strategia, new business e sviluppo del sistema.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "giulia-di-fausto",
+      "sort": 2,
+      "name": "Giulia Di Fausto",
+      "role": "Resource Manager",
+      "unit": "Direzione e supervisione",
+      "is_key": true,
+      "bio": "Persone, tempi e risorse: fa girare la pipeline.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "emiliano-trapani",
+      "sort": 3,
+      "name": "Emiliano Trapani",
+      "role": "Creative Supervisor",
+      "unit": "Direzione e supervisione",
+      "is_key": true,
+      "bio": "Supervisione creativa dei progetti.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "benedetto-spada",
+      "sort": 4,
+      "name": "Benedetto Spada",
+      "role": "Creative Tech Supervisor",
+      "unit": "Direzione e supervisione",
+      "is_key": true,
+      "bio": "R&D, real-time 3D e motion: il ponte tra creatività e tecnologia.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "enrico-settimi",
+      "sort": 5,
+      "name": "Enrico Settimi",
+      "role": "Autore · Specialist progetti culturali",
+      "unit": "Direzione e supervisione",
+      "is_key": true,
+      "bio": "Scrittura e progetti per musei, istituzioni e cultura.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "vania-morelli",
+      "sort": 6,
+      "name": "Vania Morelli",
+      "role": "Head of Production",
+      "unit": "Produzione",
+      "is_key": true,
+      "bio": "Coordina la produzione e i project manager.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "nide",
+      "sort": 7,
+      "name": "NIDE",
+      "role": "Department Director",
+      "unit": "Design, 3D & Motion",
+      "is_key": true,
+      "bio": "Dirige il reparto design, 3D e motion.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "francesco-paradiso",
+      "sort": 8,
+      "name": "Francesco Paradiso",
+      "role": "AI & Interactive Supervisor",
+      "unit": "AI & Interactive",
+      "is_key": true,
+      "bio": "Sistemi AI e interattivi: dalla ricerca alla messa in produzione.",
+      "photo": "",
+      "published": true
+    },
+    {
+      "id": "francesca-ascenzi",
+      "sort": 20,
+      "name": "Francesca Ascenzi",
+      "role": "Project Manager",
+      "unit": "Produzione",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "beatrice-camilli",
+      "sort": 21,
+      "name": "Beatrice Camilli",
+      "role": "Project Manager",
+      "unit": "Produzione",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "arianna-marchi",
+      "sort": 22,
+      "name": "Arianna Marchi",
+      "role": "Project Manager",
+      "unit": "Produzione",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "gemma-rongoni",
+      "sort": 23,
+      "name": "Gemma Rongoni",
+      "role": "Project Manager",
+      "unit": "Produzione",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "manuel-montefuscoli",
+      "sort": 30,
+      "name": "Manuel Montefuscoli",
+      "role": "Creative Director & Graphic Designer",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "francesco-tortorella",
+      "sort": 31,
+      "name": "Francesco Tortorella",
+      "role": "Creative Director & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "paolo-scaffidi-abbate",
+      "sort": 32,
+      "name": "Paolo Scaffidi Abbate",
+      "role": "3D Artist & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "emanuele-capuano",
+      "sort": 33,
+      "name": "Emanuele Capuano",
+      "role": "3D Artist & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "giuseppe-ferrillo",
+      "sort": 34,
+      "name": "Giuseppe Ferrillo",
+      "role": "3D Artist & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "tommaso-pievaroli",
+      "sort": 35,
+      "name": "Tommaso Pievaroli",
+      "role": "3D Artist & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "simone-saccares",
+      "sort": 36,
+      "name": "Simone Saccares",
+      "role": "3D Artist & Motion",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "antonio-carone",
+      "sort": 37,
+      "name": "Antonio Carone",
+      "role": "Video Editor",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "antonella-napoli",
+      "sort": 38,
+      "name": "Antonella Napoli",
+      "role": "Video Editor",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "gianluca-paoletti",
+      "sort": 39,
+      "name": "Gianluca Paoletti",
+      "role": "Video Editor",
+      "unit": "Design, 3D & Motion",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "federico-bonifati",
+      "sort": 40,
+      "name": "Federico Bonifati",
+      "role": "AI Specialist & Field Tech",
+      "unit": "AI & Interactive",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    },
+    {
+      "id": "marco-iafrati",
+      "sort": 41,
+      "name": "Marco Iafrati",
+      "role": "Developer",
+      "unit": "AI & Interactive",
+      "bio": "",
+      "photo": "",
+      "is_key": false,
+      "published": true
+    }
+  ]
 }

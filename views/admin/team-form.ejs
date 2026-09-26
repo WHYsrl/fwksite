@@ -1,0 +1,28 @@
+<%- include('../partials/admin-head', { title: isNew ? 'Nuova persona' : m.name }) %>
+<div class="head"><h1><%= isNew ? 'Nuova persona' : m.name %></h1><a class="btn" href="/admin/team">← Team</a></div>
+<form method="post" action="/admin/team/<%= isNew ? 'new' : m.id %>" enctype="multipart/form-data" class="form">
+  <section class="card">
+    <div class="grid3">
+      <% if (isNew) { %><label>ID (slug, opzionale) <input name="id" value="" placeholder="es. nome-cognome"></label><% } %>
+      <label>Ordine <input name="sort" type="number" value="<%= m.sort %>"></label>
+      <label>Nome <input name="name" value="<%= m.name %>" required></label>
+      <label>Ruolo <input name="role" value="<%= m.role %>" placeholder="es. Project Manager"></label>
+    </div>
+    <div class="grid2">
+      <label>Reparto <select name="unit"><% units.forEach(u => { %><option value="<%= u %>" <%= m.unit === u ? 'selected' : '' %>><%= u %></option><% }) %><% if (m.unit && !units.includes(m.unit)) { %><option value="<%= m.unit %>" selected><%= m.unit %></option><% } %></select></label>
+      <label>…oppure un reparto nuovo <input name="unit_custom" value="" placeholder="lascia vuoto per usare la scelta a sinistra"></label>
+    </div>
+    <label>Bio (una riga, solo per le persone chiave) <input name="bio" value="<%= m.bio %>"></label>
+    <div class="grid2">
+      <label>Foto (URL) <input name="photo" id="m-photo" value="<%= m.photo %>"></label>
+      <label>…oppure scegli dai media <select data-pick="#m-photo" data-preview="#m-prev"><option value="">—</option><% media.forEach(x => { %><option value="<%= x.path %>"><%= x.filename %></option><% }) %></select></label>
+    </div>
+    <label>…oppure carica un file (quadrata, almeno 600×600) <input type="file" name="photo_file" accept="image/*"></label>
+    <% if (m.photo) { %><img id="m-prev" class="prev" src="<%= m.photo %>" alt=""><% } else { %><img id="m-prev" class="prev" alt="" hidden><% } %>
+    <label class="check"><input type="checkbox" name="is_key" <%= m.is_key ? 'checked' : '' %>> Persona chiave (scheda in evidenza)</label>
+    <label class="check"><input type="checkbox" name="published" <%= m.published ? 'checked' : '' %>> Pubblicata</label>
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Salva</button></div>
+</form>
+<% if (!isNew) { %><form method="post" action="/admin/team/<%= m.id %>/delete" data-confirm="Eliminare questa persona?"><button class="btn danger" type="submit">Elimina</button></form><% } %>
+<%- include('../partials/admin-foot') %>

@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS media (
   id TEXT PRIMARY KEY, filename TEXT NOT NULL, path TEXT NOT NULL, mime TEXT DEFAULT '', size INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS team (
+  id TEXT PRIMARY KEY, sort INTEGER DEFAULT 0, name TEXT NOT NULL, role TEXT DEFAULT '', unit TEXT DEFAULT '',
+  bio TEXT DEFAULT '', photo TEXT DEFAULT '', is_key INTEGER DEFAULT 0, published INTEGER DEFAULT 1
+);
 CREATE TABLE IF NOT EXISTS ai_cache (key TEXT PRIMARY KEY, value TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')));
 CREATE TABLE IF NOT EXISTS ai_log (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, tokens INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')));
 `);
@@ -56,6 +60,17 @@ function seedIfEmpty() {
     seed.caps.forEach(upsertCap); seed.works.forEach(upsertWork); seed.sources.forEach(upsertSource);
     seed.signals.forEach(s => upsertSignal({ ...s, status: s.status || "published" }));
     setSetting("seeded", true);
+  });
+  tx();
+}
+// Il team è arrivato dopo il primo seed: si popola se la tabella è vuota (anche su database già esistenti), e i testi della sezione se mancano.
+function seedTeamIfEmpty() {
+  const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "seed.json"), "utf8"));
+  const n = db.prepare("SELECT COUNT(*) n FROM team").get().n;
+  const tx = db.transaction(() => {
+    if (!n && Array.isArray(seed.team)) seed.team.forEach(upsertMember);
+    const site = getSetting("site", {});
+    if (!site.team_title && seed.site.team_title) setSetting("site", { ...site, team_title: seed.site.team_title, team_text: seed.site.team_text });
   });
   tx();
 }
@@ -86,6 +101,19 @@ function upsertWork(w) {
   return id;
 }
 const deleteWork = (id) => db.prepare("DELETE FROM works WHERE id=?").run(id);
+
+// ---------- team ----------
+const rowMember = (r) => r && ({ ...r, is_key: !!r.is_key, published: !!r.published });
+function listTeam(all = false) { return db.prepare(`SELECT * FROM team ${all ? "" : "WHERE published=1"} ORDER BY sort, name`).all().map(rowMember); }
+function getMember(id) { return rowMember(db.prepare("SELECT * FROM team WHERE id=?").get(id)); }
+function upsertMember(m) {
+  const id = m.id || slug(m.name);
+  db.prepare(`INSERT INTO team(id,sort,name,role,unit,bio,photo,is_key,published) VALUES(@id,@sort,@name,@role,@unit,@bio,@photo,@is_key,@published)
+    ON CONFLICT(id) DO UPDATE SET sort=excluded.sort,name=excluded.name,role=excluded.role,unit=excluded.unit,bio=excluded.bio,photo=excluded.photo,is_key=excluded.is_key,published=excluded.published`)
+    .run({ id, sort: +m.sort || 0, name: m.name, role: m.role || "", unit: m.unit || "", bio: m.bio || "", photo: m.photo || "", is_key: m.is_key ? 1 : 0, published: m.published ? 1 : 0 });
+  return id;
+}
+const deleteMember = (id) => db.prepare("DELETE FROM team WHERE id=?").run(id);
 
 // ---------- signals ----------
 const rowSignal = (r) => r && ({ ...r, caps: J(r.caps, []), ai: J(r.ai, null) });
@@ -140,6 +168,7 @@ function getContent() {
     caps: listCaps(),
     works: listWorks(),
     signals: listSignals("published", 40),
+    team: listTeam(),
     features: (() => { const ai = getSetting("ai", {}); return { console: !!ai.console_enabled, adapt: !!ai.adapt_enabled }; })()
   };
 }
@@ -147,18 +176,19 @@ function getContent() {
 // ---------- export / import ----------
 function exportAll() {
   return { exported_at: new Date().toISOString(), site: getSetting("site", {}), radar: getSetting("radar", {}), ai: { ...getSetting("ai", {}), anthropic_key: undefined, openai_key: undefined },
-    caps: listCaps(true), works: listWorks(true), signals: listSignals("all", 5000), sources: listSources() };
+    caps: listCaps(true), works: listWorks(true), signals: listSignals("all", 5000), sources: listSources(), team: listTeam(true) };
 }
 function importAll(data) {
   const tx = db.transaction(() => {
     if (data.site) setSetting("site", data.site);
     if (data.radar) setSetting("radar", data.radar);
-    (data.caps || []).forEach(upsertCap); (data.works || []).forEach(upsertWork); (data.sources || []).forEach(upsertSource); (data.signals || []).forEach(upsertSignal);
+    (data.caps || []).forEach(upsertCap); (data.works || []).forEach(upsertWork); (data.sources || []).forEach(upsertSource); (data.signals || []).forEach(upsertSignal); (data.team || []).forEach(upsertMember);
   });
   tx();
 }
 
-module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty,
+module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, seedTeamIfEmpty,
+  listTeam, getMember, upsertMember, deleteMember,
   listCaps, getCap, upsertCap, deleteCap, listWorks, getWork, upsertWork, deleteWork,
   listSignals, getSignal, signalByUrl, upsertSignal, setSignalStatus, deleteSignal, countSignals,
   listSources, getSource, upsertSource, deleteSource, touchSource, listMedia, addMedia, deleteMedia, getMedia,
