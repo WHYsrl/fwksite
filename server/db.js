@@ -209,7 +209,28 @@ function importAll(data) {
   tx();
 }
 
-module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, seedTeamIfEmpty, seedConsoleContext, migrateRadarV2, freshSignals,
+// ---------- patch di contenuto ----------
+// I file in content/patches/*.json (stesso formato dell'export/import: { works, caps, sources, signals })
+// vengono applicati una sola volta ciascuno, in ordine alfabetico, a ogni avvio: così un deploy può
+// aggiornare i contenuti anche su un database già popolato. I file applicati sono ricordati in settings.
+function applyContentPatches() {
+  const dir = path.join(__dirname, "..", "content", "patches");
+  if (!fs.existsSync(dir)) return [];
+  const done = getSetting("patches_applied", []);
+  const applied = [];
+  fs.readdirSync(dir).filter(f => f.endsWith(".json")).sort().forEach(f => {
+    if (done.includes(f)) return;
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      importAll(data);
+      done.push(f); applied.push(f);
+    } catch (e) { console.error("Patch contenuti non applicata:", f, e.message); }
+  });
+  if (applied.length) setSetting("patches_applied", done);
+  return applied;
+}
+
+module.exports = { db, DATA_DIR, UPLOAD_DIR, slug, getSetting, setSetting, seedIfEmpty, applyContentPatches, seedTeamIfEmpty, seedConsoleContext, migrateRadarV2, freshSignals,
   listTeam, getMember, upsertMember, deleteMember,
   listCaps, getCap, upsertCap, deleteCap, listWorks, getWork, upsertWork, deleteWork,
   listSignals, getSignal, signalByUrl, upsertSignal, setSignalStatus, deleteSignal, countSignals,

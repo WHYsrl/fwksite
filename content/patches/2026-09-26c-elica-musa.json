@@ -1,0 +1,267 @@
+{
+  "id": "2026-09-26c-elica-musa",
+  "note": "Aggiunge Elica Lhov (sort 14) e ADI Musa (sort 15); rinumera le schede del vecchio sito a 16–28.",
+  "works": [
+    {
+      "id": "elica-lhov",
+      "sort": 14,
+      "client": "Elica",
+      "label": "Elica Lhov",
+      "title": "Il prodotto prende vita nelle mani dell'ambassador",
+      "year": "2025–2026",
+      "caps": [
+        "spatial-experiences",
+        "content-system"
+      ],
+      "short": "Un iPad appoggiato sul piano Lhov e il prodotto prende vita: esploso, flussi d'aria, installazione e forno in realtà aumentata, nelle mani degli ambassador Elica.",
+      "body": "Per Elica abbiamo sviluppato l'app di showcase in realtà aumentata di Lhov, il sistema con piano cottura, forno e aspirazione integrati, pensata per gli ambassador del brand nei punti vendita. Inquadrando il prodotto reale, o un marker quando il prodotto non c'è, l'app sovrappone a Lhov i suoi contenuti in quattro sezioni: Installazione, con esploso, dimensioni, cut-out e il mobile virtuale che si allinea al top; Airflow, con la pentola che attiva l'aspirazione dal lato giusto e le ventole del forno viste in trasparenza; Manutenzione, con filtri e vaschetta dell'acqua; Cooking features, con le cinque zone di cottura, il bridge, gli accessori del forno e le quattro pizze cotte insieme. Nata su iPad Pro, con una modalità di presentazione senza prodotto, nel 2026 l'app è cresciuta con nuovi contenuti, un marker compatto, le traduzioni e la versione Android: uno strumento di vendita che si aggiorna con il catalogo.",
+      "image": "/media/immersive.jpg",
+      "video_url": "",
+      "status": "in corso",
+      "published": true
+    },
+    {
+      "id": "musa-adi",
+      "sort": 15,
+      "client": "ADI Design Museum · Engitel · Fondazione TIM",
+      "label": "ADI · Musa",
+      "title": "Un'intelligenza che parla di design senza inventare",
+      "year": "2025–2026",
+      "caps": [
+        "adaptive-media",
+        "spatial-experiences"
+      ],
+      "short": "Musa accoglie i visitatori dell'ADI Design Museum: un avatar che risponde a voce, in tempo reale, su Compasso d'Oro e design italiano, senza uscire dall'archivio del museo.",
+      "body": "Musa è la guida virtuale che accoglie i visitatori dell'ADI Design Museum dal totem all'ingresso, nel progetto \"Vivere il Design\" sostenuto da Fondazione TIM e realizzato con Engitel. Risponde a voce e in tempo reale a domande sui premi Compasso d'Oro, sulla collezione permanente e sulla storia del design italiano. Volto, voce e labiale arrivano in streaming da una piattaforma di avatar real-time; il cervello è un'orchestrazione costruita da noi sopra un modello linguistico, con fallback automatico e, soprattutto, un grounding rigoroso: una knowledge base proprietaria di oltre 750.000 token sull'enciclopedia del museo, che tiene Musa ancorata alle sole informazioni dell'archivio, senza allucinazioni. Dal pannello di amministrazione il museo aggiunge informazioni volatili come orari, eventi e nuovi premiati, monitora servizi e consumi, configura le frasi di attesa e i video in stand-by; un timer di sessione risparmia i minuti di conversazione. Non un chatbot: un'interfaccia narrativa del patrimonio.",
+      "image": "/media/control.jpg",
+      "video_url": "",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "diesel-farm",
+      "sort": 16,
+      "client": "Diesel Farm · Red Circle Investments",
+      "label": "Diesel Farm",
+      "title": "Un sito come un quadro illustrato",
+      "year": "2024",
+      "caps": [
+        "adaptive-media",
+        "content-system"
+      ],
+      "short": "Il sogno bucolico di Renzo Rosso diventa un e-commerce illustrato: collage di elementi reali e illustrazioni potenziate dall'AI. Honourable Mention su Awwwards.",
+      "body": "Diesel Farm, l'azienda vinicola vicentina nata dal sogno di Renzo Rosso, non aveva bisogno di un catalogo digitale ma di un viaggio sensoriale. Siamo andati tra i vigneti e i sentieri della tenuta e da lì è nata l'idea del collage: piante, fiori, animali e insetti reali fusi con illustrazioni potenziate dall'intelligenza artificiale, che non sostituisce il tocco dell'artista ma lo arricchisce di sfumature e dettagli quasi surreali. Ogni pagina è un quadro illustrato. Sotto, un headless CMS e Shopify per la vendita dei vini, con front-end in Next.js: libertà creativa totale e e-commerce solido. Il sito ha ricevuto una Honourable Mention su Awwwards.",
+      "image": "/media/works/diesel-farm.jpg",
+      "video_url": "https://vimeo.com/1040720904/1d4035f7d3",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "otb-website",
+      "sort": 17,
+      "client": "OTB Group",
+      "label": "OTB Group",
+      "title": "La casa digitale di un portafoglio di brand del lusso",
+      "year": "2023–2024",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Il sito corporate di OTB Group (Diesel, Maison Margiela, Marni, Jil Sander, Viktor&Rolf), progettato per stampa, investitori e talenti in vista della quotazione.",
+      "body": "Per OTB Group, la holding del lusso fondata da Renzo Rosso, abbiamo guidato la trasformazione digitale del sito corporate: ricerca, benchmark e strategia per tradurre l'identità del gruppo in una casa comune per brand molto diversi tra loro. Il design, stratificato e in movimento, con parallasse e contenuti animati, mette in primo piano campagne, immagini originali e i temi di sostenibilità, fair trade e Made in Italy. Sotto, un'infrastruttura su AWS con headless CMS e una nuova architettura editoriale, pensata per scalare con la crescita del gruppo e con la sua quotazione.",
+      "image": "/media/works/otb-website.jpg",
+      "video_url": "https://vimeo.com/1040723783/06aad9f584",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "otb-made",
+      "sort": 18,
+      "client": "OTB Group",
+      "label": "OTB M.A.D.E.",
+      "title": "Dieci storie della filiera, senza didascalie",
+      "year": "2024",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Docuserie in dieci episodi brevi sulle aziende più rappresentative della filiera produttiva di OTB: racconto crudo e autentico, guidato dalle voci dei protagonisti.",
+      "body": "M.A.D.E. racconta la filiera di OTB Group attraverso dieci episodi autonomi, ciascuno dedicato a un'azienda e a uno dei suoi protagonisti. La voce fuori campo detta il ritmo, la camera segue le persone tra primi piani e figure intere, e due registri visivi si alternano: l'elemento umano, con la maestria delle mani, e lo still life di natura e macchinari con precisione quasi architettonica. Il sound design in presa diretta, dal fruscio di un campo di cotone al ronzio industriale di un magazzino, ancora ogni inquadratura alla realtà. Nessuna descrizione didattica: una sintesi visiva ed emotiva del carattere e delle competenze di ogni azienda.",
+      "image": "/media/works/otb-made.jpg",
+      "video_url": "https://vimeo.com/1039997022/4e63fcd2b8",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "otb-sustainability",
+      "sort": 19,
+      "client": "OTB Group",
+      "label": "OTB Sustainability",
+      "title": "La sostenibilità di OTB, raccontata",
+      "year": "2024",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Contenuti video per la comunicazione di sostenibilità di OTB Group, in italiano e in inglese.",
+      "body": "Per OTB Group abbiamo realizzato i contenuti video dedicati alla comunicazione di sostenibilità del gruppo, in versione italiana e inglese, con direzione creativa e produzione interne. Scheda da completare: sul vecchio sito il progetto è presente solo come reel.",
+      "image": "/media/works/otb-sustainability.jpg",
+      "video_url": "https://vimeo.com/1040026488/87cace7b5a",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "gast-10",
+      "sort": 20,
+      "client": "MoodMind",
+      "label": "GAST 10",
+      "title": "Un videogioco VR tra gioco e introspezione",
+      "year": "2024",
+      "caps": [
+        "spatial-experiences",
+        "content-system"
+      ],
+      "short": "Diorami fatti a mano trasformati in mondi VR con la fotogrammetria, principi di terapia dialettico-comportamentale, audio immersivo: un gioco che fa stare meglio.",
+      "body": "GAST 10 – A Borderlife Story è un gioco VR narrativo sviluppato per MoodMind, start-up che usa tecnologia e gioco per il benessere psicologico. Con l'artista Tommaso Ragnisco abbiamo creato concept art e diorami fisici, trasformati in asset di gioco con la fotogrammetria: un'estetica artigianale e riconoscibile. La narrazione segue Leo attraverso i mondi della Rabbia, della Paura, della Tristezza e della Gioia, ciascuno custodito da un Guardiano, e integra principi di terapia dialettico-comportamentale sviluppati con psicologi esperti. Sviluppato in Unity, con audio immersivo di Moka Music, per Meta Quest 3 e PS VR: esplorazione, enigmi e combattimenti simbolici in una delle prime esperienze VR che unisce storytelling, arte e benessere mentale.",
+      "image": "/media/works/gast-10.jpg",
+      "video_url": "https://vimeo.com/1047447379/6ad9d1161b",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "prysmian-city",
+      "sort": 21,
+      "client": "Prysmian Group",
+      "label": "Prysmian City",
+      "title": "Una città futuristica da sorvolare",
+      "year": "2023",
+      "caps": [
+        "content-system",
+        "spatial-experiences"
+      ],
+      "short": "Un microsito in cui ogni quartiere di una città interattiva racconta una linea di business del leader mondiale dei cavi: video navigabile, CMS proprietario, 14 lingue.",
+      "body": "Per Prysmian Group, leader mondiale nei sistemi in cavo per energia e telecomunicazioni, abbiamo ideato e sviluppato Prysmian City: una città futuristica presentata come video interattivo completamente navigabile, in cui ogni quartiere rappresenta un'area di competenza dell'azienda. Si vola tra i distretti, si entra nei contenuti tecnici e informativi, con primi piani, loop animati e transizioni continue. Al centro un CMS proprietario che gestisce l'intera città e permette di aggiungere nuovi hotspot navigabili. Il microsito è diventato un riferimento per la comunicazione digitale di Prysmian, è stato tradotto in 14 lingue e il suo linguaggio è oggi riusato in altri strumenti corporate.",
+      "image": "/media/works/prysmian-city.jpg",
+      "video_url": "https://vimeo.com/1040725714/78d6a10b0d",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "d-orbit",
+      "sort": 22,
+      "client": "D-Orbit",
+      "label": "D-Orbit",
+      "title": "I satelliti in orbita, in homepage",
+      "year": "2023",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Sito corporate con CMS su misura che aggiorna in tempo reale lo stato dei lanci, e un video CGI cinematografico del rilascio dei satelliti in orbita.",
+      "body": "D-Orbit, leader italiano nella logistica spaziale e nel trasporto orbitale, aveva bisogno di un sito che riflettesse la sua innovazione e sostenesse la crescita verso nuovi traguardi. Abbiamo sviluppato un CMS su misura che permette di aggiornare in tempo reale lo stato dei lanci programmati, e per la homepage un video CGI di qualità cinematografica: satelliti modellati e animati fedelmente alla tecnologia D-Orbit, che illustrano le fasi del rilascio in orbita attorno alla Terra. Estetica e tecnologia in equilibrio, in una vetrina che rafforza la posizione dell'azienda nel settore aerospaziale.",
+      "image": "/media/works/d-orbit.jpg",
+      "video_url": "https://vimeo.com/1040719287/3e7f65c8c5",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "esa-space-rider",
+      "sort": 23,
+      "client": "ESA · European Space Agency",
+      "label": "ESA Space Rider",
+      "title": "Una visione cinematografica dell'esplorazione orbitale",
+      "year": "2022",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Il video delle attività orbitali dello Space Rider, la navetta automatica e riutilizzabile dell'ESA: storyboard dal brief tecnico, modello 3D ottimizzato, look cinematografico.",
+      "body": "Per il programma Space Rider abbiamo collaborato con l'Agenzia Spaziale Europea a un video che mostra le attività orbitali della navetta automatica e riutilizzabile progettata per il rientro senza equipaggio, un progetto finanziato principalmente dall'Italia. Dal brief tecnico ESA abbiamo sviluppato uno storyboard dettagliato con i passaggi chiave delle operazioni; il modello 3D, finalizzato internamente, è stato ottimizzato per efficienza e precisione delle animazioni. Abbiamo proposto un look cinematografico, realistico e coinvolgente, che si allontana dallo stile tecnico dei video precedenti: un contenuto che celebra l'innovazione spaziale con una narrazione forte.",
+      "image": "/media/works/esa-space-rider.jpg",
+      "video_url": "https://vimeo.com/1038540700/9763a01924",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "dg-razer",
+      "sort": 24,
+      "client": "Dolce&Gabbana × Razer",
+      "label": "D&G × Razer",
+      "title": "La moda del lusso incontra l'energia del gaming",
+      "year": "2023",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Spot full CGI in Unreal Engine e still ad alta risoluzione per la campagna social globale della collezione Dolce&Gabbana × Razer.",
+      "body": "Per la collaborazione tra Dolce&Gabbana e Razer, una collezione in edizione limitata di abbigliamento e tecnologia, abbiamo prodotto i materiali della campagna social globale. Al centro uno spot interamente in CGI, realizzato con Unreal Engine, che fonde l'eleganza della maison con l'energia del mondo gaming; intorno, una serie di still ad alta risoluzione perfettamente coerenti con lo spot. Direzione creativa, modelli 3D, animazione, rendering, post-produzione e color grading in un unico processo integrato. La campagna ha raggiunto un pubblico ampio grazie alla sinergia tra le due fanbase, con un alto livello di engagement e condivisioni.",
+      "image": "/media/works/dg-razer.jpg",
+      "video_url": "https://vimeo.com/1047412101/8b5252b7ae",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "marconi",
+      "sort": 25,
+      "client": "Guglielmo Marconi",
+      "label": "Marconi",
+      "title": "Prove di Trasmissione",
+      "year": "2024",
+      "caps": [
+        "adaptive-media",
+        "spatial-experiences"
+      ],
+      "short": "Progetto immersivo con contenuti in AI dedicato a Guglielmo Marconi. Scheda da completare.",
+      "body": "Prove di Trasmissione è il progetto dedicato a Guglielmo Marconi che sul vecchio sito compare tra i lavori taggati AI e Immersive, con un teaser e un loop. Scheda da completare con brief, committente e descrizione dell'esperienza.",
+      "image": "/media/works/marconi.jpg",
+      "video_url": "https://vimeo.com/1096593867/012471563f",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "we-build-sport",
+      "sort": 26,
+      "client": "Webuild",
+      "label": "Webuild per lo Sport",
+      "title": "We dream. We build. We win.",
+      "year": "2024",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Cinque campionesse olimpiche intervistate in un cantiere della metro di Roma: interviste, regia e tutti gli asset di comunicazione della campagna Webuild per lo Sport.",
+      "body": "Come nello sport, costruire un ponte, una ferrovia o una diga richiede talento, determinazione e la sfida quotidiana di superare i propri limiti. Webuild per lo Sport celebra questi valori attraverso le storie di grandi atlete italiane: Caterina Banti, Alice Bellandi, Zaynab Dosso, Antonella Palmisano e Angela Carini raccontano cosa c'è dietro una medaglia. Abbiamo guidato la produzione della campagna girando le cinque interviste in un cantiere della metropolitana di Roma, con una regia che intreccia forza atletica e umanità, e abbiamo ideato e prodotto tutti gli asset di comunicazione.",
+      "image": "/media/screens.jpg",
+      "video_url": "",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "tim",
+      "sort": 27,
+      "client": "TIM",
+      "label": "TIM",
+      "title": "La parità non può aspettare",
+      "year": "2023",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Post-produzione ed effetti visivi dello spot istituzionale TIM per la parità di genere, diretto da Giuseppe Tornatore.",
+      "body": "Per lo spot istituzionale di TIM dedicato alla parità di genere, diretto dal premio Oscar Giuseppe Tornatore, abbiamo curato la post-produzione e gli effetti visivi. Sotto la direzione della post-producer Laura Pace e con la supervisione VFX di Paolo Landolfi, il reparto effetti guidato da Fabio Cerrito ha rafforzato la narrazione e l'estetica del film, rendendo lo spot un'esperienza visiva memorabile.",
+      "image": "/media/frames.jpg",
+      "video_url": "",
+      "status": "consegnato",
+      "published": true
+    },
+    {
+      "id": "rai-vbi",
+      "sort": 28,
+      "client": "Rai",
+      "label": "Rai · Visual Identity",
+      "title": "Un'identità visiva per i canali Rai",
+      "year": "2010",
+      "caps": [
+        "content-system"
+      ],
+      "short": "Le identità grafiche dei canali Rai intorno al nuovo logo: ident, animazioni, bumper e promo pack, con la musica di Stefano Fresi.",
+      "body": "Nel riordino della brand identity Rai attorno al nuovo logo abbiamo progettato le identità grafiche dei canali: il blu istituzionale di Rai Uno che si fonde con un cristallo trasparente, il rosso di Rai Due che prende vita in fuoco, lava e scintille, il verde di Rai Tre in un caleidoscopio di forme e colori del territorio. Con Rai Promotion e i direttori di rete abbiamo tradotto l'identità di ogni canale in un'immagine video coordinata, tra ident, animazioni del logo, bumper e promo pack, in un processo durato circa un anno con motion design, 3D e sound design. Il jingle composto da Stefano Fresi è diventato la firma sonora del nuovo logo.",
+      "image": "/media/organism-tall.jpg",
+      "video_url": "",
+      "status": "consegnato",
+      "published": false
+    }
+  ]
+}
