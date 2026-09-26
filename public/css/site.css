@@ -225,6 +225,23 @@ html[data-mood="nervous"] .grain{display:none}
 .cwin-form .chips{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
 .cwin-form .chips::-webkit-scrollbar{display:none}
 body.cwin-open{overflow:hidden}
+/* risposta a pagine: 1) testo 2) percorso */
+.panes{display:flex;flex-direction:column;gap:12px}
+.pane{min-width:0}
+.pane-next{display:none}
+.pane-dots{display:none}
+@media (max-width:820px){
+  .msg.bot.paged .panes{flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+  .msg.bot.paged .panes::-webkit-scrollbar{display:none}
+  .msg.bot.paged .pane{flex:0 0 calc(100% - 0px);scroll-snap-align:start;scroll-snap-stop:always}
+  .msg.bot.paged .proposal{margin-top:0}
+  .pane-next{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:11px 16px;border-radius:999px;border:1px solid var(--accent);color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent-soft)}
+  .pane-next span{font-family:var(--sans);font-size:15px}
+  .pane-dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+  .pane-dots i{width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
+  .pane-dots i.on{background:var(--accent);width:18px;border-radius:3px}
+}
+
 @media (max-width:820px){
   .focusbar{top:calc(60px + env(safe-area-inset-top,0px));font-size:12px;gap:8px;padding:6px 6px 6px 12px}
   .focusbar .eyebrow{display:none}

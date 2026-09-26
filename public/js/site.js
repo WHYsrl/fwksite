@@ -437,20 +437,32 @@ const ConsoleWin = {
       this.history.push({ q, a: r.answer || "" }); this.last = r;
       const items = resolveIds(r.highlight, r.answer).map(byId).filter(Boolean);
       const group = (k, label) => { const l = items.filter(i => i.kind === k); return l.length ? `<div class="prop-group"><small>${label}</small>${l.map(i => `<button type="button" class="prop-item" data-open="${i.id}">${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.src + " · " + i.title : i.name)}</button>`).join("")}</div>` : ""; };
-      let html = `<div class="msg bot"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
-      if (r.ask && r.ask.question) html += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
+      // pagina 1: la risposta (+ eventuale domanda) · pagina 2: il percorso con Vai / Mostrami tutto
+      let pane1 = `<section class="pane"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
+      if (r.ask && r.ask.question) pane1 += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
+      let pane2 = "";
       if (items.length) {
         const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), label: r.label || "", density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
-        html += `<div class="proposal"><div class="eyebrow"><span class="dot"></span>Percorso proposto${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">Vai</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div>`;
+        pane1 += `<button type="button" class="pane-next" data-pane-next>Vedi il percorso <span>→</span></button>`;
+        pane2 = `<section class="pane"><div class="proposal"><div class="eyebrow"><span class="dot"></span>Percorso proposto${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">Vai</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div></section>`;
       }
-      html += `</div>`;
-      const d = document.createElement("div"); d.innerHTML = html; think.replaceWith(d.firstElementChild);
-      this.thread.scrollTop = this.thread.scrollHeight;
+      pane1 += `</section>`;
+      const html = `<div class="msg bot${pane2 ? " paged" : ""}"><div class="panes">${pane1}${pane2}</div>${pane2 ? `<div class="pane-dots" aria-hidden="true"><i class="on"></i><i></i></div>` : ""}</div>`;
+      const d = document.createElement("div"); d.innerHTML = html; const node = d.firstElementChild; think.replaceWith(node);
+      this.bindPanes(node);
+      // mostra l'INIZIO della risposta, non la fine
+      this.thread.scrollTop = Math.max(0, node.offsetTop - 12);
       if (Console && items.length) Console.highlight(items.map(i => i.id));
     } catch (err) {
       think.className = "msg bot"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
     }
     this.busy = false;
+  },
+  bindPanes(node) {
+    const panes = $(".panes", node), dots = $$(".pane-dots i", node); if (!panes || !dots.length) return;
+    const upd = () => { const k = Math.round(panes.scrollLeft / panes.clientWidth); dots.forEach((d, j) => d.classList.toggle("on", j === k)); };
+    panes.addEventListener("scroll", () => requestAnimationFrame(upd), { passive: true });
+    const nx = $("[data-pane-next]", node); if (nx) nx.addEventListener("click", () => { if (isMobile()) panes.scrollTo({ left: panes.clientWidth, behavior: reduced ? "auto" : "smooth" }); else $(".proposal", node).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); });
   },
   apply(id) {
     const p = (this.proposals || {})[id]; if (!p) return;
@@ -463,7 +475,7 @@ const ConsoleWin = {
 };
 (function consoleWinUI() {
   const f = $("#cwin-form"); if (!f) return;
-  f.addEventListener("submit", e => { e.preventDefault(); const i = $("#cwin-q"); const q = i.value.trim(); i.value = ""; ConsoleWin.send(q); });
+  f.addEventListener("submit", e => { e.preventDefault(); const i = $("#cwin-q"); const q = i.value.trim(); i.value = ""; if (isMobile()) i.blur(); ConsoleWin.send(q); });
   $("#cwin-close").addEventListener("click", () => ConsoleWin.close());
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !ConsoleWin.el.hidden) ConsoleWin.close(); });
 })();
