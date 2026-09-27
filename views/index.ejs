@@ -201,8 +201,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
       <article class="reel" data-reel data-vimeo="<%= r.vimeo ? r.vimeo.id : '' %>" data-h="<%= r.vimeo ? r.vimeo.h : '' %>" style="--i:<%= i %>">
         <div class="reel-media"><% if (r.cover) { %><img src="<%= r.cover %>" alt="" loading="lazy"><% } %></div>
         <div class="reel-meta">
-          <div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · anteprima<% } %></div>
-          <h3><%= r.title %></h3>
+          <div><div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · anteprima<% } %></div><h3><%= r.title %></h3></div>
           <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play>Guarda con audio</button><% } %>
         </div>
       </article>

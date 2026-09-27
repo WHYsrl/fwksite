@@ -69,3 +69,15 @@
 /* il loop video nella scheda non ha controlli: uno strato trasparente evita che si prenda clic e fuoco */
 .drawer-body .d-img.video{position:relative}
 .drawer-body .d-img.video::after{content:"";position:absolute;inset:0}
+
+/* ---- reel nell'app mobile (schermata Lavori) ---- */
+@media (max-width:820px){
+  .reels-m{margin:0 0 18px}
+  .reels-m>.eyebrow{margin-bottom:2px}
+  .reels-track-m{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;padding:10px 16px 6px;margin:0 -16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .reels-track-m::-webkit-scrollbar{display:none}
+  .reels-track-m .reel{flex:0 0 86%;scroll-snap-align:center;border-radius:14px}
+  .reels-track-m .reel-meta{padding:18px 14px 14px;align-items:flex-end}
+  .reels-track-m .reel-meta h3{font-size:18px;margin-top:4px}
+  .reels-track-m .reel-play{padding:9px 12px;font-size:10px}
+}

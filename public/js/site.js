@@ -256,6 +256,7 @@ document.addEventListener("click", e => {
   const ct = e.target.closest("[data-contact]"); if (ct) { if (isMobile()) openContactSheet(); else { closeDetail(); goSection("contatti"); } return; }
   const c = e.target.closest("[data-copy]"); if (c) copyText(c);
   const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { e.preventDefault(); openContactSheet(); }
+  const lg = e.target.closest(".topbar .logo"); if (lg && isMobile()) { e.preventDefault(); App.show("home"); return; } // su mobile il logo riporta alla Home dell'app
   const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") ConsoleWin.open(tab.dataset.q || ""); else if (tab.dataset.tab === "contatti") openContactSheet(); else App.show(tab.dataset.tab); return; }
   const sn = e.target.closest("[data-story-next]"); if (sn) { Path.go(1); return; }
   const sp = e.target.closest("[data-story-prev]"); if (sp) { Path.go(-1); return; }
@@ -521,7 +522,11 @@ const App = {
       <div class="m-text metodo-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
       ${contactHTML()}
     </section>`;
+    // i reel tematici (stessi del desktop, da /admin/reel): carosello a scorrimento sopra le case
+    const reelsM = (DATA.reels || []).filter(r => r.vimeo || r.cover);
+    const reelsHTML = reelsM.length ? `<div class="reels-m"><div class="eyebrow"><span class="dot"></span>Reel · organismi in movimento</div><div class="reels-track reels-track-m" data-reels-track>${reelsM.map(r => `<article class="reel" data-reel data-vimeo="${r.vimeo ? esc(r.vimeo.id) : ""}" data-h="${r.vimeo ? esc(r.vimeo.h || "") : ""}"><div class="reel-media">${r.cover ? `<img src="${esc(media(r.cover) || r.cover)}" alt="" loading="lazy">` : ""}</div><div class="reel-meta"><div><div class="eyebrow"><span class="dot"></span>${esc(r.theme || "Reel")}${r.placeholder ? " · anteprima" : ""}</div><h3>${esc(r.title)}</h3></div>${r.vimeo ? `<button type="button" class="reel-play" data-reel-play>Guarda con audio</button>` : ""}</div></article>`).join("")}</div></div>` : "";
     const lavori = `<section class="screen" data-screen="lavori">
+      ${reelsHTML}
       <div><h2>Organismi in <span class="serif">azione.</span></h2><div class="chips"><button type="button" class="on" data-filter="all">Tutti</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
       <div class="grid2m feed" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
       <p class="app-foot">Tocca un lavoro per aprirlo e adattarlo al tuo contesto</p>
@@ -546,6 +551,7 @@ const App = {
     this.applyDensity(); this.show(this.current, true);
     if (window.Diffusion) Diffusion.mountAll(); // il Denoise nella schermata Sistema
     if (window.Organismo) Organismo.mountAll(); // l'organismo nella schermata Sistema
+    if (window.Reels) Reels.mountAll(); // i reel nella schermata Lavori
     if (window.DataField) DataField.mountAll(); // il campo dati del contesto nella schermata Sistema
   },
   show(name, silent) {
