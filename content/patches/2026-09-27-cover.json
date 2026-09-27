@@ -1,0 +1,46 @@
+{
+  "id": "2026-09-27-cover",
+  "note": "Cover per le schede senza loop Vimeo: composizioni da deck/app (Reale Mutua, Geely, Elica Lhov), storyboard (GeoAI), deck Serco (Roma aerea), vecchio sito (Webuild, TIM, Rai), immagini FAC segnaposto (vetrina try-on, Musa). Aggiorna solo il campo image.",
+  "works_update": [
+    {
+      "id": "reale",
+      "image": "/media/works/reale.jpg"
+    },
+    {
+      "id": "geely",
+      "image": "/media/works/geely.jpg"
+    },
+    {
+      "id": "try-on-realtime",
+      "image": "/media/works/try-on-realtime.jpg"
+    },
+    {
+      "id": "serco-rfw",
+      "image": "/media/works/serco-rfw.jpg"
+    },
+    {
+      "id": "geoai",
+      "image": "/media/works/geoai.jpg"
+    },
+    {
+      "id": "elica-lhov",
+      "image": "/media/works/elica-lhov.jpg"
+    },
+    {
+      "id": "musa-adi",
+      "image": "/media/works/musa-adi.jpg"
+    },
+    {
+      "id": "we-build-sport",
+      "image": "/media/works/we-build-sport.jpg"
+    },
+    {
+      "id": "tim",
+      "image": "/media/works/tim.jpg"
+    },
+    {
+      "id": "rai-vbi",
+      "image": "/media/works/rai-vbi.jpg"
+    }
+  ]
+}

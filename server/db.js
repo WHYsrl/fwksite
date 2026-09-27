@@ -210,7 +210,8 @@ function importAll(data) {
 }
 
 // ---------- patch di contenuto ----------
-// I file in content/patches/*.json (stesso formato dell'export/import: { works, caps, sources, signals })
+// I file in content/patches/*.json (stesso formato dell'export/import: { works, caps, sources, signals },
+// più works_update: [{ id, campo: valore, ... }] per aggiornare solo alcuni campi di schede esistenti)
 // vengono applicati una sola volta ciascuno, in ordine alfabetico, a ogni avvio: così un deploy può
 // aggiornare i contenuti anche su un database già popolato. I file applicati sono ricordati in settings.
 function applyContentPatches() {
@@ -222,6 +223,9 @@ function applyContentPatches() {
     if (done.includes(f)) return;
     try {
       const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      // works_update: aggiornamenti parziali (solo i campi indicati) di schede già esistenti,
+      // così una patch può cambiare p.es. la cover senza sovrascrivere testi modificati dal backoffice.
+      (data.works_update || []).forEach(u => { const cur = getWork(u.id); if (cur) upsertWork({ ...cur, ...u }); });
       importAll(data);
       done.push(f); applied.push(f);
     } catch (e) { console.error("Patch contenuti non applicata:", f, e.message); }

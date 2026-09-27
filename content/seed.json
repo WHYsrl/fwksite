@@ -176,7 +176,7 @@
       ],
       "short": "Una foto allo stand diventa in pochi minuti un video personalizzato con l'Ambassador. Stessa piattaforma, due eventi, lead profilati.",
       "body": "Per il village Reale Mutua agli Internazionali BNL d'Italia 2026 abbiamo trasformato il format \"Back in the Game\" con Juri Chechi in un'esperienza in prima persona. Il visitatore scatta una foto allo stand; una pipeline generativa (face swap, image-to-video, montaggio automatico con intro e outro dell'Ambassador) gli restituisce via email, in meno di tre minuti, un video in cui è lui il campione. Consensi e dati vengono raccolti dentro il flusso, con volumi da centinaia di attivazioni al giorno. A settembre la stessa piattaforma è stata riconfigurata per il Salone del Gusto di Torino, con nuove scene e una pipeline che protegge l'identità del talent: un caso concreto di riuso adattivo.",
-      "image": "/media/particles.jpg",
+      "image": "/media/works/reale.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -194,7 +194,7 @@
       ],
       "short": "Tre mini-giochi in spiaggia, poi basket e IRONMAN: un QR, 60 secondi di gioco, la classifica e un test drive da prenotare. Stesso motore, contesti diversi.",
       "body": "Per la campagna #CAMBIAILVENTO di Geely Italia abbiamo costruito una piattaforma web mobile-only: si inquadra un QR, ci si registra con i consensi GDPR, si gioca da 30 a 90 secondi, si entra in classifica e si arriva alla call-to-action \"Hai sbloccato il livello successivo: un vero test drive\". D'estate, sotto gli ombrelloni di Porto Pollo, i giochi erano Star Catch, Pit Stop Tap e Kite Challenge; a settembre lo stesso impianto ha generato Geely Super Dunk! per la stagione LBA e Iron Chase per IRONMAN, con trailer generati in AI per i totem LED degli eventi. Il backoffice consegna lead e consensi al CRM del cliente e misura visite, partite e click al test drive. La Geely non fa da sfondo: gioca.",
-      "image": "/media/control.jpg",
+      "image": "/media/works/geely.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -212,7 +212,7 @@
       ],
       "short": "Una vetrina che veste il passante in tempo reale: display 90\", QR, nessuna app. Il cliente prova il look prima di entrare in store.",
       "body": "Sperimentazione di Real-Time AI per il retail fisico, sviluppata per un brand premium di menswear italiano. Un display verticale da 90 pollici in vetrina mostra il passante con un capo della collezione già indossato; inquadrando un QR, dal proprio telefono e senza installare nulla, sceglie capi e total look e la vetrina si aggiorna in due o tre secondi. Quattro modalità di rendering (virtual try-on, modello sostituito, total look composito, avatar con il volto del cliente) vengono scelte automaticamente per ogni capo dal back-office del brand; il flusso chiude con lead capture con consenso, store più vicino e look salvato via email, con dati eliminati a fine sessione. Dwell time atteso di 2–3 minuti contro i 4–8 secondi di una vetrina classica: la vetrina non intercetta più il traffico, lo genera.",
-      "image": "/media/hero-mobile.jpg",
+      "image": "/media/works/try-on-realtime.jpg",
       "video_url": "",
       "status": "in corso",
       "published": true
@@ -265,7 +265,7 @@
       ],
       "short": "Un visore, cinque minuti, quattro quadranti di Roma: ogni scelta contro il calore urbano si proietta al 2050 con dati reali di Copernicus e Destination Earth.",
       "body": "Per la giornata Serco alla Rome Future Week 2026 abbiamo costruito una simulazione VR per Meta Quest 3. Il visitatore entra nella Serco Climate Control Room come Operatore: quattro schermi sorvegliano Centro, Est, Ovest e Sud di Roma; a ogni alert legge i dati del quadrante e sceglie in pochi secondi l'intervento contro il calore urbano, tra chiome arboree, tetti verdi e alternative plausibili ma sbagliate. Le conseguenze si proiettano al 2050 e il punteggio finale (popolazione protetta, gradi ridotti, tempo impiegato) entra in classifica. Dietro la scena ci sono dati Sentinel, CAMS, Urban Atlas e il Climate Digital Twin di Destination Earth: il gioco rende leggibile ciò che Serco fa con quei dati.",
-      "image": "/media/screens.jpg",
+      "image": "/media/works/serco-rfw.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -283,7 +283,7 @@
       ],
       "short": "Un tool scientifico di Earth Observation diventa una storia di 75 secondi. \"The Earth has all the answers. You just have to ask.\"",
       "body": "GeoAI permette a chi non è esperto GIS di interrogare le immagini satellitari in linguaggio naturale e avere risposte in pochi secondi. Per Serco ed ESA lo abbiamo raccontato con un promo di 75 secondi in tre atti (una verità scoperta, il problema che rivela, la chiamata all'azione) e con un tutorial di due minuti sul workflow reale. Il look cinematografico nasce da una pipeline generativa fusa con riprese aeree, screen recording del servizio e motion graphics sull'identità di Destination Earth. Il claim di prodotto, \"99.7% reduction in manual analysis time\", chiude la storia.",
-      "image": "/media/torus.jpg",
+      "image": "/media/works/geoai.jpg",
       "video_url": "",
       "status": "in corso",
       "published": true
@@ -405,7 +405,7 @@
       ],
       "short": "Un iPad appoggiato sul piano Lhov e il prodotto prende vita: esploso, flussi d'aria, installazione e forno in realtà aumentata, nelle mani degli ambassador Elica.",
       "body": "Per Elica abbiamo sviluppato l'app di showcase in realtà aumentata di Lhov, il sistema con piano cottura, forno e aspirazione integrati, pensata per gli ambassador del brand nei punti vendita. Inquadrando il prodotto reale, o un marker quando il prodotto non c'è, l'app sovrappone a Lhov i suoi contenuti in quattro sezioni: Installazione, con esploso, dimensioni, cut-out e il mobile virtuale che si allinea al top; Airflow, con la pentola che attiva l'aspirazione dal lato giusto e le ventole del forno viste in trasparenza; Manutenzione, con filtri e vaschetta dell'acqua; Cooking features, con le cinque zone di cottura, il bridge, gli accessori del forno e le quattro pizze cotte insieme. Nata su iPad Pro, con una modalità di presentazione senza prodotto, nel 2026 l'app è cresciuta con nuovi contenuti, un marker compatto, le traduzioni e la versione Android: uno strumento di vendita che si aggiorna con il catalogo.",
-      "image": "/media/immersive.jpg",
+      "image": "/media/works/elica-lhov.jpg",
       "video_url": "",
       "status": "in corso",
       "published": true
@@ -423,7 +423,7 @@
       ],
       "short": "Musa accoglie i visitatori dell'ADI Design Museum: un avatar che risponde a voce, in tempo reale, su Compasso d'Oro e design italiano, senza uscire dall'archivio del museo.",
       "body": "Musa è la guida virtuale che accoglie i visitatori dell'ADI Design Museum dal totem all'ingresso, nel progetto \"Vivere il Design\" sostenuto da Fondazione TIM e realizzato con Engitel. Risponde a voce e in tempo reale a domande sui premi Compasso d'Oro, sulla collezione permanente e sulla storia del design italiano. Volto, voce e labiale arrivano in streaming da una piattaforma di avatar real-time; il cervello è un'orchestrazione costruita da noi sopra un modello linguistico, con fallback automatico e, soprattutto, un grounding rigoroso: una knowledge base proprietaria di oltre 750.000 token sull'enciclopedia del museo, che tiene Musa ancorata alle sole informazioni dell'archivio, senza allucinazioni. Dal pannello di amministrazione il museo aggiunge informazioni volatili come orari, eventi e nuovi premiati, monitora servizi e consumi, configura le frasi di attesa e i video in stand-by; un timer di sessione risparmia i minuti di conversazione. Non un chatbot: un'interfaccia narrativa del patrimonio.",
-      "image": "/media/control.jpg",
+      "image": "/media/works/musa-adi.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -614,7 +614,7 @@
       ],
       "short": "Cinque campionesse olimpiche intervistate in un cantiere della metro di Roma: interviste, regia e tutti gli asset di comunicazione della campagna Webuild per lo Sport.",
       "body": "Come nello sport, costruire un ponte, una ferrovia o una diga richiede talento, determinazione e la sfida quotidiana di superare i propri limiti. Webuild per lo Sport celebra questi valori attraverso le storie di grandi atlete italiane: Caterina Banti, Alice Bellandi, Zaynab Dosso, Antonella Palmisano e Angela Carini raccontano cosa c'è dietro una medaglia. Abbiamo guidato la produzione della campagna girando le cinque interviste in un cantiere della metropolitana di Roma, con una regia che intreccia forza atletica e umanità, e abbiamo ideato e prodotto tutti gli asset di comunicazione.",
-      "image": "/media/screens.jpg",
+      "image": "/media/works/we-build-sport.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -631,7 +631,7 @@
       ],
       "short": "Post-produzione ed effetti visivi dello spot istituzionale TIM per la parità di genere, diretto da Giuseppe Tornatore.",
       "body": "Per lo spot istituzionale di TIM dedicato alla parità di genere, diretto dal premio Oscar Giuseppe Tornatore, abbiamo curato la post-produzione e gli effetti visivi. Sotto la direzione della post-producer Laura Pace e con la supervisione VFX di Paolo Landolfi, il reparto effetti guidato da Fabio Cerrito ha rafforzato la narrazione e l'estetica del film, rendendo lo spot un'esperienza visiva memorabile.",
-      "image": "/media/frames.jpg",
+      "image": "/media/works/tim.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": true
@@ -648,7 +648,7 @@
       ],
       "short": "Le identità grafiche dei canali Rai intorno al nuovo logo: ident, animazioni, bumper e promo pack, con la musica di Stefano Fresi.",
       "body": "Nel riordino della brand identity Rai attorno al nuovo logo abbiamo progettato le identità grafiche dei canali: il blu istituzionale di Rai Uno che si fonde con un cristallo trasparente, il rosso di Rai Due che prende vita in fuoco, lava e scintille, il verde di Rai Tre in un caleidoscopio di forme e colori del territorio. Con Rai Promotion e i direttori di rete abbiamo tradotto l'identità di ogni canale in un'immagine video coordinata, tra ident, animazioni del logo, bumper e promo pack, in un processo durato circa un anno con motion design, 3D e sound design. Il jingle composto da Stefano Fresi è diventato la firma sonora del nuovo logo.",
-      "image": "/media/organism-tall.jpg",
+      "image": "/media/works/rai-vbi.jpg",
       "video_url": "",
       "status": "consegnato",
       "published": false
