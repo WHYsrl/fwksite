@@ -64,7 +64,14 @@ router.get("/inglese", (req, res) => {
   res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), only, gsel, aiOn: ai.isConfigured() });
 });
 router.post("/inglese/impostazioni", (req, res) => { const b = req.body || {}; i18n.setSetting({ en_public: !!b.en_public, auto_when_private: !!b.auto_when_private }); flash(req, b.en_public ? "Versione inglese pubblica: il selettore IT/EN è visibile e chi ha il browser in un'altra lingua vede l'inglese" : "Versione inglese non pubblica: resta visibile solo su /en"); res.redirect("/admin/inglese"); });
-router.post("/inglese/traduci", async (req, res) => { try { const r = await i18n.run("en", { max: +req.body.max || 400 }); flash(req, r.skipped ? "Traduzione non partita: " + r.reason : `Tradotte ${r.translated} voci${r.pending > 0 ? `, ne restano ${r.pending}` : ""}${r.errors.length ? " · errori: " + r.errors.join("; ") : ""}`, r.errors.length ? "err" : "ok"); } catch (e) { flash(req, "Errore: " + e.message, "err"); } res.redirect("/admin/inglese"); });
+router.post("/inglese/traduci", async (req, res) => {
+  try {
+    const r = await i18n.run("en", { max: +req.body.max || 400 }); const errs = r.errors || [];
+    if (r.skipped) flash(req, r.reason === "già in esecuzione" ? "La traduzione automatica è già in corso (parte da sola all'avvio e dopo le modifiche): ricarica questa pagina tra un minuto per vedere i progressi" : "Traduzione non partita: " + r.reason, "err");
+    else flash(req, `Tradotte ${r.translated} voci${r.pending > 0 ? `, ne restano ${r.pending}` : ""}${errs.length ? " · errori: " + errs.join("; ") : ""}`, errs.length ? "err" : "ok");
+  } catch (e) { flash(req, "Errore: " + e.message, "err"); }
+  res.redirect("/admin/inglese");
+});
 router.post("/inglese/rigenera", async (req, res) => { const n = i18n.resetAuto("en"); flash(req, `${n} traduzioni automatiche cancellate: si rifanno in background (le correzioni a mano restano)`); i18n.refreshSoon(2000); res.redirect("/admin/inglese"); });
 router.post("/inglese/salva", (req, res) => {
   const b = req.body || {}; const content = enContent(); const src = new Map(i18n.collect(content).map(it => [it.key, it.text]));

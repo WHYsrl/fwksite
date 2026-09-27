@@ -118,8 +118,8 @@ async function translateBatch(items, lang) {
 }
 // Traduce quello che manca (a lotti di 20). Ritorna { translated, pending, errors }
 async function run(lang = "en", { max = 400 } = {}) {
-  if (running) return { skipped: true, reason: "già in esecuzione" };
-  if (!ai.isConfigured()) return { skipped: true, reason: "AI non configurata" };
+  if (running) return { skipped: true, reason: "già in esecuzione", translated: 0, pending: 0, errors: [] };
+  if (!ai.isConfigured()) return { skipped: true, reason: "AI non configurata", translated: 0, pending: 0, errors: [] };
   running = true;
   const res = { translated: 0, pending: 0, errors: [] };
   try {
