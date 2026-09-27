@@ -99,14 +99,24 @@ const Modes = {
     const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? "Essenziale" : "Modalità") : (this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità");
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
-    const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + labelWeather(w.kind) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
-    const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${labelWeather(w.kind)}` : "";
+    const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + weatherLabel(w) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
+    const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${weatherLabel(w)}` : "";
     if (isMobile() && typeof App !== "undefined" && App.applyDensity) App.applyDensity(); // su mobile la densità nasconde/mostra i blocchi subito
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 50);
   },
   set(k, v) { this[k] = v; try { sessionStorage.setItem("fw." + k, v); } catch {} this.apply(); }
 };
 function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pioggia", storm: "temporale", snow: "neve", night: "notte", unknown: "" }[k] || ""; }
+// Condizioni dal codice WMO di Open-Meteo: etichetta breve e frase discorsiva (il "kind" serve solo al ritmo del sito, e di notte dice solo "notte")
+const WMO = { 0: ["sereno", "il cielo è sereno"], 1: ["quasi sereno", "il cielo è quasi sereno"], 2: ["poco nuvoloso", "il cielo è poco nuvoloso"], 3: ["coperto", "il cielo è coperto"], 45: ["nebbia", "c'è nebbia"], 48: ["nebbia", "c'è nebbia"],
+  51: ["pioviggine", "pioviggina"], 53: ["pioviggine", "pioviggina"], 55: ["pioviggine fitta", "pioviggina fitto"], 56: ["pioviggine gelata", "cade pioviggine gelata"], 57: ["pioviggine gelata", "cade pioviggine gelata"],
+  61: ["pioggia leggera", "piove leggermente"], 63: ["pioggia", "piove"], 65: ["pioggia forte", "piove forte"], 66: ["pioggia gelata", "cade pioggia gelata"], 67: ["pioggia gelata", "cade pioggia gelata"],
+  71: ["neve leggera", "nevica leggermente"], 73: ["neve", "nevica"], 75: ["neve forte", "nevica forte"], 77: ["neve", "nevica"], 80: ["rovesci", "ci sono rovesci"], 81: ["rovesci", "ci sono rovesci"], 82: ["rovesci violenti", "ci sono rovesci violenti"], 85: ["rovesci di neve", "ci sono rovesci di neve"], 86: ["rovesci di neve", "ci sono rovesci di neve"],
+  95: ["temporale", "c'è un temporale"], 96: ["temporale con grandine", "c'è un temporale con grandine"], 99: ["temporale con grandine", "c'è un temporale con grandine"] };
+function weatherLabel(w) { const e = w && w.code != null && WMO[w.code]; return e ? e[0] : labelWeather(w && w.kind); }
+function weatherPhrase(w) { const e = w && w.code != null && WMO[w.code]; return e ? e[1] : ""; }
+// La qualità di rete stimata dal browser (Network Information API): "4g" vuol dire solo "veloce", anche su wifi o fibra
+function connLabel(c) { return { "slow-2g": "lenta", "2g": "lenta", "3g": "media", "4g": "veloce" }[c] || ""; }
 (function modesUI() {
   const btn = $("#modes-btn"), panel = $("#modes"); if (!btn || !panel) return;
   if (DATA.site.modes_enabled === false) { btn.hidden = true; return; }
@@ -123,12 +133,12 @@ function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pio
 function renderContext() {
   const c = Ctx.local(); const w = Ctx.weather;
   const langName = c.lang.startsWith("it") ? "italiano" : c.lang.startsWith("en") ? "inglese" : c.lang.startsWith("fr") ? "francese" : c.lang.startsWith("de") ? "tedesco" : c.lang.startsWith("es") ? "spagnolo" : c.lang;
-  const parts = [`Sono le <span class="v">${esc(c.time)}</span> di <span class="v">${esc(c.day)} ${c.slot}</span>${w && w.temp != null ? ` e a Roma ci sono <span class="v">${w.temp}°</span>, ${labelWeather(w.kind)}` : ""}.`,
-    `Stai leggendo da un <span class="v">${esc(c.device)}</span> di <span class="v">${c.vw}×${c.vh}</span> pixel, in <span class="v">${esc(langName)}</span>, con le animazioni <span class="v">${c.reduced ? "ridotte" : "attive"}</span>, densità <span class="v">${Modes.density === "2" ? "essenziale" : Modes.density === "10" ? "media" : "completa"}</span>.`,
+  const parts = [`Sono le <span class="v">${esc(c.time)}</span> di <span class="v">${esc(c.day)} ${c.slot}</span>${w && w.temp != null ? ` e a Roma ci sono <span class="v">${w.temp}°</span>${weatherPhrase(w) ? ` e <span class="v">${weatherPhrase(w)}</span>` : ""}` : ""}.`,
+    `Stai leggendo da un <span class="v">${esc(c.device)}</span> di <span class="v">${c.vw}×${c.vh}</span> pixel, con il browser in <span class="v">${esc(langName)}</span>, con le animazioni <span class="v">${c.reduced ? "ridotte" : "attive"}</span>, densità <span class="v">${Modes.density === "2" ? "essenziale" : Modes.density === "10" ? "media" : "completa"}</span>.`,
     c.mobile ? `Per questo vedi un feed verticale: su un desktop gli stessi contenuti diventano una console esplorabile.` : `Per questo vedi la Console: su un telefono gli stessi contenuti diventano un feed verticale.`,
     `Un sistema, tante esperienze: è il principio con cui progettiamo ogni organismo di contenuto.`];
-  const kv = [["Ora locale", c.time], ["Giorno", `${c.day} · ${c.slot}`], ["Dispositivo", c.device], ["Schermo", `${c.vw} × ${c.vh}`], ["Lingua", langName], ["Movimento", c.reduced ? "ridotto" : "attivo"], ["Meteo Roma", w && w.temp != null ? `${w.temp}° · ${labelWeather(w.kind)}` : "n.d."], ["Ritmo", Modes.mood === "nervous" ? "essenziale" : html.dataset.energy === "calm" ? "calmo" : html.dataset.energy === "vivid" ? "vivace" : "neutro"], ["Densità", Modes.density === "all" ? "tutto" : Modes.density + " min"]];
-  if (c.conn) kv.push(["Connessione", c.conn]);
+  const kv = [["Ora locale", c.time], ["Giorno", `${c.day} · ${c.slot}`], ["Dispositivo", c.device], ["Schermo", `${c.vw} × ${c.vh}`], ["Lingua del browser", langName], ["Movimento", c.reduced ? "ridotto" : "attivo"], ["Meteo Roma", w && w.temp != null ? `${w.temp}° · ${weatherLabel(w)}` : "n.d."], ["Ritmo", Modes.mood === "nervous" ? "essenziale" : html.dataset.energy === "calm" ? "calmo" : html.dataset.energy === "vivid" ? "vivace" : "neutro"], ["Densità", Modes.density === "all" ? "tutto" : Modes.density + " min"]];
+  if (connLabel(c.conn)) kv.push(["Connessione", connLabel(c.conn)]);
   const kvHTML = kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("");
   const t = $("#context-text"); if (t) t.innerHTML = parts.join(" ");
   const k = $("#context-kv"); if (k) k.innerHTML = kvHTML;
@@ -458,7 +468,7 @@ const App = {
     const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div><small>${esc(x.client)}</small><h3>${esc(x.title)}</h3></div></button>`;
     const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>Chiedi alla Console: cosa fate per…</span></button>`;
     const home = `<section class="screen on" data-screen="home">
-      <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + labelWeather(w.kind) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
+      <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
       ${site.hero_concrete ? `<p class="m-concrete" data-m-tier="2"><b>In pratica:</b> ${esc(site.hero_concrete)}</p>` : ""}
       <div data-m-tier="2">${askBox}<p class="ask-hint">Per esempio: cosa fate per il retail? · quali visori usate? · che formati servono per il DOOH?</p></div>
       <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? "Le aree del tuo percorso" : "Le quattro aree"}</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
@@ -805,7 +815,7 @@ const Intro = {
     const moodTxt = { calm: "in blu notte, con un ritmo disteso", vivid: "in nero e viola, con tutta l'energia accesa", nervous: "in verde e menta, senza rumore, dritto al punto", light: "in chiaro, tutto in luce" }[this.mood] || "";
     $("#intro-msg").textContent = `Va bene: ${timeTxt}, ${moodTxt}.`;
     const log = $("#intro-log"); log.innerHTML = "";
-    const lines = [`<b>Densità</b> ${this.time === "2" ? "essenziale" : this.time === "all" ? "completa" : "media"}`, `<b>Ritmo</b> ${this.mood === "nervous" ? "essenziale" : this.mood === "vivid" ? "vivace" : "calmo"}`, `<b>Contesto</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · Roma ${w.temp}° ${labelWeather(w.kind)}` : ""}`, `<b>Sistema</b> on air`];
+    const lines = [`<b>Densità</b> ${this.time === "2" ? "essenziale" : this.time === "all" ? "completa" : "media"}`, `<b>Ritmo</b> ${this.mood === "nervous" ? "essenziale" : this.mood === "vivid" ? "vivace" : "calmo"}`, `<b>Contesto</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · Roma ${w.temp}° ${weatherLabel(w)}` : ""}`, `<b>Sistema</b> on air`];
     this.step(3);
     lines.forEach((l, i) => { const li = document.createElement("li"); li.innerHTML = l; li.style.animationDelay = (0.35 + i * 0.45) + "s"; log.appendChild(li); });
     clearTimeout(this.timer); this.timer = setTimeout(() => this.finish(), 4200);
@@ -834,7 +844,7 @@ bindPrompt($("#prompt"));
 Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
 if (window.Diffusion) Diffusion.mountAll(); // Denoise (desktop: sezione Adaptive Content Systems)
 Focus.apply();
-Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${labelWeather(w.kind)}`; });
+Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${weatherLabel(w)}`; });
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
 // la densità cambia la composizione del feed
