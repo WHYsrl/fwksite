@@ -1,0 +1,12 @@
+<%- include('../partials/admin-head', { title: 'Dati del contesto' }) %>
+<div class="head"><h1>Dati del contesto</h1></div>
+<p class="muted">Sono i numeri che il campo di particelle della sezione <b>Il contesto</b> compone sullo schermo, uno alla volta, con fonte e data (anche nella schermata Sistema su mobile). Non arrivano da un feed: vanno aggiornati a mano quando escono dati nuovi (rapporti DataReportal, trimestrali di Meta e Alphabet, annunci di OpenAI…). <%= custom ? 'Stai usando una lista personalizzata.' : 'Stai usando la lista di default.' %></p>
+<form method="post" action="/admin/dati" class="form">
+  <section class="card">
+    <label>Voci (JSON, una lista) <textarea name="json" rows="28" class="mono" style="font-size:12.5px;line-height:1.45"><%= json %></textarea></label>
+    <p class="muted" style="margin-top:10px">Campi: <code>kind</code> = <b>number</b> (un numero grande: <code>display</code> + <code>label</code>) · <b>bars</b> (barre a confronto: <code>bars</code> = lista di <code>name</code>, <code>value</code>, <code>display</code>) · <b>stream</b> (flusso con contatore dal vivo: <code>rate</code> = unità al secondo, <code>counter</code> = didascalia del contatore) · <b>words</b> (parole che si alternano: <code>words</code>). Sempre: <code>cat</code>, <code>label</code>, <code>display</code>, <code>source</code>, <code>date</code>, <code>url</code> (facoltativo). L'ordine è l'ordine delle scene.</p>
+    <div class="actions"><button class="btn primary" type="submit">Salva</button> <button class="btn" type="submit" name="action" value="reset" onclick="return confirm('Torno ai dati di default?')">Torna ai default</button></div>
+  </section>
+  <details class="card"><summary>Lista di default (riferimento)</summary><pre class="mono" style="font-size:12px;white-space:pre-wrap;margin-top:10px"><%= defaults %></pre></details>
+</form>
+<%- include('../partials/admin-foot') %>

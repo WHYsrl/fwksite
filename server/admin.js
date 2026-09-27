@@ -9,6 +9,7 @@ const ai = require("./ai");
 const feeds = require("./feeds");
 const concrete = require("./concrete");
 const imagegen = require("./imagegen");
+const figures = require("./figures");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -70,6 +71,15 @@ router.post("/contesto", async (req, res) => {
     catch (e) { flash(req, "Test fallito: " + e.message, "err"); }
   } else flash(req, "Contesto salvato: la Console lo usa dalla prossima domanda");
   res.redirect("/admin/contesto");
+});
+
+// ---------- dati del contesto (i numeri del campo di particelle) ----------
+router.get("/dati", (req, res) => res.render("admin/dati", { json: JSON.stringify(figures.list(), null, 2), custom: !!store.getSetting("context_figures", null), defaults: JSON.stringify(figures.DEFAULT, null, 2) }));
+router.post("/dati", (req, res) => {
+  if (req.body.action === "reset") { figures.reset(); flash(req, "Dati riportati a quelli di default"); return res.redirect("/admin/dati"); }
+  try { const v = figures.save(String(req.body.json || "")); flash(req, `Dati salvati: ${v.length} ${v.length === 1 ? "voce" : "voci"}`); }
+  catch (e) { flash(req, "Non salvato: " + e.message, "err"); }
+  res.redirect("/admin/dati");
 });
 
 // ---------- capacità ----------

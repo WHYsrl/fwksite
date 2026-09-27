@@ -17,6 +17,7 @@ store.seedConsoleContext();
 // "In concreto": tecnologie, formati e casi d'uso per area; al primo avvio sostituisce i testi astratti delle aree
 const concrete = require("./concrete");
 const imagegen = require("./imagegen"); // Denoise: immagini generate da un oggetto nominato
+const figures = require("./figures"); // Il contesto: i numeri che il campo di particelle compone
 if (concrete.migrate()) console.log("Aree: testi concreti, tecnologie e casi d'uso applicati");
 if (concrete.migrateV2()) console.log("Aree: Activation System riscritta intorno all'engagement");
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
@@ -25,7 +26,7 @@ store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(
 
 // Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
 const fs = require("fs");
-const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/diffusion.js", "public/css/admin.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
+const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/diffusion.js", "public/js/datafield.js", "public/css/admin.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
 
 const app = express();
 app.locals.v = ASSET_V;
@@ -50,7 +51,7 @@ app.get("/", (req, res) => {
 });
 app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(withImage(concrete.decorate(store.getContent()))); });
 // il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
-function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; return content; }
+function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; content.figures = figures.list(); return content; }
 // Versioni chiare delle immagini d'ambiente (mood "Chiaro"): public/media/light/<nome>.jpg sostituisce /media/<nome>.jpg
 const LIGHT_MEDIA = (() => { try { const dir = path.join(__dirname, "..", "public", "media", "light"); const out = {}; fs.readdirSync(dir).filter(f => /\.(jpe?g|png|webp)$/i.test(f) && !/-sm\./.test(f)).forEach(f => { out["/media/" + f] = "/media/light/" + f; }); return out; } catch { return {}; } })();
 // Radar: ricerca dal vivo per il visitatore (fonti esterne, non curate)
