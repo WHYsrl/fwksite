@@ -55,7 +55,7 @@ window.Diffusion = (() => {
     const stage = root.querySelector(".dn-stage"), cv = root.querySelector("canvas"), ctx = cv.getContext("2d"), hud = root.querySelector(".dn-hud"), hint = root.querySelector(".dn-hint"), form = root.querySelector(".dn-form"), input = form.querySelector("input"), fmts = root.querySelector(".dn-formats"), regen = root.querySelector(".dn-regen"), regenNote = root.querySelector(".dn-regen-note");
     const accent = () => cssVar(root, "--accent", "#BF00FF"), bgCol = () => cssVar(root, "--bg", "#050307");
     if (!tiles.length) makeTiles(accent());
-    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0, variants: {}, pending: {}, fstep: {} };
+    const st = { step: 0, img: null, subject: "", status: "idle", seed: 1, format: "free", W: 0, H: 0, dpr: 1, raf: 0, last: 0, visible: false, msg: "", model: "", lat: null, tick: 0, variants: {}, pending: {}, fstep: {}, bad: {} };
     const small = document.createElement("canvas"), sctx = small.getContext("2d");
 
     function size() { const r = stage.getBoundingClientRect(); if (!r.width || !r.height) return false; st.dpr = Math.min(1.5, window.devicePixelRatio || 1); st.W = Math.round(r.width); st.H = Math.round(r.height); cv.width = st.W * st.dpr; cv.height = st.H * st.dpr; ctx.setTransform(st.dpr, 0, 0, st.dpr, 0, 0); return true; }
@@ -192,9 +192,19 @@ window.Diffusion = (() => {
     // Varianti di formato: appena c'è la base, il modello compone in parallelo orizzontale (16:9), verticale (9:16) e panoramica (32:9)
     function syncRegen() {
       const f = st.format; if (st.step < N || !st.img) { regenNote.textContent = ""; return; }
-      if (VARIANTS.includes(f)) regenNote.textContent = st.variants[f] ? `${f} composto dal modello` : st.pending[f] ? `${f} in arrivo dal modello · intanto clicca: ogni clic è un passo` : st.pending[f] === false ? `${f}: il modello non ha risposto, ritaglio della base` : "";
+      if (VARIANTS.includes(f)) regenNote.textContent = st.variants[f] ? `${f} composto dal modello` : st.pending[f] ? `${f} in arrivo dal modello · intanto clicca: ogni clic è un passo` : st.pending[f] === false ? (st.bad[f] === "stretched" ? `${f}: il modello aveva solo deformato la base, quindi ritaglio della base` : `${f}: il modello non ha risposto, ritaglio della base`) : "";
       else regenNote.textContent = f === "1:1" ? "1:1 · l'immagine com'è nata" : "";
       fmts.querySelectorAll("button").forEach(b => { const id = b.dataset.f; b.classList.toggle("wait", VARIANTS.includes(id) && !!st.pending[id]); b.classList.toggle("ready", VARIANTS.includes(id) && !!st.variants[id]); });
+    }
+    // La variante è solo la base stirata al nuovo formato? Si riportano entrambe a 48×48 (la variante schiacciata) e si confrontano le mappe dei bordi:
+    // una copia deformata ha gli stessi bordi negli stessi punti (correlazione alta), una vera ricomposizione no
+    function stretched(v, base) {
+      try {
+        const S = 48; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d");
+        const grad = (img) => { x.clearRect(0, 0, S, S); x.drawImage(img, 0, 0, S, S); const d = x.getImageData(0, 0, S, S).data; const l = new Float32Array(S * S); for (let i = 0; i < S * S; i++) l[i] = d[i * 4] * .3 + d[i * 4 + 1] * .59 + d[i * 4 + 2] * .11; const g = []; for (let y = 1; y < S - 1; y++) for (let q = 1; q < S - 1; q++) { const i = y * S + q; g.push(Math.hypot(l[i + 1] - l[i - 1], l[i + S] - l[i - S])); } const m = g.reduce((t, w) => t + w, 0) / g.length; const sd = Math.sqrt(g.reduce((t, w) => t + (w - m) ** 2, 0) / g.length) || 1; return g.map(w => (w - m) / sd); };
+        const a = grad(base), b = grad(v); let r = 0; for (let i = 0; i < a.length; i++) r += a[i] * b[i];
+        return r / a.length > 0.7;
+      } catch { return false; }
     }
     function requestVariants(subject) {
       VARIANTS.forEach(async (f) => {
@@ -203,14 +213,16 @@ window.Diffusion = (() => {
           const r = await fetch("/api/ai/image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: subject, mood: document.documentElement.dataset.mood || "", format: f }) });
           const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Il modello non risponde");
           const img = new Image(); img.src = j.image; await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("Immagine non leggibile")); });
-          if (st.subject !== subject) return; st.variants[f] = img; st.pending[f] = null;
+          if (st.subject !== subject) return;
+          if (st.img && stretched(img, st.img)) { st.pending[f] = false; st.bad[f] = "stretched"; } // il modello ha solo deformato la base: meglio un ritaglio onesto
+          else { st.variants[f] = img; st.pending[f] = null; }
         } catch (e) { if (st.subject !== subject) return; st.pending[f] = false; }
         syncRegen(); if (st.format === f) { updHud(); draw(); }
       });
     }
     async function generate(subject) {
       subject = String(subject || "").trim().slice(0, 60); if (subject.length < 2) { input.focus(); return; }
-      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; st.variants = {}; st.pending = {}; st.fstep = {}; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
+      st.subject = subject; st.step = 0; st.img = null; st.lat = null; st.status = "loading"; st.msg = ""; st.format = "free"; st.variants = {}; st.pending = {}; st.fstep = {}; st.bad = {}; syncFormats(); fmts.hidden = true; regen.hidden = true; root.classList.remove("done"); reseed(); updHud(); draw(); loop();
       try {
         let img;
         if (PREVIEW) { await new Promise(r => setTimeout(r, 1400)); img = previewImage(subject, accent()); st.model = "anteprima"; }
@@ -238,7 +250,7 @@ window.Diffusion = (() => {
     new ResizeObserver(() => { if (size()) draw(); }).observe(stage);
     new IntersectionObserver(en => en.forEach(x => { st.visible = x.isIntersecting; if (st.visible && view().status === "loading") loop(); }), { threshold: 0.2 }).observe(stage);
     if (size()) draw(); updHud();
-    root.__dn = { reframe, bars, analyze }; // per i test
+    root.__dn = { reframe, bars, analyze, stretched }; // per i test
   }
   function mountAll() { document.querySelectorAll("[data-diffusion]").forEach(mount); }
   return { mount, mountAll };

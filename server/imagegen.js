@@ -2,6 +2,16 @@
 // Il "denoising" a passi lo fa il browser (public/js/diffusion.js): qui si genera, si modera, si mette in cache e si limita.
 const crypto = require("crypto");
 const store = require("./db");
+const jpeg = require("jpeg-js"); // per mettere la base al centro di una tela verticale (riferimento del 9:16), senza librerie native
+
+// La base (quadrata) al centro di una tela W×H nera, senza scalarla se ci sta: il modello vede il soggetto con le proporzioni giuste e riempie le bande
+function letterbox(jpegBuf, W, H) {
+  const src = jpeg.decode(jpegBuf, { useTArray: true, formatAsRGBA: true });
+  const k = Math.min(1, W / src.width, H / src.height); const dw = Math.round(src.width * k), dh = Math.round(src.height * k); const ox = Math.floor((W - dw) / 2), oy = Math.floor((H - dh) / 2);
+  const out = Buffer.alloc(W * H * 4, 0); for (let i = 3; i < out.length; i += 4) out[i] = 255;
+  for (let y = 0; y < dh; y++) { const sy = Math.min(src.height - 1, Math.floor(y / k)); for (let x = 0; x < dw; x++) { const sx = Math.min(src.width - 1, Math.floor(x / k)); const si = (sy * src.width + sx) * 4, di = ((oy + y) * W + ox + x) * 4; out[di] = src.data[si]; out[di + 1] = src.data[si + 1]; out[di + 2] = src.data[si + 2]; } }
+  return jpeg.encode({ data: out, width: W, height: H }, 88).data;
+}
 
 const STYLE = {
   vivid: "luce viola e magenta radente, riflessi iridescenti",
@@ -55,7 +65,8 @@ const FRAMES = { "16:9": { frame: "landscape", size: "1536x1024" }, "32:9": { fr
 // Con l'immagine base come riferimento: stesso soggetto, posa nuova
 const RECOMPOSE = {
   landscape: "in orizzontale 16:9 (fotografia larga quanto la tela, con sottili bande nere sopra e sotto): lo stesso soggetto in una posa o disposizione che riempie la larghezza (disteso, coricato, di profilo), set esteso ai lati, soggetto intero e lontano dai bordi",
-  portrait: "in verticale 9:16 (fotografia alta quanto la tela, con sottili bande nere a sinistra e a destra): lo stesso soggetto nelle sue proporzioni naturali (mai allungato), ripreso da più vicino o in una posa che si sviluppa in altezza (in piedi, eretto), set esteso sopra e sotto, soggetto intero e lontano dai bordi",
+  // il 9:16 è un outpainting: il riferimento è la base con bande nere sopra e sotto, da riempire continuando la scena (così il soggetto non viene mai allungato)
+  portrait: "in verticale: l'immagine di riferimento è la fotografia base con due bande nere sopra e sotto; riempi completamente le bande continuando fedelmente fondale, set e pavimento verso l'alto e verso il basso, e lascia il soggetto esattamente com'è, nella stessa posizione, con la stessa dimensione e le stesse proporzioni (non allungarlo, non spostarlo, non ridisegnarlo); nessuna banda nera deve restare",
   wide: "in ultra-panoramico 32:9: la fotografia occupa una fascia orizzontale al centro della tela, alta circa il 45% e larga quanto tutta la tela, con bande nere piatte sopra e sotto; nella fascia lo stesso soggetto in una posa che riempie quasi tutta la larghezza (un animale sdraiato per lungo, un oggetto coricato o di profilo da vicino), intero e lontano dalle bande e dai bordi"
 };
 
@@ -82,8 +93,10 @@ async function generate({ q, mood, format }) {
   let r;
   if (base && base.image) {
     const fd = new FormData();
-    fd.append("image", new Blob([Buffer.from(base.image.split(",")[1], "base64")], { type: "image/jpeg" }), "base.jpg");
-    fd.append("model", c.model); fd.append("prompt", `Stesso oggetto e stessa scena dell'immagine di riferimento (identici materiali, colori, luce e stile), ricomposti ${RECOMPOSE[fr.frame]}. ${prompt}`);
+    let ref = Buffer.from(base.image.split(",")[1], "base64"); let text = `Stesso oggetto e stessa scena dell'immagine di riferimento (identici materiali, colori, luce e stile), ricomposti ${RECOMPOSE[fr.frame]}. ${prompt}`;
+    if (fr.frame === "portrait") { const [W, H] = size.split("x").map(Number); try { ref = letterbox(ref, W, H); text = `Stessa fotografia dell'immagine di riferimento (identici soggetto, materiali, colori, luce e stile), completata ${RECOMPOSE.portrait}. ${buildPrompt(subject, m, null)}`; } catch (e) { console.warn("letterbox:", e.message); } }
+    fd.append("image", new Blob([ref], { type: "image/jpeg" }), "base.jpg");
+    fd.append("model", c.model); fd.append("prompt", text);
     fd.append("n", "1"); fd.append("size", size); fd.append("quality", c.quality); fd.append("output_format", "jpeg"); fd.append("output_compression", "82");
     r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { authorization: `Bearer ${c.key}` }, body: fd });
   } else {
