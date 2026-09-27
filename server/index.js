@@ -113,6 +113,9 @@ app.post("/api/ai/image", (req, res) => {
 });
 app.get("/health", (req, res) => res.json({ ok: true, ai: ai.isConfigured(), image: imagegen.isConfigured(), radar: feeds.lastRun() }));
 
+// ---------- L'Organismo (prototipo a sé): /organismo, /organismo/telefono, stream SSE e stimoli ----------
+app.use("/organismo", require("./organismo"));
+
 // ---------- backoffice ----------
 app.use("/admin", admin);
 

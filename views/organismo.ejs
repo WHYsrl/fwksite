@@ -1,0 +1,99 @@
+<%
+/* L'Organismo — prototipo a sé. Una pagina sola per i due schermi: phone=false è lo schermo principale
+   (desktop, con QR e timeline), phone=true è il secondo schermo aperto dal QR (stanza `room`). */
+const brand = (site && site.brand) || "Frameworks";
+%><!doctype html>
+<html lang="it" class="vo <%= phone ? "vo-phone" : "vo-desk" %>" data-mood="vivid" data-energy="auto" data-weather="unknown" data-density="all">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="robots" content="noindex">
+<title>L'Organismo · <%= brand %></title>
+<meta name="theme-color" content="#050307">
+<link rel="preload" href="/public/fonts/HelveticaNowDisplay-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/public/css/site.css?v=<%= typeof v !== 'undefined' ? v : '1' %>">
+<link rel="stylesheet" href="/public/css/organismo.css?v=<%= ov %>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -3 63 65'><rect x='-6' y='-3' width='63' height='65' rx='12' fill='%23050307'/><g fill='%23fff'><polygon points='51.09 14.75 25.55 59 51.09 44.25 51.09 14.75'/><polygon points='25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5'/><polygon points='25.55 29.5 25.55 59 0 44.25 25.55 29.5'/></g></svg>">
+<script>window.__ORG__ = { phone: <%= phone ? "true" : "false" %>, room: "<%= room %>", mobileUA: <%= mobileUA ? "true" : "false" %> };</script>
+</head>
+<body class="vo-body">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="fw-mark" viewBox="0 0 51.09 59"><g fill="currentColor"><polygon points="51.09 14.75 25.55 59 51.09 44.25 51.09 14.75"/><polygon points="25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5"/><polygon points="25.55 29.5 25.55 59 0 44.25 25.55 29.5"/></g></symbol>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="vo-stage" id="vo-stage" aria-label="L'organismo: un solo organismo, nutrito dal Radar, dagli umori dei visitatori e dal meteo di Roma">
+  <canvas id="vo-glow" aria-hidden="true"></canvas>
+  <canvas id="vo-cv"></canvas>
+  <div class="vo-tip" id="vo-tip" hidden></div>
+  <div class="vo-flash" id="vo-flash" aria-hidden="true"></div>
+</div>
+
+<header class="vo-top">
+  <a class="vo-logo" href="/" aria-label="<%= brand %>"><svg viewBox="0 0 51.09 59" width="18" height="21" aria-hidden="true"><use href="#fw-mark"/></svg><span><%= brand %></span></a>
+  <span class="eyebrow vo-eyebrow"><span class="dot"></span><%= phone ? "Secondo schermo" : "Prototipo · L'organismo" %></span>
+  <% if (!phone) { %>
+  <div class="vo-mood" id="vo-mood" role="group" aria-label="Di che umore sei?">
+    <span class="k">Di che umore sei?</span>
+    <div class="seg"><button type="button" data-mood="vivid">Acceso</button><button type="button" data-mood="calm">Notturno</button><button type="button" data-mood="nervous">Quieto</button><button type="button" data-mood="light">Chiaro</button></div>
+  </div>
+  <% } %>
+</header>
+
+<% if (!phone) { %>
+<aside class="vo-side">
+  <h1 class="vo-title">Ogni progetto è concepito come un <span class="serif">organismo vivente.</span></h1>
+  <p class="vo-lead" id="vo-lead">Questo è vivo da <b>—</b>. Non lo accudisce nessuno: lo nutre il mondo.</p>
+  <dl class="vo-feed" id="vo-feed" aria-live="polite">
+    <div class="f f-radar"><dt>Radar</dt><dd><b id="f-signals">—</b> segnali assimilati<small id="f-signals-sub">ogni notizia pubblicata dal Radar è un nodo, nel settore del suo sistema</small></dd></div>
+    <div class="f f-mood"><dt>Umori</dt><dd><b id="f-moods">—</b><small id="f-moods-sub">gli umori dichiarati dai visitatori danno il temperamento: i colori</small></dd></div>
+    <div class="f f-weather"><dt>Meteo · Roma</dt><dd><b id="f-weather">—</b><small id="f-weather-sub">il meteo regola il ritmo, il vento lo fa ondeggiare</small></dd></div>
+    <div class="f f-stim"><dt>Stimoli</dt><dd><b id="f-stimoli">—</b><small id="f-stimoli-sub">clic e tocchi: reagisce, e ne resta una traccia per tutti</small></dd></div>
+  </dl>
+  <p class="vo-hint" id="vo-hint">Clicca nel vuoto: reagisce. Clicca un nodo: ti dice da quale notizia è nato.</p>
+  <p class="vo-hint vo-legend">Cresce per settori · alto Content System · destra Activation System · basso Spatial Experiences · sinistra Adaptive Media</p>
+</aside>
+
+<aside class="vo-qr" id="vo-qr">
+  <div class="vo-qr-in">
+    <span class="eyebrow"><span class="dot"></span>Continua sul telefono</span>
+    <div class="vo-qr-img" id="vo-qr-img" role="img" aria-label="QR code per aprire l'organismo sul telefono"></div>
+    <p>Inquadra con la fotocamera: l'organismo passa sul tuo schermo e i due restano collegati. Inclinalo, toccalo.</p>
+  </div>
+  <div class="vo-qr-on" hidden>
+    <span class="eyebrow"><span class="dot"></span>Telefono collegato</span>
+    <div class="vo-phone-ico" aria-hidden="true"><i></i></div>
+    <p id="vo-qr-on-text">Inclina il telefono: l'organismo lo sente. Toccalo: risponde qui.</p>
+  </div>
+</aside>
+
+<footer class="vo-bottom">
+  <div class="vo-tl">
+    <span class="eyebrow"><span class="dot"></span>Com'era</span>
+    <input type="range" id="vo-tl" min="0" max="0" value="0" step="1" aria-label="Torna indietro nel tempo">
+    <span class="vo-tl-label" id="vo-tl-label">Oggi</span>
+    <button type="button" class="vo-tl-today" id="vo-tl-today" hidden>Oggi</button>
+  </div>
+  <div class="vo-presence" id="vo-presence"></div>
+</footer>
+<% } else { %>
+<div class="vo-arrive" id="vo-arrive">
+  <div>
+    <span class="eyebrow"><span class="dot"></span>Secondo schermo</span>
+    <h1>L'organismo sta per <span class="serif">passare qui.</span></h1>
+    <p>Lo stesso organismo dello schermo principale, riconfigurato per il tuo telefono. Inclinalo: lo sente anche di là. Toccalo: risponde su entrambi.</p>
+    <button type="button" id="vo-arrive-btn">Accoglilo</button>
+  </div>
+</div>
+<footer class="vo-bottom vo-bottom-phone">
+  <div class="vo-presence" id="vo-presence"></div>
+  <div class="vo-hint" id="vo-hint">Inclina · tocca · trascina</div>
+</footer>
+<% } %>
+
+<script src="/public/js/vendor/qrcode.js"></script>
+<script src="/public/js/organismo.js?v=<%= ov %>"></script>
+</body>
+</html>
