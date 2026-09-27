@@ -9,17 +9,26 @@ const store = require("./db");
 const slug = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || ("reel-" + Date.now().toString(36));
 const vimeo = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] || "" } : null; };
 
+// i tre reel tematici di Frameworks (cartella Vimeo FBF_Websites → Frameworks → Reel); finché un reel non è su Vimeo, il segnaposto usa il loop di una case
 const DEFAULTS = [
-  { id: "cultura", title: "Cultura e musei", theme: "Cultura", from: "troia" },
-  { id: "spazio", title: "Spazio", theme: "Spazio", from: "esa-space-rider" },
-  { id: "moda", title: "Moda e lusso", theme: "Moda", from: "moka-dg" },
-  { id: "corporate", title: "Corporate e brand", theme: "Corporate", from: "we-build-sport" }
+  { id: "cultura", title: "Cultura e musei", theme: "Cultura", from: "troia", url: "https://vimeo.com/1227780840/65a298e9c7" },
+  { id: "spazio", title: "Aerospazio", theme: "Spazio", from: "esa-space-rider" },
+  { id: "gaming", title: "Gaming", theme: "Gaming", from: "geely" }
 ];
 
 function seedIfMissing() {
-  if (store.getSetting("reels", null) != null) return;
-  const reels = DEFAULTS.map((d, i) => { const w = store.getWork(d.from) || {}; return { id: d.id, title: d.title, theme: d.theme, url: w.video_url || "", cover: w.image || "", sort: i + 1, placeholder: true }; });
-  store.setSetting("reels", reels);
+  const existing = store.getSetting("reels", null);
+  const make = (d, i) => { const w = store.getWork(d.from) || {}; return { id: d.id, title: d.title, theme: d.theme, url: d.url || w.video_url || "", cover: w.image || "", sort: i + 1, placeholder: !d.url }; };
+  if (existing == null) { store.setSetting("reels", DEFAULTS.map(make)); return; }
+  // allineamento: i reel veri sostituiscono i segnaposto (mai una voce modificata a mano), i temi previsti mancanti si aggiungono, i vecchi segnaposto fuori tema spariscono
+  let changed = false; let reels = existing.slice();
+  DEFAULTS.forEach((d, i) => {
+    const r = reels.find(x => x.id === d.id);
+    if (!r) { reels.push(make(d, reels.length)); changed = true; }
+    else if (r.placeholder && d.url && r.url !== d.url) { Object.assign(r, { url: d.url, title: r.title || d.title, placeholder: false }); changed = true; }
+  });
+  const before = reels.length; reels = reels.filter(r => !(r.placeholder && !DEFAULTS.some(d => d.id === r.id))); if (reels.length !== before) changed = true;
+  if (changed) { reels.forEach((r, i) => r.sort = i + 1); store.setSetting("reels", reels); }
 }
 function list() { return (store.getSetting("reels", []) || []).slice().sort((a, b) => (a.sort || 0) - (b.sort || 0)).map(r => ({ ...r, vimeo: vimeo(r.url) })); }
 function upsert(b) {
