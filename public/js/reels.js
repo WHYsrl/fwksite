@@ -26,10 +26,10 @@
       else if (el.classList.contains("playing")) frame(el, false);
     }), { root: null, rootMargin: "0px 200px", threshold: .25 });
     reels.forEach(r => io.observe(r));
+    // "Guarda con audio": il reel completo a schermo intero (lightbox + fullscreen dove c'è), con i controlli del player
     track.addEventListener("click", e => {
       const b = e.target.closest("[data-reel-play]"); if (!b) return; const el = b.closest("[data-reel]");
-      if (el.classList.contains("playing")) { frame(el, false); return; }
-      quiet(el); frame(el, true); el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      quiet(null); Box.open(el);
     });
     // frecce (nel contenitore .reels-wrap, se c'è)
     const wrap = track.closest(".reels-wrap") || track.parentElement;
@@ -41,6 +41,31 @@
     // i player in background non si mettono in pausa da soli quando la scheda è nascosta: si tolgono e si rimettono
     document.addEventListener("visibilitychange", () => { if (document.hidden) reels.forEach(r => { const f = r.querySelector("iframe"); if (f && !r.classList.contains("playing")) f.remove(); }); else reels.forEach(r => { const rect = r.getBoundingClientRect(); if (rect.bottom > 0 && rect.top < innerHeight && rect.width && !r.querySelector("iframe")) frame(r, false); }); });
   }
-  window.Reels = { mount, mountAll: (sel) => document.querySelectorAll(sel || ".reels-track, [data-reels-track]").forEach(mount) };
+  // ---- lightbox: uno solo per pagina ----
+  const Box = (() => {
+    let el = null;
+    const build = () => {
+      el = document.createElement("div"); el.className = "reel-box"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+      el.innerHTML = `<button type="button" class="reel-box-x" aria-label="Chiudi">✕</button><div class="reel-box-in"><iframe title="Reel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="reel-box-cap"></div>`;
+      document.body.appendChild(el);
+      el.addEventListener("click", e => { if (e.target === el || e.target.closest(".reel-box-x")) close(); });
+      document.addEventListener("keydown", e => { if (e.key === "Escape" && el.classList.contains("on")) close(); });
+      document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && el.classList.contains("on") && el.dataset.fs === "1") close(); });
+    };
+    const open = (reel) => {
+      const id = reel.dataset.vimeo, h = reel.dataset.h; if (!id) return; if (!el) build();
+      el.querySelector("iframe").src = `https://player.vimeo.com/video/${id}?${h ? "h=" + h + "&" : ""}dnt=1&playsinline=1&autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0`;
+      el.querySelector(".reel-box-cap").textContent = reel.dataset.title || (reel.querySelector("h3") && reel.querySelector("h3").textContent) || "";
+      el.classList.add("on"); document.body.classList.add("reel-box-open"); el.dataset.fs = "0";
+      // schermo intero dove il browser lo permette su un elemento (desktop, Android); su iPhone la lightbox copre già tutto e il player ha il suo tasto
+      try { if (el.requestFullscreen) el.requestFullscreen().then(() => { el.dataset.fs = "1"; }).catch(() => {}); } catch {}
+    };
+    const close = () => {
+      if (!el) return; el.classList.remove("on"); document.body.classList.remove("reel-box-open"); el.querySelector("iframe").src = "about:blank";
+      if (document.fullscreenElement === el) { try { document.exitFullscreen().catch(() => {}); } catch {} }
+    };
+    return { open, close };
+  })();
+  window.Reels = { mount, open: (reel) => Box.open(reel), mountAll: (sel) => document.querySelectorAll(sel || ".reels-track, [data-reels-track]").forEach(mount) };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => window.Reels.mountAll()); else window.Reels.mountAll();
 })();

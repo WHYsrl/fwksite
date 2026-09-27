@@ -81,3 +81,31 @@
   .reels-track-m .reel-meta h3{font-size:18px;margin-top:4px}
   .reels-track-m .reel-play{padding:9px 12px;font-size:10px}
 }
+
+/* ---- lightbox del reel: schermo intero, player con audio e controlli ---- */
+.reel-box{position:fixed;inset:0;z-index:200;background:#000;display:none;align-items:center;justify-content:center;padding:0}
+.reel-box.on{display:flex}
+.reel-box-in{width:min(100vw,calc(100vh * 16 / 9));aspect-ratio:16/9;position:relative;background:#000}
+.reel-box-in iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.reel-box-x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.55);color:#fff;font-size:17px;cursor:pointer;display:grid;place-items:center}
+.reel-box-x:hover{background:#fff;color:#000}
+.reel-box-cap{position:absolute;left:18px;bottom:calc(14px + env(safe-area-inset-bottom,0px));font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);pointer-events:none}
+body.reel-box-open{overflow:hidden}
+
+/* ---- modalità Chiaro: il logo nel suo viola, didascalie delle card su fondo viola, Radar viola invece che nero ---- */
+html[data-mood="light"] .topbar .logo,html[data-mood="light"] body.over-hero:not(.light-media) .topbar .logo{color:#BF00FF}
+html[data-mood="light"] body.on-paper .topbar .logo{color:#fff} /* sul Radar viola il logo torna bianco */
+html[data-mood="light"] .cap-img::after{background:linear-gradient(180deg,rgba(142,0,196,0) 8%,rgba(142,0,196,.96) 60%)}
+html[data-mood="light"] .cap-body .eyebrow,html[data-mood="light"] .cap-body h3,html[data-mood="light"] .cap-body p,html[data-mood="light"] .cap-more{color:#fff}
+html[data-mood="light"] .cap-body h3 .serif{color:#F1D9FF}
+html[data-mood="light"] .cap-body .tag,html[data-mood="light"] .cap-body .tech-tags .tag{color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12)}
+html[data-mood="light"] .cap-more{opacity:1}
+html[data-mood="light"]{--paper:#8E00C4;--paper-2:#7A00A9;--paper-card:#9A16D1;--paper-soft:rgba(255,255,255,.1);--paper-ink:#fff;--paper-ink-2:rgba(255,255,255,.85);--paper-line:rgba(255,255,255,.24)}
+html[data-mood="light"] .paper,html[data-mood="light"] .paper-screen,html[data-mood="light"] .paper-card,html[data-mood="light"] .path-paper{--accent:#fff;--accent-ink:#F1D9FF;--accent-rgb:255,255,255;--accent-soft:rgba(255,255,255,.14)}
+@media (max-width:820px){
+  html[data-mood="light"] .tile::before{background:linear-gradient(180deg,transparent 22%,rgba(142,0,196,.94) 58%)}
+  html[data-mood="light"] .tile .eyebrow,html[data-mood="light"] .tile h3,html[data-mood="light"] .tile p{color:#fff}
+  html[data-mood="light"] .tile .eyebrow .dot{background:#fff}
+  html[data-mood="light"] .tile h3 .serif{color:#F1D9FF}
+}
+html[data-mood="light"] body.on-paper .topbar .cta{background:#fff;color:#8E00C4} /* sul Radar viola il bottone resta leggibile */

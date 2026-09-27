@@ -8,7 +8,7 @@ const DataField = (() => {
   const cssVar = (el, n, d) => (getComputedStyle(el).getPropertyValue(n) || "").trim() || d;
   const fmtInt = (n) => Math.floor(n).toLocaleString("it-IT");
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
-  const HOLD = { number: 6500, bars: 8500, stream: 9000, words: 1150 }; // ms per scena (words: per parola)
+  const HOLD = { number: 3400, bars: 4400, stream: 4600, words: 800 }; // ms per scena (words: per parola) — ritmo svelto
 
   function mount(root) {
     if (root.dataset.mounted) return; root.dataset.mounted = "1";
