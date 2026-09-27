@@ -19,17 +19,18 @@ const CAPS = {
     tech: ["CGI / 3D fotorealistico", "Motion design", "Reels · TikTok · Shorts 9:16", "Feed 1:1 · 4:5", "YouTube · CTV 16:9", "Display · banner HTML5", "Asset modulari", "Giochi"]
   },
   "activation-system": {
-    short: "Rollout di campagne su DOOH, retail, eventi e piattaforme: dagli schermi LED urbani ai totem in store, con refresh programmati e varianti per luogo, orario e pubblico.",
-    body: "L'attivazione è un processo continuo, non un lancio. Progettiamo ambienti di campagna distribuiti su più touchpoint e ne curiamo la vita nel tempo: release progressive, refresh programmati, adattamenti guidati dai dati (meteo, orario, luogo, stock). Dal DOOH ai punti vendita, dagli eventi ai dealer, con i formati e le specifiche tecniche di ogni circuito già risolti in fase di progetto.",
-    tags: ["rollout", "DOOH / FOOH", "retail", "programmatic", "campaign environments", "refresh"],
+    short: "Attivazioni che fanno partecipare le persone: schermi che reagiscono a chi passa, vetrine e totem che cambiano con meteo, orario e pubblico, eventi e installazioni pensati per fermarsi, giocare, condividere.",
+    body: "Un'attivazione riesce quando le persone fanno qualcosa: si fermano, interagiscono, fotografano, tornano. Progettiamo campagne per l'engagement, non per la sola visibilità: contenuti che reagiscono al contesto (meteo, orario, luogo, stock, chi c'è davanti), meccaniche di partecipazione, momenti da condividere. Dal DOOH ai punti vendita, dagli eventi ai dealer, con formati e specifiche di ogni circuito già risolti in fase di progetto, e una vita curata nel tempo: release progressive, refresh programmati, varianti che imparano dai dati.",
+    tags: ["engagement", "DOOH / FOOH", "retail", "programmatic", "eventi", "interattività"],
     uses: [
       "Campagne DOOH su circuiti urbani, stazioni, aeroporti e centri commerciali: LED wall, totem verticali, pensiline, maxi-schermi",
       "Programmatic DOOH: creatività che cambia con meteo, orario, traffico o dati di vendita",
-      "FOOH (fake out-of-home): CGI ambientata in città reali, pensata per i social",
+      "Schermi e vetrine interattive: contenuti che reagiscono al passaggio, al gesto, alla voce; giochi e photo-op da condividere",
+      "FOOH (fake out-of-home): CGI ambientata in città reali, pensata per far parlare i social",
       "Retail: vetrine digitali, totem, videowall in store, shelf screen e retail media",
-      "Eventi, fiere e dealer: contenuti per LED wall di palco e stand, aggiornati nel tempo"
+      "Eventi, fiere e dealer: LED wall di palco e stand, attivazioni dal vivo e contenuti aggiornati nel tempo"
     ],
-    tech: ["DOOH · LED urbani", "Totem 9:16 · pensiline", "Maxi-schermi 32:9 · 16:9", "Programmatic DOOH · DCO", "FOOH", "Vetrine e videowall retail", "Retail media", "LED wall eventi e palchi"]
+    tech: ["DOOH · LED urbani", "Totem 9:16 · pensiline", "Maxi-schermi 32:9 · 16:9", "Programmatic DOOH · DCO", "Interattività · sensori e camere", "FOOH", "Vetrine e videowall retail", "LED wall eventi e palchi"]
   },
   "spatial-experiences": {
     short: "Esperienze che escono dallo schermo: visori Apple Vision Pro, Meta Quest 3 e Quest Pro, Varjo; proiezioni immersive e interattive; LED wall, pavimenti interattivi e installazioni sensoriali.",
@@ -106,5 +107,17 @@ function migrate() {
   db().setSetting("concrete_v1", true);
   return true;
 }
+// v2: Activation System riscritta intorno all'engagement; si applica solo se i testi sono ancora quelli della v1 (non modificati dal backoffice)
+const V1 = { "activation-system": { short: "Rollout di campagne su DOOH, retail, eventi e piattaforme: dagli schermi LED urbani ai totem in store, con refresh programmati e varianti per luogo, orario e pubblico.", uses0: "Campagne DOOH su circuiti urbani, stazioni, aeroporti e centri commerciali: LED wall, totem verticali, pensiline, maxi-schermi", usesN: 5 } };
+function migrateV2() {
+  if (db().getSetting("concrete_v2", false)) return false;
+  Object.entries(V1).forEach(([id, v]) => {
+    const d = CAPS[id]; const cap = db().getCap(id);
+    if (cap && cap.short === v.short) db().upsertCap({ ...cap, short: d.short, body: d.body, tags: d.tags });
+    const cur = forCap(id); if (cur.uses.length === v.usesN && cur.uses[0] === v.uses0) setCap(id, { uses: d.uses, tech: d.tech });
+  });
+  db().setSetting("concrete_v2", true);
+  return true;
+}
 
-module.exports = { CAPS, SITE, forCap, setCap, removeCap, decorate, applyDefaults, migrate, list };
+module.exports = { CAPS, SITE, forCap, setCap, removeCap, decorate, applyDefaults, migrate, migrateV2, list };

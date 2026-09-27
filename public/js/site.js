@@ -221,7 +221,7 @@ scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListene
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
   const nav = e.target.closest('.topnav a[href^="#"]'); if (nav && !isMobile()) { const t = $(nav.getAttribute("href")); if (t && getComputedStyle(t).display === "none") { e.preventDefault(); if (Focus.ids) Focus.clear(); else Modes.set("density", "all"); setTimeout(() => t.scrollIntoView({ behavior: reduced ? "auto" : "smooth" }), 60); return; } }
-  const b = e.target.closest("[data-open]"); if (b) { openDetail(byId(b.dataset.open)); return; }
+  const b = e.target.closest("[data-open]"); if (b) { openDetail(byId(b.dataset.open)); if (b.dataset.to) { const body = isMobile() ? $("#sheet-body") : drawer.querySelector(".drawer-body"); const t = body && body.querySelector(b.dataset.to); if (t) setTimeout(() => { body.scrollTop = Math.max(0, body.scrollTop + t.getBoundingClientRect().top - body.getBoundingClientRect().top - 14); }, 80); } return; } // data-to: dentro la scheda si va subito a quel blocco (es. casi d'uso), senza rileggere il testo
   const n = e.target.closest("[data-open-node]"); if (n) { openDetail(byId(n.dataset.openNode)); return; }
   const go = e.target.closest(".adapt .go"); if (go) runAdapt(go.closest(".adapt"));
   const ct = e.target.closest("[data-contact]"); if (ct) { if (isMobile()) openContactSheet(); else { closeDetail(); goSection("contatti"); } return; }
@@ -604,22 +604,22 @@ const Path = {
   // MOBILE: le tappe
   renderStory() {
     const c = this.counts(); if (!c.items.length) return "";
-    const site = DATA.site; const total = c.items.length + 2; const label = Focus.label ? ` · ${esc(Focus.label)}` : "";
+    const site = DATA.site; const total = c.items.length + 1; const label = Focus.label ? ` · ${esc(Focus.label)}` : "";
     const next = (lab) => `<button type="button" class="story-next" data-story-next>${lab} <span>→</span></button>`;
     const zones = `<div class="tapzones" aria-hidden="true"><span data-story-prev></span><span data-story-next></span></div>`;
     const tappa = (i, k) => `<div class="eyebrow"><span class="dot"></span>Tappa ${String(i).padStart(2, "0")} di ${c.items.length} · ${k}</div>`;
     const img = (src, fallback, i) => `<div class="slide-img"><img src="${media(src) || media(fallback)}" alt="" loading="lazy"><span class="num">${String(i).padStart(2, "0")} / ${c.items.length}</span>${zones}</div>`;
-    const intro = `<article class="slide slide-intro"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Percorso della Console${label}</div>${Focus.q ? `<p class="story-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}<h2>${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2><p class="story-meta">${this.metaText()}</p>${Focus.sections.length ? `<div class="story-also"><span>Vedi anche</span>${Focus.sections.map(x => `<button type="button" class="btn" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : ""}<div class="slide-actions">${next("Inizia")}</div></div></article>`;
     const body = c.items.map((it, k) => {
       const i = k + 1, last = i === c.items.length, go = next(last ? "Fine" : "Avanti");
-      if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${((it.tech && it.tech.length) ? it.tech.slice(0, 3) : (it.tags || []).slice(0, 3)).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri l'area</button>${go}</div></div></article>`;
-      if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Lavoro · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions"><button class="btn primary" type="button" data-open="${it.id}">Apri il lavoro</button>${go}</div></div></article>`;
+      // area: il testo intero sta qui, così non serve aprire la scheda per leggerlo; la scheda aggiunge casi d'uso, tecnologie, lavori e "tre idee"
+      if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Area · tappa ${i} di ${c.items.length}</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="body">${esc(it.body || it.short)}</p><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}" data-to=".d-concrete">Casi d'uso e tecnologie</button></div></div></article>`;
+      if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Lavoro · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}">Apri il lavoro</button></div></div></article>`;
       return `<article class="slide slide-signal"><div class="slide-in">${tappa(i, "Radar · fonte esterna")}<div class="paper-card"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(it.src)}</b><span>${esc(fmtDate(it.date))} · ${esc(domain(it.url))}</span></div><h2>“${esc(it.title)}”</h2>${it.summary ? `<p class="sum">${esc(it.summary)}</p>` : ""}<p class="why"><small>La nostra lettura</small>${esc(it.why)}</p><p class="ext">Contenuto di terzi: titolo e riassunto appartengono a ${esc(it.src)}. Frameworks lo segnala e lo commenta.</p></div><div class="slide-actions"><a class="btn src-link" href="${esc(it.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a>${go}</div></div></article>`;
     }).join("");
     const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Fine del percorso · Parliamone</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><p class="more">Questo era il percorso su misura per te. Frameworks è un sistema più grande.</p><div class="slide-actions col"><button class="btn accent" type="button" data-discover>Scopri tutta Frameworks <span>→</span></button><button class="btn" type="button" data-tab="console">Chiedi ancora alla Console</button></div></div></article>`;
     return `<section class="screen story" data-screen="percorso" aria-label="Percorso">
       <div class="story-head"><div class="story-progress" id="story-progress" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div><div class="story-bar"><span class="story-label">Percorso${label}</span><span class="story-count" id="story-count">1 / ${total}</span><button type="button" class="story-exit" data-focus-reset>Esci ✕</button></div></div>
-      <div class="story-track" id="story-track">${intro}${body}${end}</div>
+      <div class="story-track" id="story-track">${body}${end}</div>
     </section>`;
   },
   bindStory() {
@@ -693,21 +693,18 @@ const ConsoleWin = {
       this.history.push({ q, a: r.answer || "" }); this.last = r;
       const items = resolveIds(r.highlight, r.answer).map(byId).filter(Boolean);
       const group = (k, label) => { const l = items.filter(i => i.kind === k); return l.length ? `<div class="prop-group"><small>${label}</small>${l.map(i => `<button type="button" class="prop-item" data-open="${i.id}">${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.src + " · " + i.title : i.name)}</button>`).join("")}</div>` : ""; };
-      // pagina 1: la risposta (+ eventuale domanda) · pagina 2: il percorso con Vai / Mostrami tutto
-      let pane1 = `<section class="pane"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
-      if (r.ask && r.ask.question) pane1 += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
-      let pane2 = "";
+      // un solo messaggio: la risposta (+ eventuale domanda) e subito sotto il percorso con un'azione sola
+      let html = `<div class="msg bot"><span class="who">Console</span><p>${esc(r.answer || "")}</p>`;
+      if (r.ask && r.ask.question) html += `<div class="ask-q"><p>${esc(r.ask.question)}</p><div class="chips">${(r.ask.options || []).slice(0, 4).map(o => `<button type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`;
       const secs = (r.sections || []).filter(x => SECTIONS[x]);
       if (items.length || secs.length) {
         const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), sections: secs, label: r.label || "", answer: r.answer || "", q, density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
-        pane1 += `<button type="button" class="pane-next" data-pane-next>${items.length ? "Vedi il percorso" : "Dove andare"} <span>→</span></button>`;
         const secGroup = secs.length ? `<div class="prop-group"><small>${items.length ? "Vedi anche" : "Sezioni del sito"}</small>${secs.map(x => `<button type="button" class="prop-item sec" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : "";
-        pane2 = `<section class="pane"><div class="proposal"><div class="eyebrow"><span class="dot"></span>${items.length ? "Percorso proposto" : "Navigazione proposta"}${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}${secGroup}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">${items.length ? "Vai" : "Portami lì"}</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div></section>`;
+        const n = items.length;
+        html += `<div class="proposal"><div class="eyebrow"><span class="dot"></span>${n ? "Percorso proposto" : "Navigazione proposta"}${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}${secGroup}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">${n ? `Apri il percorso · ${n} ${n === 1 ? "tappa" : "tappe"}` : "Portami lì"}</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div>`;
       }
-      pane1 += `</section>`;
-      const html = `<div class="msg bot${pane2 ? " paged" : ""}"><div class="panes">${pane1}${pane2}</div>${pane2 ? `<div class="pane-dots" aria-hidden="true"><i class="on"></i><i></i></div>` : ""}</div>`;
+      html += `</div>`;
       const d = document.createElement("div"); d.innerHTML = html; const node = d.firstElementChild; think.replaceWith(node);
-      this.bindPanes(node);
       // mostra l'INIZIO della risposta, non la fine
       this.thread.scrollTop = Math.max(0, node.offsetTop - 12);
       if (Console && items.length) Console.highlight(items.map(i => i.id));
@@ -715,12 +712,6 @@ const ConsoleWin = {
       think.className = "msg bot"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
     }
     this.busy = false;
-  },
-  bindPanes(node) {
-    const panes = $(".panes", node), dots = $$(".pane-dots i", node); if (!panes || !dots.length) return;
-    const upd = () => { const k = Math.round(panes.scrollLeft / panes.clientWidth); dots.forEach((d, j) => d.classList.toggle("on", j === k)); };
-    panes.addEventListener("scroll", () => requestAnimationFrame(upd), { passive: true });
-    const nx = $("[data-pane-next]", node); if (nx) nx.addEventListener("click", () => { if (isMobile()) panes.scrollTo({ left: panes.clientWidth, behavior: reduced ? "auto" : "smooth" }); else $(".proposal", node).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); });
   },
   apply(id) {
     const p = (this.proposals || {})[id]; if (!p) return;
