@@ -6,7 +6,9 @@ const DataField = (() => {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const cssVar = (el, n, d) => (getComputedStyle(el).getPropertyValue(n) || "").trim() || d;
-  const fmtInt = (n) => Math.floor(n).toLocaleString("it-IT");
+  const LANG = String(document.documentElement.lang || "it").toLowerCase().startsWith("en") ? "en" : "it"; // lingua: tr("testo italiano") → inglese dal dizionario di i18n.js
+  const tr = window.FW_I18N ? window.FW_I18N.make(LANG) : (x) => String(x);
+  const fmtInt = (n) => Math.floor(n).toLocaleString(LANG === "en" ? "en-GB" : "it-IT");
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
   const HOLD = { number: 3400, bars: 4400, stream: 4600, words: 800 }; // ms per scena (words: per parola) — ritmo svelto
 
@@ -14,8 +16,8 @@ const DataField = (() => {
     if (root.dataset.mounted) return; root.dataset.mounted = "1";
     const figs = ((window.__DATA__ || {}).figures || []).filter(f => f && f.kind);
     if (!figs.length) return;
-    root.innerHTML = `<canvas aria-hidden="true"></canvas><div class="df-dots" aria-hidden="true">${figs.map(() => "<i></i>").join("")}</div><div class="df-hint">tocca · prossimo dato</div><div class="df-cap"><div class="df-eyebrow"></div><div class="df-title"></div><div class="df-src"></div></div>`;
-    root.setAttribute("role", "img"); root.setAttribute("aria-label", "Dati del contesto: " + figs.map(f => `${f.display} ${f.label}`).join("; "));
+    root.innerHTML = `<canvas aria-hidden="true"></canvas><div class="df-dots" aria-hidden="true">${figs.map(() => "<i></i>").join("")}</div><div class="df-hint">${tr("tocca · prossimo dato")}</div><div class="df-cap"><div class="df-eyebrow"></div><div class="df-title"></div><div class="df-src"></div></div>`;
+    root.setAttribute("role", "img"); root.setAttribute("aria-label", tr("Dati del contesto: ") + figs.map(f => `${f.display} ${f.label}`).join("; "));
     const cv = root.querySelector("canvas"), ctx = cv.getContext("2d");
     const oc = document.createElement("canvas"), octx = oc.getContext("2d", { willReadFrequently: true });
     const capEye = root.querySelector(".df-eyebrow"), capTitle = root.querySelector(".df-title"), capSrc = root.querySelector(".df-src"), dots = root.querySelectorAll(".df-dots i");

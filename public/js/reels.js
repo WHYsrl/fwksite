@@ -7,6 +7,8 @@
    ========================================================= */
 (() => {
   "use strict";
+  // Lingua: tr("testo italiano") → inglese dal dizionario di i18n.js quando <html lang="en">
+  const tr = window.FW_I18N ? window.FW_I18N.make(String(document.documentElement.lang || "it").toLowerCase().startsWith("en") ? "en" : "it") : (x) => String(x);
   function mount(track) {
     if (!track || track.dataset.mounted) return; track.dataset.mounted = "1";
     const reels = [...track.querySelectorAll("[data-reel]")]; if (!reels.length) return;
@@ -14,9 +16,9 @@
     const frame = (el, full) => {
       const media = el.querySelector(".reel-media"); const old = media.querySelector("iframe"); if (old) old.remove();
       const s = src(el, full); if (!s) return;
-      const f = document.createElement("iframe"); f.src = s; f.loading = "lazy"; f.title = full ? "Reel" : "Anteprima del reel"; f.allow = "autoplay; fullscreen; picture-in-picture"; if (full) f.allowFullscreen = true; else { f.inert = true; f.tabIndex = -1; } // l'anteprima muta non prende clic né fuoco
+      const f = document.createElement("iframe"); f.src = s; f.loading = "lazy"; f.title = full ? "Reel" : tr("Anteprima del reel"); f.allow = "autoplay; fullscreen; picture-in-picture"; if (full) f.allowFullscreen = true; else { f.inert = true; f.tabIndex = -1; } // l'anteprima muta non prende clic né fuoco
       media.appendChild(f); el.classList.toggle("playing", full);
-      const b = el.querySelector("[data-reel-play]"); if (b) b.textContent = full ? "Torna al loop" : "Guarda con audio";
+      const b = el.querySelector("[data-reel-play]"); if (b) b.textContent = full ? tr("Torna al loop") : tr("Guarda con audio");
     };
     const quiet = (except) => reels.forEach(r => { if (r !== except && r.classList.contains("playing")) frame(r, false); });
     // anteprima muta quando il reel è in vista; se stava suonando ed esce, torna al loop
@@ -54,7 +56,7 @@
     const settle = () => { restore(); requestAnimationFrame(restore); [80, 300, 600].forEach(t => setTimeout(restore, t)); setTimeout(() => { from = null; }, 700); };
     const build = () => {
       el = document.createElement("div"); el.className = "reel-box"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
-      el.innerHTML = `<button type="button" class="reel-box-x" aria-label="Chiudi">✕</button><div class="reel-box-in"><iframe title="Reel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="reel-box-cap"></div>`;
+      el.innerHTML = `<button type="button" class="reel-box-x" aria-label="${tr("Chiudi")}">✕</button><div class="reel-box-in"><iframe title="Reel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="reel-box-cap"></div>`;
       document.body.appendChild(el);
       el.addEventListener("click", e => { if (e.target === el || e.target.closest(".reel-box-x")) close(); });
       document.addEventListener("keydown", e => { if (e.key === "Escape" && el.classList.contains("on")) close(); });

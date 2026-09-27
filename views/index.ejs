@@ -5,15 +5,20 @@ const cx = (s) => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": 
 const capName = (id) => (content.caps.find(c => c.id === id) || {}).name || id;
 const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
 const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
-const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
+const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat(typeof lang === "string" && lang === "en" ? "en-GB" : "it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
 const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 3).toUpperCase();
 const team = content.team || []; const keyPeople = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
+// Lingua: il server passa lang ("it" | "en") e t(); nell'anteprima statica mancano e si resta in italiano
+const LANG = typeof lang === "string" && lang === "en" ? "en" : "it"; const T = typeof t === "function" ? t : (s, v) => { let o = String(s); if (v) Object.keys(v).forEach(k => { o = o.split("{" + k + "}").join(v[k]); }); return o; };
+const EN_PUBLIC = typeof enPublic !== "undefined" && !!enPublic; // la versione inglese è pubblica (selettore visibile)
+const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, m, day] = d.split("-"); const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m ? `${+day || ""} ${mo[(+m) - 1] || ""} ${y}`.trim() : d; };
 %><!doctype html>
-<html lang="it" data-energy="auto" data-density="10" data-weather="unknown">
+<html lang="<%= LANG %>" data-energy="auto" data-density="10" data-weather="unknown">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title><%= site.brand %> · <%= site.claim %></title>
+<% if (!preview) { %><link rel="alternate" hreflang="it" href="/it"><link rel="alternate" hreflang="en" href="/en"><link rel="alternate" hreflang="x-default" href="/"><% } %>
 <meta name="description" content="<%= cx(site.tagline) %>">
 <meta property="og:title" content="<%= cx(site.brand) %> · <%= cx(site.claim) %>">
 <meta property="og:description" content="<%= cx(site.tagline) %>">
@@ -38,83 +43,85 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="157" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
-  <nav class="topnav" aria-label="Navigazione">
-    <a href="#sistema">Sistema</a><a href="#aree">Aree</a><a href="#lavori">Lavori</a><a href="#metodo">Metodo</a><a href="#team">Team</a><a href="#radar">Radar</a>
-    <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl">Modalità</span></button>
-    <a class="cta" href="#contatti">Parliamone</a>
+  <nav class="topnav" aria-label="<%= T("Navigazione") %>">
+    <a href="#sistema"><%= T("Sistema") %></a><a href="#aree"><%= T("Aree") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
+    <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
+    <% if (EN_PUBLIC && !preview) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
+    <a class="cta" href="#contatti"><%= T("Parliamone") %></a>
   </nav>
 </header>
 
-<div class="focusbar" id="focusbar" hidden><span class="eyebrow"><span class="dot"></span>Percorso della Console</span><span id="focus-text"></span><button type="button" id="focus-reset">Esci dal percorso</button></div>
+<div class="focusbar" id="focusbar" hidden><span class="eyebrow"><span class="dot"></span><%= T("Percorso della Console") %></span><span id="focus-text"></span><button type="button" id="focus-reset"><%= T("Esci dal percorso") %></button></div>
 
 <div class="cwin" id="cwin" hidden role="dialog" aria-modal="true" aria-label="Console">
   <div class="cwin-bg" aria-hidden="true"><img src="/media/particles.jpg" alt=""></div>
-  <div class="cwin-top"><span class="eyebrow"><span class="dot"></span>Console · <%= site.brand %></span><button type="button" class="x" id="cwin-close" aria-label="Chiudi la Console">✕</button></div>
+  <div class="cwin-top"><span class="eyebrow"><span class="dot"></span>Console · <%= site.brand %></span><button type="button" class="x" id="cwin-close" aria-label="<%= T("Chiudi la Console") %>">✕</button></div>
   <div class="cwin-thread" id="cwin-thread"></div>
   <form class="cwin-form" id="cwin-form" autocomplete="off">
-    <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="Una domanda su Frameworks, o sul nostro mestiere" enterkeyhint="send"><button type="submit" aria-label="Invia">→</button></div>
+    <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="<%= T("Una domanda su Frameworks, o sul nostro mestiere") %>" enterkeyhint="send"><button type="submit" aria-label="<%= T("Invia") %>">→</button></div>
     <div class="chips" id="cwin-chips"></div>
   </form>
 </div>
 
 <div class="modes" id="modes" hidden>
-  <div class="modes-head"><span class="eyebrow"><span class="dot"></span>La pagina si adatta a te</span><button type="button" class="x" id="modes-close" aria-label="Chiudi">✕</button></div>
-  <div class="modes-row"><span class="k">Quanto tempo hai?</span><div class="seg" role="group" aria-label="Tempo"><button type="button" data-density="2">2 minuti</button><button type="button" data-density="10" class="on">10 minuti</button><button type="button" data-density="all">Tutto il tempo</button></div></div>
-  <div class="modes-row"><span class="k">Che mood preferisci?</span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light">Chiaro</button><button type="button" data-mood="vivid">Acceso</button><button type="button" data-mood="calm">Notturno</button><button type="button" data-mood="nervous">Quieto</button></div></div>
-  <div class="modes-row"><span class="k">Ambiente</span><div class="modes-env" id="modes-env">Roma · in ascolto…</div></div>
-  <p class="modes-note">Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.</p>
+  <div class="modes-head"><span class="eyebrow"><span class="dot"></span><%= T("La pagina si adatta a te") %></span><button type="button" class="x" id="modes-close" aria-label="<%= T("Chiudi") %>">✕</button></div>
+  <div class="modes-row"><span class="k"><%= T("Quanto tempo hai?") %></span><div class="seg" role="group" aria-label="<%= T("Tempo") %>"><button type="button" data-density="2"><%= T("2 minuti") %></button><button type="button" data-density="10" class="on"><%= T("10 minuti") %></button><button type="button" data-density="all"><%= T("Tutto il tempo") %></button></div></div>
+  <div class="modes-row"><span class="k"><%= T("Che mood preferisci?") %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= T("Chiaro") %></button><button type="button" data-mood="vivid"><%= T("Acceso") %></button><button type="button" data-mood="calm"><%= T("Notturno") %></button><button type="button" data-mood="nervous"><%= T("Quieto") %></button></div></div>
+  <div class="modes-row"><span class="k"><%= T("Ambiente") %></span><div class="modes-env" id="modes-env"><%= T("Roma · in ascolto…") %></div></div>
+  <% if (EN_PUBLIC && !preview) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
+  <p class="modes-note"><%= T("Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.") %></p>
 </div>
 
 
 <!-- ============================ INTRO ============================ -->
-<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-label="Benvenuto">
+<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-label="<%= T("Benvenuto") %>">
   <div class="intro-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt=""></div>
-  <div class="intro-top"><svg viewBox="0 0 421.23 59" width="143" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><button type="button" class="intro-skip" id="intro-skip">Salta</button></div>
+  <div class="intro-top"><svg viewBox="0 0 421.23 59" width="143" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><span class="intro-top-r"><% if (EN_PUBLIC && !preview) { %><a class="intro-lang" href="<%= LANG === "en" ? "/it" : "/en" %>" lang="<%= LANG === "en" ? "it" : "en" %>"><%= LANG === "en" ? "Italiano" : "English" %></a><% } %><button type="button" class="intro-skip" id="intro-skip"><%= T("Salta") %></button></span></div>
   <div class="intro-body">
     <div class="intro-steps">
     <section class="intro-step on" data-step="1">
-      <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 1 di 2</div>
-      <h2 class="serif">Quanto tempo hai?</h2>
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> 2</div>
+      <h2 class="serif"><%= T("Quanto tempo hai?") %></h2>
       <div class="intro-opts">
-        <button type="button" data-time="2"><b>2 minuti</b><span>Fammi capire cosa fate.</span></button>
-        <button type="button" data-time="10"><b>10 minuti</b><span>Come lavorate e cosa avete fatto.</span></button>
-        <button type="button" data-time="all"><b>Tutto il tempo che serve</b><span>Voglio godermi l'esperienza.</span></button>
+        <button type="button" data-time="2"><b><%= T("2 minuti") %></b><span><%= T("Fammi capire cosa fate.") %></span></button>
+        <button type="button" data-time="10"><b><%= T("10 minuti") %></b><span><%= T("Come lavorate e cosa avete fatto.") %></span></button>
+        <button type="button" data-time="all"><b><%= T("Tutto il tempo che serve") %></b><span><%= T("Voglio godermi l'esperienza.") %></span></button>
       </div>
     </section>
     <section class="intro-step" data-step="2">
-      <div class="eyebrow"><span class="dot"></span>Prima di cominciare · 2 di 2</div>
-      <h2 class="serif">Che mood preferisci?</h2>
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 2 <%= T("di") %> 2</div>
+      <h2 class="serif"><%= T("Che mood preferisci?") %></h2>
       <div class="intro-opts">
-        <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b>Chiaro</b><span>Fondo chiaro e viola d'inchiostro, tutto in luce.</span></button>
-        <button type="button" data-mood="vivid"><i class="swatch" style="--s1:#050307;--s2:#BF00FF" aria-hidden="true"></i><b>Acceso</b><span>Nero e viola, energia e movimento.</span></button>
-        <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b>Notturno</b><span>Blu notte e lavanda, ritmo disteso.</span></button>
-        <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b>Quieto</b><span>Verde e menta, dritto al punto, senza rumore.</span></button>
+        <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b><%= T("Chiaro") %></b><span><%= T("Fondo chiaro e viola d'inchiostro, tutto in luce.") %></span></button>
+        <button type="button" data-mood="vivid"><i class="swatch" style="--s1:#050307;--s2:#BF00FF" aria-hidden="true"></i><b><%= T("Acceso") %></b><span><%= T("Nero e viola, energia e movimento.") %></span></button>
+        <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b><%= T("Notturno") %></b><span><%= T("Blu notte e lavanda, ritmo disteso.") %></span></button>
+        <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b><%= T("Quieto") %></b><span><%= T("Verde e menta, dritto al punto, senza rumore.") %></span></button>
       </div>
     </section>
     </div>
     <!-- Console già nell'intro (mobile): complementare alle domande, tiene conto delle scelte fatte -->
     <div class="intro-console" id="intro-console">
-      <div class="intro-or"><i></i><span id="intro-or-text">oppure · chiedi alla Console</span><i></i></div>
+      <div class="intro-or"><i></i><span id="intro-or-text"><%= T("oppure · chiedi alla Console") %></span><i></i></div>
       <form class="prompt-row" id="intro-form" autocomplete="off">
-        <label for="intro-q" class="sr-only">Chiedi alla Console</label>
-        <input id="intro-q" type="text" placeholder="Cosa cerchi? Te lo mostro subito" enterkeyhint="send" maxlength="300">
-        <button type="submit" aria-label="Chiedi alla Console">→</button>
+        <label for="intro-q" class="sr-only"><%= T("Chiedi alla Console") %></label>
+        <input id="intro-q" type="text" placeholder="<%= T("Cosa cerchi? Te lo mostro subito") %>" enterkeyhint="send" maxlength="300">
+        <button type="submit" aria-label="<%= T("Chiedi alla Console") %>">→</button>
       </form>
       <div class="chips">
-        <button type="button" data-intro-ask="Ho fretta: l'essenziale">Ho fretta</button>
-        <button type="button" data-intro-ask="Cosa fate per il retail?">Retail</button>
-        <button type="button" data-intro-ask="Come usate l'AI?">AI</button>
-        <button type="button" data-intro-ask="Mostrami le esperienze immersive">Immersivo</button>
-        <button type="button" data-intro-ask="Cosa dice il radar oggi?">Radar</button>
+        <button type="button" data-intro-ask="<%= T("Ho fretta: l'essenziale") %>"><%= T("Ho fretta") %></button>
+        <button type="button" data-intro-ask="<%= T("Cosa fate per il retail?") %>">Retail</button>
+        <button type="button" data-intro-ask="<%= T("Come usate l'AI?") %>">AI</button>
+        <button type="button" data-intro-ask="<%= T("Mostrami le esperienze immersive") %>"><%= T("Immersivo") %></button>
+        <button type="button" data-intro-ask="<%= T("Cosa dice il radar oggi?") %>">Radar</button>
       </div>
     </div>
     <section class="intro-step" data-step="3">
-      <div class="eyebrow"><span class="dot"></span>Configurazione</div>
-      <h2 class="serif" id="intro-title">Il sito si sta configurando <em>per te.</em></h2>
+      <div class="eyebrow"><span class="dot"></span><%= T("Configurazione") %></div>
+      <h2 class="serif" id="intro-title"><%- T("Il sito si sta configurando <em>per te.</em>") %></h2>
       <p class="intro-msg" id="intro-msg"></p>
       <ul class="intro-log" id="intro-log"></ul>
-      <p class="intro-hint">Puoi cambiare scelta in qualsiasi momento premendo il tasto <b class="modes-pill"><span class="modes-ico"></span>Modalità</b> in alto.</p>
-      <div class="intro-actions"><button type="button" class="btn primary" id="intro-go">Via</button><button type="button" class="btn intro-ask" id="intro-ask">✦ Chiedi alla Console</button></div>
+      <p class="intro-hint"><%- T("Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto.", { btn: '<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>' }) %></p>
+      <div class="intro-actions"><button type="button" class="btn primary" id="intro-go"><%= T("Via") %></button><button type="button" class="btn intro-ask" id="intro-ask">✦ <%= T("Chiedi alla Console") %></button></div>
     </section>
   </div>
 </div>
@@ -124,24 +131,24 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <section class="console desktop-only path-keep" id="console" data-tier="2" aria-label="Console">
   <div class="console-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt="" data-parallax="0.15" fetchpriority="high"></div>
   <div class="console-grid" aria-hidden="true"></div>
-  <canvas id="graph" aria-label="Mappa interattiva: aree, lavori e radar"></canvas>
+  <canvas id="graph" aria-label="<%= T("Mappa interattiva: aree, lavori e radar") %>"></canvas>
   <div class="hero-copy">
     <div class="eyebrow"><span class="dot"></span><%= site.claim %></div>
     <h1 class="split"><%- em(site.hero_title) %></h1>
     <p class="lead"><%= site.hero_text %></p>
-    <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
+    <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core"><%= T("Apri il sistema") %></button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
-      <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>
-      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · quali visori usate? · come usate l'AI?"><button type="submit" aria-label="Apri la Console">→</button></div>
+      <label class="eyebrow" for="prompt-q"><span class="dot"></span><%= T("Chiedi alla Console") %></label>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="<%= T("es. cosa fate per il retail? · quali visori usate? · come usate l'AI?") %>"><button type="submit" aria-label="<%= T("Apri la Console") %>">→</button></div>
     </form>
   </div>
-  <div class="hint" aria-hidden="true"><span>trascina i nodi <i></i></span><span>clic per aprire <i></i></span><span>punti chiari = radar, fonti esterne <i></i></span></div>
-  <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span>Roma <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
-  <div class="ticker" aria-label="Radar: titoli da fonti esterne"><div class="label">Radar · fonti esterne</div><div class="track"><div class="row" id="ticker-row"></div></div></div>
+  <div class="hint" aria-hidden="true"><span><%= T("trascina i nodi") %> <i></i></span><span><%= T("clic per aprire") %> <i></i></span><span><%= T("punti chiari = radar, fonti esterne") %> <i></i></span></div>
+  <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span><%= T("Roma") %> <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
+  <div class="ticker" aria-label="<%= T("Radar: titoli da fonti esterne") %>"><div class="label"><%= T("Radar · fonti esterne") %></div><div class="track"><div class="row" id="ticker-row"></div></div></div>
 </section>
 
 <!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
-<section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="Percorso"></section>
+<section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="<%= T("Percorso") %>"></section>
 
 <!-- ============================ STATEMENT ============================ -->
 <section class="statement purple desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="-0.25"><%= site.statements[0] %></h2></section>
@@ -151,7 +158,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
   <div class="split2">
     <div class="ph df rv" data-datafield><img src="/media/particles.jpg" alt="" loading="lazy"></div>
     <div>
-      <div class="eyebrow rv"><span class="dot"></span>Il contesto</div>
+      <div class="eyebrow rv"><span class="dot"></span><%= T("Il contesto") %></div>
       <p class="big rv"><%= site.context_text %></p>
       <p class="serif statement-inline rv"><%= site.statements[1] %></p>
     </div>
@@ -160,13 +167,13 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 
 <!-- ============================ AREE ============================ -->
 <section class="section desktop-only" id="aree" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Aree</div><h2 class="rv">Quattro sistemi, un <span class="serif">organismo.</span></h2></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Aree") %></div><h2 class="rv"><%- T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
   <div class="caps">
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
       <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
-      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(t => { %><span class="tag"><%= t %></span><% }) %></div><span class="cap-more">Casi d'uso e tecnologie →</span></div>
+      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(tg => { %><span class="tag"><%= tg %></span><% }) %></div><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
     </button>
     <% }) %>
   </div>
@@ -186,30 +193,30 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <%# Reel: i video tematici (Vimeo) in un carosello, al posto dello statement scorrevole; si gestiscono da /admin/reel %>
 <% const reels = (content.reels || []).filter(r => r.vimeo || r.cover); if (reels.length) { %>
 <section class="section reels desktop-only" data-tier="10" id="reel" aria-label="Reel">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Reel</div><div><h2 class="rv">Organismi in <span class="serif">movimento.</span></h2><p class="rv">Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu.</p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Reel</div><div><h2 class="rv"><%- T("Organismi in <span class=\"serif\">movimento.</span>") %></h2><p class="rv"><%= T("Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu.") %></p></div></div>
   <div class="reels-wrap rv">
-    <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="Reel precedente">←</button>
+    <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="<%= T("Reel precedente") %>">←</button>
     <div class="reels-track" id="reels-track">
       <% reels.forEach((r, i) => { %>
       <article class="reel" data-reel data-vimeo="<%= r.vimeo ? r.vimeo.id : '' %>" data-h="<%= r.vimeo ? r.vimeo.h : '' %>" style="--i:<%= i %>">
         <div class="reel-media"><% if (r.cover) { %><img src="<%= r.cover %>" alt="" loading="lazy"><% } %></div>
         <div class="reel-meta">
-          <div><div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · anteprima<% } %></div><h3><%= r.title %></h3></div>
-          <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play>Guarda con audio</button><% } %>
+          <div><div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · <%= T("anteprima") %><% } %></div><h3><%= r.title %></h3></div>
+          <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play><%= T("Guarda con audio") %></button><% } %>
         </div>
       </article>
       <% }) %>
     </div>
-    <button type="button" class="reels-arrow next" data-reels-nav="1" aria-label="Reel successivo">→</button>
+    <button type="button" class="reels-arrow next" data-reels-nav="1" aria-label="<%= T("Reel successivo") %>">→</button>
   </div>
 </section>
 <% } %>
 
 <!-- ============================ LAVORI ============================ -->
 <section class="section desktop-only" id="lavori" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Lavori</div><div><h2 class="rv">Organismi in <span class="serif">azione.</span></h2><p class="rv">Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.</p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Lavori") %></div><div><h2 class="rv"><%- T("Organismi in <span class=\"serif\">azione.</span>") %></h2><p class="rv"><%- T("Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.") %></p></div></div>
   <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro %>
-  <div class="works-chips rv" role="group" aria-label="Filtra i lavori"><button type="button" class="on" data-wfilter="all">Tutti <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
+  <div class="works-chips rv" role="group" aria-label="<%= T("Filtra i lavori") %>"><button type="button" class="on" data-wfilter="all"><%= T("Tutti") %> <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
   <div class="works">
     <% content.works.forEach((w, i) => { %>
     <button class="work rv" type="button" data-open="<%= w.id %>" data-caps="<%= w.caps.join(' ') %>" data-tilt style="--i:<%= i %>">
@@ -224,8 +231,8 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <section class="section desktop-only" id="metodo" data-tier="10">
   <div class="split2">
     <div>
-      <div class="eyebrow rv"><span class="dot"></span>Metodo</div>
-      <h2 class="rv">Cinque fasi, un <span class="serif">ciclo.</span></h2>
+      <div class="eyebrow rv"><span class="dot"></span><%= T("Metodo") %></div>
+      <h2 class="rv"><%- T("Cinque fasi, un <span class=\"serif\">ciclo.</span>") %></h2>
       <p class="lead rv"><%= site.method_intro %></p>
       <ol class="method-list">
         <% (site.method || []).forEach((m, i) => { %><li class="rv" style="--i:<%= i %>"><b><%= m.k %></b><span><%= m.text %></span></li><% }) %>
@@ -246,7 +253,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 
 <!-- ============================ TEAM ============================ -->
 <section class="section team desktop-only" id="team" data-tier="10" <%= team.length ? '' : 'hidden' %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Team · <%= team.length %> persone</div><div><h2 class="rv"><%- em(site.team_title || 'Un sistema è fatto di <em>persone.</em>') %></h2><p class="rv"><%= site.team_text || '' %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Team · {n} persone", { n: team.length }) %></div><div><h2 class="rv"><%- em(site.team_title || T('Un sistema è fatto di <em>persone.</em>')) %></h2><p class="rv"><%= site.team_text || '' %></p></div></div>
   <div class="people">
     <% keyPeople.forEach((m, i) => { %>
     <div class="person rv" style="--i:<%= i %>">
@@ -257,7 +264,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
   </div>
   <div class="roster rv">
     <% units.forEach(u => { const list = team.filter(m => m.unit === u && !m.is_key); if (!list.length) return; const leads = keyPeople.filter(m => m.unit === u); %>
-    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line">con <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
+    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line"><%= T("con") %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
     <% }) %>
   </div>
 </section>
@@ -274,29 +281,29 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 
 <!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
 <section class="section radar paper desktop-only" id="radar" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Radar · rassegna da fonti esterne<% if (content.radar_at) { %><span class="radar-at"> · aggiornato <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Radar · rassegna da fonti esterne") %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
   <div class="radar-live rv">
-    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span>Cerca nel mondo, adesso</div><p>Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi.</p></div>
-    <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="es. retail media, DOOH, AI generativa…" maxlength="80" aria-label="Cerca nel radar"><button type="submit">Cerca</button></form>
-    <div class="radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="AI generativa pubblicità">AI generativa</button><button type="button" data-live-q="virtual production">Virtual production</button><button type="button" data-live-q="musei esperienze immersive">Musei immersivi</button></div>
+    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= T("Cerca nel mondo, adesso") %></div><p><%= T("Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi.") %></p></div>
+    <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="<%= T("es. retail media, DOOH, AI generativa…") %>" maxlength="80" aria-label="<%= T("Cerca nel radar") %>"><button type="submit"><%= T("Cerca") %></button></form>
+    <div class="radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="<%= T("AI generativa pubblicità") %>"><%= T("AI generativa") %></button><button type="button" data-live-q="virtual production">Virtual production</button><button type="button" data-live-q="<%= T("musei esperienze immersive") %>"><%= T("Musei immersivi") %></button></div>
     <div class="radar-results" data-radar-results hidden></div>
   </div>
   <div class="signals">
     <% content.signals.forEach((s, i) => { %>
     <article class="signal<%= i < 5 ? ' rv' : ' more' %>" data-id="<%= s.id %>" style="--i:<%= i % 5 %>"<%= i >= 5 ? ' hidden' : '' %>>
-      <div class="src"><span class="chip ext">Fonte esterna</span><b><%= s.src %></b><span><%= fmtDate(s.date) %> · <%= domain(s.url) %></span></div>
+      <div class="src"><span class="chip ext"><%= T("Fonte esterna") %></span><b><%= s.src %></b><span><%= fmtDateL(s.date) %> · <%= domain(s.url) %></span></div>
       <div class="sig-main"><h3><a href="<%= s.url %>" target="_blank" rel="noopener nofollow">“<%= s.title %>” ↗</a></h3><% if (s.summary) { %><p class="sum"><%= s.summary %></p><% } %></div>
-      <div class="why"><small>La nostra lettura</small><%= s.why %><% if (s.caps.length) { %><div class="tags"><% s.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div><% } %></div>
+      <div class="why"><small><%= T("La nostra lettura") %></small><%= s.why %><% if (s.caps.length) { %><div class="tags"><% s.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div><% } %></div>
     </article>
     <% }) %>
   </div>
-  <% if (content.signals.length > 5) { %><div class="radar-more-row"><button type="button" class="btn radar-more" data-radar-more>Leggi ancora <span>+<%= Math.min(5, content.signals.length - 5) %> di <%= content.signals.length - 5 %></span></button></div><% } %>
-  <p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p>
+  <% if (content.signals.length > 5) { %><div class="radar-more-row"><button type="button" class="btn radar-more" data-radar-more><%= T("Leggi ancora") %> <span>+<%= Math.min(5, content.signals.length - 5) %> <%= T("di") %> <%= content.signals.length - 5 %></span></button></div><% } %>
+  <p class="note"><%= T("I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.") %></p>
 </section>
 
 <!-- ============================ CONTESTO PERSONALE ============================ -->
 <section class="section desktop-only" id="contesto" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Narrowcasting</div><h2 class="rv">Questa pagina si è composta <span class="serif">per te.</span></h2></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Narrowcasting</div><h2 class="rv"><%- T("Questa pagina si è composta <span class=\"serif\">per te.</span>") %></h2></div>
   <div class="context"><p class="big" id="context-text"></p><div class="kv" id="context-kv"></div></div>
 </section>
 
@@ -309,10 +316,10 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 </section>
 
 <!-- ============================ CHIUSURA + CONTATTI ============================ -->
-<section class="closing desktop-only" data-tier="10" aria-label="Chiusura"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
+<section class="closing desktop-only" data-tier="10" aria-label="<%= T("Chiusura") %>"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
 <section class="section contact desktop-only path-keep" id="contatti" data-tier="2">
   <div class="split2">
-    <div><div class="eyebrow rv"><span class="dot"></span>Contatti</div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>">Copia</button></div></div>
+    <div><div class="eyebrow rv"><span class="dot"></span><%= T("Contatti") %></div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>"><%= T("Copia") %></button></div></div>
     <figure class="ph rv" data-tilt><img src="/media/roma.jpg" alt="" loading="lazy" data-parallax="0.08"><figcaption class="address"><%- cx(site.contact_address).replace(/\n/g, "<br>") %></figcaption></figure>
   </div>
 </section>
@@ -321,17 +328,18 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <!-- ============================ MOBILE (app) ============================ -->
 <div class="app-shell mobile-only">
   <div class="app" id="app"></div>
-  <nav class="tabbar" id="tabbar" aria-label="Sezioni"></nav>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="Chiudi">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
+  <nav class="tabbar" id="tabbar" aria-label="<%= T("Sezioni") %>"></nav>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="<%= T("Dettaglio") %>"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="<%= T("Chiudi") %>">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
 </div>
 </main>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer desktop-only" id="drawer" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="drawer-head"><span class="eyebrow" id="drawer-eyebrow"></span><div class="drawer-nav" id="drawer-nav" hidden><button type="button" id="drawer-prev" aria-label="Scheda precedente" title="Precedente (←)">←</button><span class="pos" id="drawer-pos"></span><button type="button" id="drawer-next" aria-label="Scheda successiva" title="Successiva (→)">→</button><button type="button" class="expand" id="drawer-expand" title="Allarga la scheda">Espandi</button></div><button class="x" type="button" id="drawer-close" aria-label="Chiudi">✕</button></div><div class="drawer-body" id="drawer-body"></div></aside>
+<aside class="drawer desktop-only" id="drawer" role="dialog" aria-modal="true" aria-label="<%= T("Dettaglio") %>"><div class="drawer-head"><span class="eyebrow" id="drawer-eyebrow"></span><div class="drawer-nav" id="drawer-nav" hidden><button type="button" id="drawer-prev" aria-label="<%= T("Scheda precedente") %>" title="<%= T("Precedente") %> (←)">←</button><span class="pos" id="drawer-pos"></span><button type="button" id="drawer-next" aria-label="<%= T("Scheda successiva") %>" title="<%= T("Successiva") %> (→)">→</button><button type="button" class="expand" id="drawer-expand" title="<%= T("Allarga la scheda") %>"><%= T("Espandi") %></button></div><button class="x" type="button" id="drawer-close" aria-label="<%= T("Chiudi") %>">✕</button></div><div class="drawer-body" id="drawer-body"></div></aside>
 
-<script>window.__DATA__ = <%- JSON.stringify(content).replace(/</g, "\\u003c") %>; window.__PREVIEW__ = <%= preview ? 'true' : 'false' %>; window.__AI__ = <%= aiOn ? 'true' : 'false' %>;</script>
+<script>window.__DATA__ = <%- JSON.stringify(content).replace(/</g, "\\u003c") %>; window.__PREVIEW__ = <%= preview ? 'true' : 'false' %>; window.__AI__ = <%= aiOn ? 'true' : 'false' %>; window.__LANG__ = "<%= LANG %>";</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="<%= preview ? 'i18n.js' : '/public/js/i18n.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'diffusion.js' : '/public/js/diffusion.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'datafield.js' : '/public/js/datafield.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'vendor/qrcode.js' : '/public/js/vendor/qrcode.js' %>"></script>

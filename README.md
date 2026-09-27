@@ -76,6 +76,15 @@ Costi indicativi (settembre 2026): Standard ~25 $/mese + disco 5 GB ~1,25 $/mese
 
 `npm run preview` genera `preview/index.html` (contenuti del seed, senza server): è la versione usata per l'artifact di anteprima. Le funzioni AI nell'anteprima usano la capability "sample" dell'artifact, in produzione le API del server.
 
+## 7. Versione inglese
+
+Il sito è bilingue (it/en). Lingua della pagina: `/it` e `/en` la forzano e la ricordano in un cookie (`fw_lang`); `/` usa il cookie o, se manca, la lingua del browser (italiano → it, tutto il resto → en). L'inglese "dal browser" e il selettore IT/EN (barra in alto, pannello Modalità, intro) compaiono solo quando la versione inglese è stata resa pubblica da **/admin/inglese**; prima di allora l'inglese si vede solo aprendo `/en`.
+
+- **Interfaccia** (menu, bottoni, didascalie, messaggi della Console e dell'Organismo): dizionario in `public/js/i18n.js`, chiave = testo italiano com'è scritto nel codice, valore = inglese. Lo usano il server (template EJS, `t("…")`) e il browser (`site.js`, `organismo.js`, `reels.js`, `datafield.js`). Una chiave che manca resta in italiano: si vede e si aggiunge lì.
+- **Contenuti** (testi del sito, aree, lavori, team, letture e riassunti del Radar, reel, dati del contesto): li traduce l'AI (stessa chiave di /admin/ai) campo per campo, nella tabella `translations` (`server/i18n.js`); si ritraduce solo ciò che manca o il cui testo italiano è cambiato. Parte da sola all'avvio, dopo ogni modifica dal backoffice e dopo ogni giro del Radar, oppure a mano da /admin/inglese, dove ogni campo si può correggere: la correzione resta finché l'italiano non cambia.
+- **AI**: Console e "Adatta al tuo contesto" rispondono in inglese quando la pagina è in inglese (`lang` nelle chiamate a `/api/ai/*`).
+- Restano in italiano: il backoffice e le pagine a sé dell'Organismo (`/organismo`, secondo schermo, AR).
+
 ## Note
 
 - **Font**: Helvetica Now Display (brand) è self-hosted in `public/fonts` (woff2 nei pesi 300/400/500/700/800, convertiti dagli OTF della cartella `font/`); Geist Mono per i dati e Instrument Serif come sostituto di GT Super Display arrivano da Google Fonts. Quando avrai i file di GT Super (e di Auger Mono, la cartella è vuota), si mettono in `public/fonts` e si aggiungono i `@font-face` in `site.css`.

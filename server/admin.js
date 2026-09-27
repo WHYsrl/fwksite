@@ -10,6 +10,7 @@ const feeds = require("./feeds");
 const concrete = require("./concrete");
 const imagegen = require("./imagegen");
 const figures = require("./figures");
+const i18n = require("./i18n");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -38,6 +39,8 @@ router.post("/login", (req, res) => {
 });
 router.post("/logout", (req, res) => { req.session = null; res.redirect("/admin/login"); });
 router.use(requireAdmin);
+// ogni modifica dal backoffice fa ripartire, con calma, la traduzione inglese di quello che è cambiato
+router.use((req, res, next) => { if (req.method === "POST" && !req.path.startsWith("/inglese")) res.on("finish", () => { try { i18n.refreshSoon(); } catch (e) { } }); next(); });
 
 // ---------- dashboard ----------
 router.get("/", (req, res) => {
@@ -50,6 +53,24 @@ router.get("/reel", (req, res) => { const all = reels.list(); res.render("admin/
 router.post("/reel", (req, res) => { const b = req.body || {}; if (!String(b.title || "").trim()) { flash(req, "Serve almeno il titolo", "err"); return res.redirect("/admin/reel"); } reels.upsert(b); flash(req, "Reel salvato"); res.redirect("/admin/reel"); });
 router.post("/reel/:id/move", (req, res) => { reels.move(req.params.id, +req.body.dir || 1); res.redirect("/admin/reel"); });
 router.post("/reel/:id/delete", (req, res) => { reels.remove(req.params.id); flash(req, "Reel eliminato"); res.redirect("/admin/reel"); });
+
+// ---------- versione inglese: traduzioni dei contenuti (tabella translations), pubblicazione, correzioni ----------
+function enContent() { const c = concrete.decorate(store.getContent()); c.reels = reels.list(); c.figures = figures.list(); return c; }
+router.get("/inglese", (req, res) => {
+  const content = enContent(); const items = i18n.collect(content); const m = new Map(); store.db.prepare("SELECT key, src_hash, value, manual, updated_at FROM translations WHERE lang='en'").all().forEach(r => m.set(r.key, r));
+  const groups = {}; const label = { site: "Testi del sito", caps: "Aree", works: "Lavori", team: "Team", signals: "Radar (letture e riassunti)", reels: "Reel", figures: "Dati del contesto" };
+  items.forEach(it => { const g = it.key.split(".")[0]; const r = m.get(it.key); const state = !r ? "missing" : r.src_hash !== i18n.hash(it.text) ? "stale" : r.manual ? "manual" : "ok"; (groups[g] = groups[g] || { name: label[g] || g, items: [] }).items.push({ ...it, value: r ? r.value : "", state, updated: r ? r.updated_at : "" }); });
+  const only = req.query.only || ""; const gsel = req.query.g || "";
+  res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), only, gsel, aiOn: ai.isConfigured() });
+});
+router.post("/inglese/impostazioni", (req, res) => { const b = req.body || {}; i18n.setSetting({ en_public: !!b.en_public, auto_when_private: !!b.auto_when_private }); flash(req, b.en_public ? "Versione inglese pubblica: il selettore IT/EN è visibile e chi ha il browser in un'altra lingua vede l'inglese" : "Versione inglese non pubblica: resta visibile solo su /en"); res.redirect("/admin/inglese"); });
+router.post("/inglese/traduci", async (req, res) => { try { const r = await i18n.run("en", { max: +req.body.max || 400 }); flash(req, r.skipped ? "Traduzione non partita: " + r.reason : `Tradotte ${r.translated} voci${r.pending > 0 ? `, ne restano ${r.pending}` : ""}${r.errors.length ? " · errori: " + r.errors.join("; ") : ""}`, r.errors.length ? "err" : "ok"); } catch (e) { flash(req, "Errore: " + e.message, "err"); } res.redirect("/admin/inglese"); });
+router.post("/inglese/rigenera", async (req, res) => { const n = i18n.resetAuto("en"); flash(req, `${n} traduzioni automatiche cancellate: si rifanno in background (le correzioni a mano restano)`); i18n.refreshSoon(2000); res.redirect("/admin/inglese"); });
+router.post("/inglese/salva", (req, res) => {
+  const b = req.body || {}; const content = enContent(); const src = new Map(i18n.collect(content).map(it => [it.key, it.text]));
+  let n = 0; Object.keys(b).forEach(k => { if (!k.startsWith("tr:")) return; const key = k.slice(3); const text = src.get(key); if (text == null) return; const v = String(b[k] || "").trim(); if (v) { i18n.save("en", key, text, v, true); n++; } else i18n.remove("en", key); });
+  flash(req, `${n} traduzioni salvate (correzioni a mano)`); res.redirect("/admin/inglese" + (b.back ? "?" + b.back : ""));
+});
 
 // ---------- testi ----------
 const lines = (s) => String(s || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);

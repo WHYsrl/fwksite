@@ -1,0 +1,67 @@
+<%- include('../partials/admin-head', { title: 'Inglese' }) %>
+<%
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const STATE = { ok: ["ok", "tradotta (AI)"], manual: ["manual", "corretta a mano"], stale: ["stale", "da rifare: l'italiano è cambiato"], missing: ["missing", "manca"] };
+const keys = Object.keys(groups); const show = gsel && groups[gsel] ? [gsel] : keys;
+%>
+<h1>Versione inglese</h1>
+<p class="muted">L'interfaccia (menu, bottoni, didascalie) è tradotta nel codice. I contenuti — testi del sito, aree, lavori, team, letture del Radar, reel, dati del contesto — li traduce l'AI in automatico, campo per campo; qui li controlli e li correggi. Una correzione a mano resta finché non cambi il testo italiano. Anteprima: <a href="/en" target="_blank">/en ↗</a> (italiano: <a href="/it" target="_blank">/it ↗</a>).</p>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Stato</h2>
+    <p class="mono"><%= status.total %> campi · <b><%= status.ok %></b> tradotti (di cui <%= status.manual %> a mano) · <b><%= status.stale %></b> da rifare · <b><%= status.missing %></b> mancanti</p>
+    <% if (last) { %><p class="mono muted">Ultima traduzione automatica: <%= new Date(last.at).toLocaleString('it-IT') %> · tradotte <%= last.translated %><% if (last.errors && last.errors.length) { %> · errori: <%= last.errors.join("; ") %><% } %></p><% } %>
+    <% if (!aiOn) { %><p class="muted">AI non configurata: la traduzione automatica non può partire (imposta la chiave in <a href="/admin/ai">AI</a>).</p><% } %>
+    <div class="row">
+      <form method="post" action="/admin/inglese/traduci"><button class="btn primary" type="submit" <%= aiOn ? '' : 'disabled' %>>Traduci adesso quello che manca (<%= status.stale + status.missing %>)</button></form>
+      <form method="post" action="/admin/inglese/rigenera" data-confirm="Cancellare tutte le traduzioni automatiche e rifarle da capo? Le correzioni a mano restano."><button class="btn danger" type="submit" <%= aiOn ? '' : 'disabled' %>>Rigenera tutto</button></form>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Pubblicazione</h2>
+    <form method="post" action="/admin/inglese/impostazioni">
+      <label class="check"><input type="checkbox" name="en_public" value="1" <%= settings.en_public ? 'checked' : '' %>> Versione inglese pubblica: selettore IT/EN visibile e chi ha il browser in una lingua diversa dall'italiano vede l'inglese</label>
+      <label class="check"><input type="checkbox" name="auto_when_private" value="1" <%= settings.auto_when_private !== false ? 'checked' : '' %>> Traduci in automatico anche finché non è pubblica (all'avvio, dopo ogni modifica e dopo ogni giro del Radar)</label>
+      <p class="muted">Finché non è pubblica, l'inglese si vede solo aprendo <code>/en</code>.</p>
+      <div class="actions"><button class="btn" type="submit">Salva</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="row wrap">
+  <span class="mono muted">Mostra:</span>
+  <a class="btn sm <%= !gsel ? 'primary' : '' %>" href="/admin/inglese<%= only ? '?only=' + only : '' %>">tutto</a>
+  <% keys.forEach(k => { %><a class="btn sm <%= gsel === k ? 'primary' : '' %>" href="/admin/inglese?g=<%= k %><%= only ? '&only=' + only : '' %>"><%= groups[k].name %> <small>· <%= groups[k].items.length %></small></a><% }) %>
+  <span class="mono muted" style="margin-left:12px">Filtro:</span>
+  <a class="btn sm <%= !only ? 'primary' : '' %>" href="/admin/inglese<%= gsel ? '?g=' + gsel : '' %>">tutte</a>
+  <a class="btn sm <%= only === 'todo' ? 'primary' : '' %>" href="/admin/inglese?only=todo<%= gsel ? '&g=' + gsel : '' %>">solo da fare</a>
+  <a class="btn sm <%= only === 'manual' ? 'primary' : '' %>" href="/admin/inglese?only=manual<%= gsel ? '&g=' + gsel : '' %>">solo corrette a mano</a>
+</div>
+
+<form method="post" action="/admin/inglese/salva" class="form">
+  <input type="hidden" name="back" value="<%= [gsel ? 'g=' + gsel : '', only ? 'only=' + only : ''].filter(Boolean).join('&') %>">
+  <% show.forEach(k => { const g = groups[k]; const items = g.items.filter(it => !only || (only === 'todo' ? (it.state === 'missing' || it.state === 'stale') : it.state === 'manual')); if (!items.length) return; %>
+  <section class="card">
+    <h2><%= g.name %> <small class="muted">· <%= items.length %></small></h2>
+    <table class="tr-table">
+      <tr><th style="width:38%">Italiano</th><th>Inglese</th><th style="width:130px">Stato</th></tr>
+      <% items.forEach(it => { const st = STATE[it.state] || STATE.missing; %>
+      <tr class="tr-<%= it.state %>">
+        <td><div class="tr-src"><%= it.text %></div><small class="mono muted"><%= it.key %></small></td>
+        <td><textarea name="tr:<%= it.key %>" rows="<%= Math.min(8, Math.max(1, Math.ceil(it.text.length / 70))) %>"><%= it.value %></textarea></td>
+        <td><span class="pill <%= st[0] === 'manual' ? 'consegnato' : st[0] === 'missing' || st[0] === 'stale' ? 'placeholder' : '' %>"><%= st[1] %></span><% if (it.updated) { %><br><small class="mono muted"><%= it.updated.slice(0, 16) %></small><% } %></td>
+      </tr>
+      <% }) %>
+    </table>
+    <div class="actions"><button class="btn primary" type="submit">Salva le correzioni</button> <span class="muted">Un campo lasciato vuoto torna alla traduzione automatica.</span></div>
+  </section>
+  <% }) %>
+</form>
+<style>
+.tr-table td{vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line)}
+.tr-src{white-space:pre-wrap;font-size:13.5px;line-height:1.45}
+.tr-table textarea{margin-top:0;font-size:13.5px;line-height:1.45;min-height:38px}
+.tr-stale textarea,.tr-missing textarea{border-color:rgba(191,0,255,.5)}
+</style>
+<%- include('../partials/admin-foot') %>

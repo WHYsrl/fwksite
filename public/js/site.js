@@ -12,6 +12,10 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<":
 const em = (s) => String(s ?? "").replace(/<em>/g, '<span class="serif">').replace(/<\/em>/g, "</span>");
 const isMobile = () => matchMedia("(max-width: 820px)").matches;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Lingua: la decide il server (<html lang>); t("testo italiano") restituisce l'inglese dal dizionario di i18n.js, altrimenti il testo com'è
+const LANG = String(document.documentElement.lang || "it").toLowerCase().startsWith("en") ? "en" : "it";
+const t = window.FW_I18N ? window.FW_I18N.make(LANG) : Object.assign((s, vars) => { let o = String(s); if (vars) Object.keys(vars).forEach(k => { o = o.split("{" + k + "}").join(vars[k]); }); return o; }, { lang: "it" });
+const LOCALE = LANG === "en" ? "en-GB" : "it-IT";
 const media = (p) => PREVIEW && p && p.startsWith("/media/") ? p.slice(1) : p;
 // Video dei lavori: link Vimeo (vimeo.com/ID o vimeo.com/ID/HASH) → player in loop muto; file mp4/webm → <video>; altrimenti immagine.
 const vimeoId = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] } : null; };
@@ -19,7 +23,7 @@ function workMedia(item, fallback) {
   const v = (item.video_url || "").trim();
   if (v) {
     const vm = vimeoId(v);
-    if (vm) return `<div class="d-img video"><iframe src="https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}background=1&autoplay=1&loop=1&muted=1&autopause=0&dnt=1" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="Video del progetto"></iframe></div>`;
+    if (vm) return `<div class="d-img video"><iframe src="https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}background=1&autoplay=1&loop=1&muted=1&autopause=0&dnt=1" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${t("Video del progetto")}"></iframe></div>`;
     if (/\.(mp4|webm|mov)(\?|$)/i.test(v)) return `<div class="d-img video"><video src="${esc(v)}" autoplay muted loop playsinline preload="metadata"${item.image ? ` poster="${esc(media(item.image))}"` : ""}></video></div>`;
   }
   return `<div class="d-img"><img src="${media(item.image) || media(fallback)}" alt=""></div>`;
@@ -64,9 +68,9 @@ const LightMedia = {
 const hasGsap = typeof window.gsap !== "undefined";
 if (hasGsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
-const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
+const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const mesi = LANG === "en" ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] : ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]; return m ? `${+day || ""} ${mesi[(+m) - 1] || ""} ${y}`.trim() : d; };
 const domain = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
-const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
+const fmtWhen = (iso) => { try { return new Intl.DateTimeFormat(LOCALE, { timeZone: "Europe/Rome", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)); } catch { return ""; } };
 
 /* =========================================================
    CONTESTO E MODALITÀ AMBIENTALI
@@ -75,8 +79,8 @@ const Ctx = {
   weather: null,
   local() {
     const now = new Date(); const h = now.getHours();
-    return { time: new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit" }).format(now), day: new Intl.DateTimeFormat("it-IT", { weekday: "long" }).format(now), slot: h < 6 ? "notte" : h < 12 ? "mattina" : h < 18 ? "pomeriggio" : "sera", hour: h,
-      mobile: isMobile(), device: isMobile() ? (matchMedia("(pointer: coarse)").matches ? "telefono" : "finestra stretta") : (matchMedia("(pointer: coarse)").matches ? "tablet" : "desktop"), vw: innerWidth, vh: innerHeight,
+    return { time: new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit" }).format(now), day: new Intl.DateTimeFormat(LOCALE, { weekday: "long" }).format(now), slot: h < 6 ? t("notte") : h < 12 ? t("mattina") : h < 18 ? t("pomeriggio") : t("sera"), night: h < 6, hour: h,
+      mobile: isMobile(), device: isMobile() ? (matchMedia("(pointer: coarse)").matches ? t("telefono") : t("finestra stretta")) : (matchMedia("(pointer: coarse)").matches ? "tablet" : "desktop"), vw: innerWidth, vh: innerHeight,
       lang: (navigator.language || "it").toLowerCase(), reduced, dark: matchMedia("(prefers-color-scheme: dark)").matches, conn: navigator.connection && navigator.connection.effectiveType || null };
   },
   async fetchWeather() {
@@ -92,31 +96,31 @@ const Modes = {
     const kind = w ? w.kind : (c.hour < 7 || c.hour >= 21 ? "night" : "unknown");
     html.dataset.weather = kind;
     let energy = this.mood === "nervous" ? "calm" : this.mood === "light" ? "auto" : this.mood; // il mood "chiaro" non forza il ritmo
-    if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.slot === "notte") ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
+    if (energy === "auto") energy = (kind === "rain" || kind === "night" || kind === "snow" || c.night) ? "calm" : (kind === "storm" || kind === "sun") ? "vivid" : "auto";
     html.dataset.energy = energy; html.dataset.mood = this.mood;
     Theme.read(); document.dispatchEvent(new CustomEvent("fw:theme")); // i canvas si adeguano alla palette dell'umore
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
-    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? "Essenziale" : "Modalità") : (this.density === "2" ? "Essenziale · mostra tutto" : this.density === "all" ? "Modalità · tutto" : "Modalità");
+    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? t("Essenziale") : t("Modalità")) : (this.density === "2" ? t("Essenziale · mostra tutto") : this.density === "all" ? t("Modalità · tutto") : t("Modalità"));
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
-    const env = $("#modes-env"); if (env) env.textContent = `Roma · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + weatherLabel(w) : "meteo non disponibile"} · ritmo ${this.mood === "nervous" ? "essenziale" : energy === "calm" ? "calmo" : energy === "vivid" ? "vivace" : "neutro"}`;
+    const env = $("#modes-env"); if (env) env.textContent = `${t("Roma")} · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + weatherLabel(w) : t("meteo non disponibile")} · ${t("ritmo")} ${this.mood === "nervous" ? t("essenziale") : energy === "calm" ? t("calmo") : energy === "vivid" ? t("vivace") : t("neutro")}`;
     const sw = $("#status-weather"); if (sw) sw.textContent = w && w.temp != null ? `· ${w.temp}° ${weatherLabel(w)}` : "";
     if (isMobile() && typeof App !== "undefined" && App.applyDensity) App.applyDensity(); // su mobile la densità nasconde/mostra i blocchi subito
     if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 50);
   },
   set(k, v) { this[k] = v; try { sessionStorage.setItem("fw." + k, v); } catch {} this.apply(); }
 };
-function labelWeather(k) { return { sun: "sereno", cloud: "nuvoloso", rain: "pioggia", storm: "temporale", snow: "neve", night: "notte", unknown: "" }[k] || ""; }
+function labelWeather(k) { const s = { sun: "sereno", cloud: "nuvoloso", rain: "pioggia", storm: "temporale", snow: "neve", night: "notte", unknown: "" }[k] || ""; return s ? t(s) : ""; }
 // Condizioni dal codice WMO di Open-Meteo: etichetta breve e frase discorsiva (il "kind" serve solo al ritmo del sito, e di notte dice solo "notte")
 const WMO = { 0: ["sereno", "il cielo è sereno"], 1: ["quasi sereno", "il cielo è quasi sereno"], 2: ["poco nuvoloso", "il cielo è poco nuvoloso"], 3: ["coperto", "il cielo è coperto"], 45: ["nebbia", "c'è nebbia"], 48: ["nebbia", "c'è nebbia"],
   51: ["pioviggine", "pioviggina"], 53: ["pioviggine", "pioviggina"], 55: ["pioviggine fitta", "pioviggina fitto"], 56: ["pioviggine gelata", "cade pioviggine gelata"], 57: ["pioviggine gelata", "cade pioviggine gelata"],
   61: ["pioggia leggera", "piove leggermente"], 63: ["pioggia", "piove"], 65: ["pioggia forte", "piove forte"], 66: ["pioggia gelata", "cade pioggia gelata"], 67: ["pioggia gelata", "cade pioggia gelata"],
   71: ["neve leggera", "nevica leggermente"], 73: ["neve", "nevica"], 75: ["neve forte", "nevica forte"], 77: ["neve", "nevica"], 80: ["rovesci", "ci sono rovesci"], 81: ["rovesci", "ci sono rovesci"], 82: ["rovesci violenti", "ci sono rovesci violenti"], 85: ["rovesci di neve", "ci sono rovesci di neve"], 86: ["rovesci di neve", "ci sono rovesci di neve"],
   95: ["temporale", "c'è un temporale"], 96: ["temporale con grandine", "c'è un temporale con grandine"], 99: ["temporale con grandine", "c'è un temporale con grandine"] };
-function weatherLabel(w) { const e = w && w.code != null && WMO[w.code]; return e ? e[0] : labelWeather(w && w.kind); }
-function weatherPhrase(w) { const e = w && w.code != null && WMO[w.code]; return e ? e[1] : ""; }
+function weatherLabel(w) { const e = w && w.code != null && WMO[w.code]; return e ? t(e[0]) : labelWeather(w && w.kind); }
+function weatherPhrase(w) { const e = w && w.code != null && WMO[w.code]; return e ? t(e[1]) : ""; }
 // La qualità di rete stimata dal browser (Network Information API): "4g" vuol dire solo "veloce", anche su wifi o fibra
-function connLabel(c) { return { "slow-2g": "lenta", "2g": "lenta", "3g": "media", "4g": "veloce" }[c] || ""; }
+function connLabel(c) { const s = { "slow-2g": "lenta", "2g": "lenta", "3g": "media", "4g": "veloce" }[c] || ""; return s ? t(s) : ""; }
 (function modesUI() {
   const btn = $("#modes-btn"), panel = $("#modes"); if (!btn || !panel) return;
   if (DATA.site.modes_enabled === false) { btn.hidden = true; return; }
@@ -132,20 +136,21 @@ function connLabel(c) { return { "slow-2g": "lenta", "2g": "lenta", "3g": "media
 
 function renderContext() {
   const c = Ctx.local(); const w = Ctx.weather;
-  const langName = c.lang.startsWith("it") ? "italiano" : c.lang.startsWith("en") ? "inglese" : c.lang.startsWith("fr") ? "francese" : c.lang.startsWith("de") ? "tedesco" : c.lang.startsWith("es") ? "spagnolo" : c.lang;
-  const parts = [`Sono le <span class="v">${esc(c.time)}</span> di <span class="v">${esc(c.day)} ${c.slot}</span>${w && w.temp != null ? ` e a Roma ci sono <span class="v">${w.temp}°</span>${weatherPhrase(w) ? ` e <span class="v">${weatherPhrase(w)}</span>` : ""}` : ""}.`,
-    `Stai leggendo da un <span class="v">${esc(c.device)}</span> di <span class="v">${c.vw}×${c.vh}</span> pixel, con il browser in <span class="v">${esc(langName)}</span>, con le animazioni <span class="v">${c.reduced ? "ridotte" : "attive"}</span>, densità <span class="v">${Modes.density === "2" ? "essenziale" : Modes.density === "10" ? "media" : "completa"}</span>.`,
-    c.mobile ? `Per questo vedi un feed verticale: su un desktop gli stessi contenuti diventano una console esplorabile.` : `Per questo vedi la Console: su un telefono gli stessi contenuti diventano un feed verticale.`,
-    `Un sistema, tante esperienze: è il principio con cui progettiamo ogni organismo di contenuto.`];
-  const kv = [["Ora locale", c.time], ["Giorno", `${c.day} · ${c.slot}`], ["Dispositivo", c.device], ["Schermo", `${c.vw} × ${c.vh}`], ["Lingua del browser", langName], ["Movimento", c.reduced ? "ridotto" : "attivo"], ["Meteo Roma", w && w.temp != null ? `${w.temp}° · ${weatherLabel(w)}` : "n.d."], ["Ritmo", Modes.mood === "nervous" ? "essenziale" : html.dataset.energy === "calm" ? "calmo" : html.dataset.energy === "vivid" ? "vivace" : "neutro"], ["Densità", Modes.density === "all" ? "tutto" : Modes.density + " min"]];
-  if (connLabel(c.conn)) kv.push(["Connessione", connLabel(c.conn)]);
+  const langName = c.lang.startsWith("it") ? t("italiano") : c.lang.startsWith("en") ? t("inglese") : c.lang.startsWith("fr") ? t("francese") : c.lang.startsWith("de") ? t("tedesco") : c.lang.startsWith("es") ? t("spagnolo") : c.lang;
+  const v = (x) => `<span class="v">${x}</span>`;
+  const parts = [t("Sono le {time} di {day}{weather}.", { time: v(esc(c.time)), day: v(esc(c.day) + " " + c.slot), weather: w && w.temp != null ? t(" e a Roma ci sono {temp}", { temp: v(w.temp + "°") }) + (weatherPhrase(w) ? t(" e {phrase}", { phrase: v(weatherPhrase(w)) }) : "") : "" }),
+    t("Stai leggendo da un {device} di {size} pixel, con il browser in {lang}, con le animazioni {motion}, densità {density}.", { device: v(esc(c.device)), size: v(c.vw + "×" + c.vh), lang: v(esc(langName)), motion: v(c.reduced ? t("ridotte") : t("attive")), density: v(Modes.density === "2" ? t("essenziale") : Modes.density === "10" ? t("media") : t("completa")) }),
+    c.mobile ? t("Per questo vedi un feed verticale: su un desktop gli stessi contenuti diventano una console esplorabile.") : t("Per questo vedi la Console: su un telefono gli stessi contenuti diventano un feed verticale."),
+    t("Un sistema, tante esperienze: è il principio con cui progettiamo ogni organismo di contenuto.")];
+  const kv = [[t("Ora locale"), c.time], [t("Giorno"), `${c.day} · ${c.slot}`], [t("Dispositivo"), c.device], [t("Schermo"), `${c.vw} × ${c.vh}`], [t("Lingua del browser"), langName], [t("Movimento"), c.reduced ? t("ridotto") : t("attivo")], [t("Meteo Roma"), w && w.temp != null ? `${w.temp}° · ${weatherLabel(w)}` : t("n.d.")], [t("Ritmo"), Modes.mood === "nervous" ? t("essenziale") : html.dataset.energy === "calm" ? t("calmo") : html.dataset.energy === "vivid" ? t("vivace") : t("neutro")], [t("Densità"), Modes.density === "all" ? t("tutto") : Modes.density + " min"]];
+  if (connLabel(c.conn)) kv.push([t("Connessione"), connLabel(c.conn)]);
   const kvHTML = kv.map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("");
-  const t = $("#context-text"); if (t) t.innerHTML = parts.join(" ");
+  const ct = $("#context-text"); if (ct) ct.innerHTML = parts.join(" ");
   const k = $("#context-kv"); if (k) k.innerHTML = kvHTML;
-  const sr = $("#status-right"); if (sr) sr.innerHTML = `<b>${DATA.caps.length}</b> aree · <b>${DATA.works.length}</b> lavori · <b>${DATA.signals.length}</b> radar · <b>${esc(c.device)} · ${esc(c.day)} · ${c.slot}</b>`;
+  const sr = $("#status-right"); if (sr) sr.innerHTML = `<b>${DATA.caps.length}</b> ${t("aree")} · <b>${DATA.works.length}</b> ${t("lavori")} · <b>${DATA.signals.length}</b> radar · <b>${esc(c.device)} · ${esc(c.day)} · ${c.slot}</b>`;
   return { c, kvHTML, text: parts.join(" ") };
 }
-(function clock() { const el = $("#clock"); if (!el) return; const t = () => el.textContent = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()); t(); setInterval(t, 1000); })();
+(function clock() { const el = $("#clock"); if (!el) return; const tick = () => el.textContent = new Intl.DateTimeFormat(LOCALE, { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date()); tick(); setInterval(tick, 1000); })();
 (function statusWords() { const el = $("#status-words"); if (!el) return; const words = DATA.site.closing && DATA.site.closing.length ? DATA.site.closing : ["On Air", "Live", "Alive"]; let i = 0; setInterval(() => { i = (i + 1) % words.length; el.textContent = words[i]; }, 4000); })();
 
 /* =========================================================
@@ -155,7 +160,7 @@ function renderContext() {
 const Prefs = {
   get() { try { return JSON.parse(sessionStorage.getItem("fw.prefs") || "null"); } catch { return null; } },
   set(p) { try { sessionStorage.setItem("fw.prefs", JSON.stringify({ time: p.time || null, mood: p.mood || null })); } catch {} },
-  text() { const p = this.get(); if (!p) return ""; const t = { "2": "2 minuti", "10": "10 minuti", all: "tutto il tempo che serve" }[p.time]; const m = { calm: "mood notturno", vivid: "mood acceso", nervous: "mood quieto, dritto al punto", light: "mood chiaro" }[p.mood]; return [t, m].filter(Boolean).join(", "); }
+  text() { const p = this.get(); if (!p) return ""; const tt = { "2": t("2 minuti"), "10": t("10 minuti"), all: t("tutto il tempo che serve") }[p.time]; const m = { calm: t("mood notturno"), vivid: t("mood acceso"), nervous: t("mood quieto, dritto al punto"), light: t("mood chiaro") }[p.mood]; return [tt, m].filter(Boolean).join(", "); }
 };
 
 const AI = {
@@ -175,7 +180,7 @@ const AI = {
   brand: `Sei la Console di Frameworks (Frame by Frame, Roma): Adaptive Content Systems, "organismi di comunicazione sintetici viventi, capaci di adattarsi a ogni contesto". Tono lucido, concreto, elegante, italiano, frasi brevi, niente elenchi. Non inventare lavori o dati; le notizie del Radar sono di terzi.`,
   async console(q, history = []) {
     const prefs = Prefs.get() || {};
-    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history, prefs }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
+    if (!PREVIEW) { const r = await fetch("/api/ai/console", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q, history, prefs, lang: LANG }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || t("Errore")); return j; }
     const hist = history.length ? `\nCONVERSAZIONE PRECEDENTE:\n${history.map(h => `Visitatore: ${h.q}\nConsole: ${h.a}`).join("\n")}\n` : "";
     const pt = { "2": "2 minuti: solo l'essenziale → al massimo 2 aree e 1 lavoro, niente radar, una frase", "10": "10 minuti → 2-3 aree e 2-3 lavori", all: "tutto il tempo → fino a 6 elementi, radar incluso se pertinente" }[prefs.time];
     const pm = { calm: "notturno: tono disteso", vivid: "acceso: tono energico, puoi includere il radar", nervous: "quieto: asciutto, niente radar", light: "chiaro: tono limpido e leggero" }[prefs.mood];
@@ -184,7 +189,7 @@ const AI = {
     return out;
   },
   async adapt(p) {
-    if (!PREVIEW) { const r = await fetch("/api/ai/adapt", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(p) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore"); return j; }
+    if (!PREVIEW) { const r = await fetch("/api/ai/adapt", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...p, lang: LANG }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || t("Errore")); return j; }
     const item = byId(p.itemId); const desc = item.client ? `PUNTO DI PARTENZA (lavoro): ${item.client} — ${item.title}. ${item.body}` : `PUNTO DI PARTENZA (area): ${item.name}. ${item.body}`;
     const caps = item.client ? (item.caps || []).map(capById).filter(Boolean) : [item];
     const toolbox = caps.map(x => `${x.name}: ${(x.tech || []).join(", ") || (x.tags || []).join(", ")}; casi d'uso: ${(x.uses || []).join("; ") || x.short}`).join("\n");
@@ -199,18 +204,18 @@ const AI = {
    ========================================================= */
 function detailHTML(item) {
   const list = (items, label) => items.length ? `<div class="list">${items.map(i => `<button type="button" data-open="${i.id}"><span>${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.title : i.name)}</span><small>${label}</small></button>`).join("")}</div>` : "";
-  const adapt = (id) => DATA.features.adapt !== false ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>Adatta al tuo contesto</div><h4>Tre idee concrete per il vostro brand.</h4><p class="adapt-hint">Settore, canale e obiettivo: la Console risponde con proposte specifiche, senza giri di parole.</p><div class="grid"><input name="sector" placeholder="Settore (es. automotive, farmaceutico, GDO)" maxlength="60"><input name="channel" placeholder="Canale (es. DOOH aeroporti, TikTok, showroom)" maxlength="60"></div><input name="goal" placeholder="Obiettivo (es. lancio in 12 paesi, traffico in store, formare la rete vendita)" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">Dammi tre idee</button><div class="adapt-out" hidden></div></div>` : "";
-  const concrete = (item) => { const uses = item.uses || [], tech = item.tech || []; if (!uses.length && !tech.length) return `<div class="tags">${(item.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`; return `<div class="d-concrete">${uses.length ? `<div><div class="eyebrow"><span class="dot"></span>Casi d'uso</div><ul class="uses">${uses.map(u => `<li>${esc(u)}</li>`).join("")}</ul></div>` : ""}${tech.length ? `<div><div class="eyebrow"><span class="dot"></span>Tecnologie, dispositivi e formati</div><div class="tags">${tech.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div></div>` : ""}</div>`; };
-  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
-  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>Area</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p>${concrete(item)}${adapt(item.id)}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), "lavoro")}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
-  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
-  if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">Fonte esterna</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">Contenuto di terzi: titolo e riassunto appartengono a ${esc(item.src)} (${esc(domain(item.url))}). Frameworks lo segnala e lo commenta.</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">La nostra lettura</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), "area")}</div>`;
+  const adapt = (id) => DATA.features.adapt !== false ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>${t("Adatta al tuo contesto")}</div><h4>${t("Tre idee concrete per il vostro brand.")}</h4><p class="adapt-hint">${t("Settore, canale e obiettivo: la Console risponde con proposte specifiche, senza giri di parole.")}</p><div class="grid"><input name="sector" placeholder="${t("Settore (es. automotive, farmaceutico, GDO)")}" maxlength="60"><input name="channel" placeholder="${t("Canale (es. DOOH aeroporti, TikTok, showroom)")}" maxlength="60"></div><input name="goal" placeholder="${t("Obiettivo (es. lancio in 12 paesi, traffico in store, formare la rete vendita)")}" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">${t("Dammi tre idee")}</button><div class="adapt-out" hidden></div></div>` : "";
+  const concrete = (item) => { const uses = item.uses || [], tech = item.tech || []; if (!uses.length && !tech.length) return `<div class="tags">${(item.tags || []).map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div>`; return `<div class="d-concrete">${uses.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Casi d'uso")}</div><ul class="uses">${uses.map(u => `<li>${esc(u)}</li>`).join("")}</ul></div>` : ""}${tech.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Tecnologie, dispositivi e formati")}</div><div class="tags">${tech.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>` : ""}</div>`; };
+  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
+  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p>${concrete(item)}${adapt(item.id)}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), t("lavoro"))}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
+  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id)}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
+  if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">${t("Fonte esterna")}</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">${t("Contenuto di terzi: titolo e riassunto appartengono a {src} ({domain}). Frameworks lo segnala e lo commenta.", { src: esc(item.src), domain: esc(domain(item.url)) })}</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">${t("La nostra lettura")}</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">${t("Leggi la fonte")} ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
   return "";
 }
 const drawer = $("#drawer"), scrim = $("#scrim"), sheet = $("#sheet");
 function openDetail(item) {
   if (!item) return;
-  const h = detailHTML(item); const eyebrow = item.kind === "core" ? "Frameworks" : item.kind === "cap" ? "Area" : item.kind === "work" ? "Lavoro" : "Radar";
+  const h = detailHTML(item); const eyebrow = item.kind === "core" ? "Frameworks" : item.kind === "cap" ? t("Area") : item.kind === "work" ? t("Lavoro") : "Radar";
   if (isMobile()) { $("#sheet-body").innerHTML = h; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; }
   else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.state = "open"; drawer.querySelector(".drawer-body").scrollTop = 0; $$("#drawer-body iframe").forEach(f => { f.inert = true; f.tabIndex = -1; }); DrawerNav.update(item); } // il loop video non prende il fuoco: ← → restano al drawer
   scrim.dataset.state = "open";
@@ -232,7 +237,7 @@ const DrawerNav = {
     const list = this.siblings(this.item); if (list.length < 2) return; const i = list.findIndex(x => x.id === this.item.id); const next = list[(i + dir + list.length) % list.length];
     const body = drawer.querySelector(".drawer-body"); body.classList.add("swap-out"); setTimeout(() => { openDetail(byId(next.id)); body.classList.remove("swap-out"); }, 220);
   },
-  expand() { const on = drawer.classList.toggle("wide"); const b = $("#drawer-expand"); if (b) b.textContent = on ? "Riduci" : "Espandi"; }
+  expand() { const on = drawer.classList.toggle("wide"); const b = $("#drawer-expand"); if (b) b.textContent = on ? t("Riduci") : t("Espandi"); }
 };
 // il loop video nella scheda (senza controlli) si prende il fuoco appena carica: lo restituiamo al drawer, così ← → funzionano
 window.addEventListener("blur", () => { const a = document.activeElement; if (a && a.tagName === "IFRAME" && drawer.dataset.state === "open" && (drawer.contains(a) || a.inert)) setTimeout(() => { try { drawer.focus({ preventScroll: true }); } catch {} }, 0); });
@@ -243,7 +248,7 @@ document.addEventListener("keydown", e => { if (drawer.dataset.state !== "open" 
 // ---- lavori (desktop): chip filtro per sistema ----
 const WorksFilter = {
   current: "all",
-  set(id) { this.current = id; $$("[data-wfilter]").forEach(b => b.classList.toggle("on", b.dataset.wfilter === id)); const cards = $$("#lavori .work"); let n = 0; cards.forEach(w => { const on = id === "all" || (w.dataset.caps || "").split(" ").includes(id); w.classList.toggle("is-filtered", !on); if (on) n++; }); const grid = $("#lavori .works"); if (grid) { let e = grid.querySelector(".works-empty"); if (!n) { if (!e) { e = document.createElement("div"); e.className = "works-empty"; e.textContent = "Nessun lavoro in questa area, per ora."; grid.appendChild(e); } } else if (e) e.remove(); } }
+  set(id) { this.current = id; $$("[data-wfilter]").forEach(b => b.classList.toggle("on", b.dataset.wfilter === id)); const cards = $$("#lavori .work"); let n = 0; cards.forEach(w => { const on = id === "all" || (w.dataset.caps || "").split(" ").includes(id); w.classList.toggle("is-filtered", !on); if (on) n++; }); const grid = $("#lavori .works"); if (grid) { let e = grid.querySelector(".works-empty"); if (!n) { if (!e) { e = document.createElement("div"); e.className = "works-empty"; e.textContent = t("Nessun lavoro in questa area, per ora."); grid.appendChild(e); } } else if (e) e.remove(); } }
 };
 document.addEventListener("click", e => { const b = e.target.closest("[data-wfilter]"); if (b) WorksFilter.set(b.dataset.wfilter); });
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
@@ -272,20 +277,20 @@ async function runAdapt(box) {
   const out = $(".adapt-out", box), go = $(".go", box);
   const p = { itemId: box.dataset.adapt, sector: $("[name=sector]", box).value.trim(), channel: $("[name=channel]", box).value.trim(), goal: $("[name=goal]", box).value.trim() };
   if (!p.sector && !p.goal && !p.channel) { $("[name=sector]", box).focus(); return; }
-  out.hidden = false; out.classList.remove("rich"); out.innerHTML = `<span class="who">Console · tre idee in arrivo…</span>`; go.disabled = true;
+  out.hidden = false; out.classList.remove("rich"); out.innerHTML = `<span class="who">${t("Console · tre idee in arrivo…")}</span>`; go.disabled = true;
   try {
     const r = await AI.adapt(p);
     if (r.ideas && r.ideas.length) {
       out.classList.add("rich");
-      out.innerHTML = `<span class="who">Tre idee per ${esc([p.sector, p.channel].filter(Boolean).join(" · ") || "il vostro contesto")}</span>${r.summary ? `<p class="adapt-sum">${esc(r.summary)}</p>` : ""}<ol class="ideas">${r.ideas.map(i => `<li><b>${esc(i.title)}</b><span>${esc(i.text)}</span>${i.tech ? `<small>${esc(i.tech)}</small>` : ""}</li>`).join("")}</ol>${r.next ? `<p class="adapt-next">${esc(r.next)}</p>` : ""}<div class="adapt-cta"><button class="btn primary" type="button" data-contact>Parliamone: brief o brainstorming</button></div>`;
-    } else out.innerHTML = `<span class="who">Variante per il vostro contesto</span>${esc(r.text)}`;
+      out.innerHTML = `<span class="who">${t("Tre idee per {ctx}", { ctx: esc([p.sector, p.channel].filter(Boolean).join(" · ") || t("il vostro contesto")) })}</span>${r.summary ? `<p class="adapt-sum">${esc(r.summary)}</p>` : ""}<ol class="ideas">${r.ideas.map(i => `<li><b>${esc(i.title)}</b><span>${esc(i.text)}</span>${i.tech ? `<small>${esc(i.tech)}</small>` : ""}</li>`).join("")}</ol>${r.next ? `<p class="adapt-next">${esc(r.next)}</p>` : ""}<div class="adapt-cta"><button class="btn primary" type="button" data-contact>${t("Parliamone: brief o brainstorming")}</button></div>`;
+    } else out.innerHTML = `<span class="who">${t("Variante per il vostro contesto")}</span>${esc(r.text)}`;
   }
-  catch (e) { out.innerHTML = `<span class="who">Console</span>${esc(e.message || "Non riesco a generare le idee adesso.")}`; }
+  catch (e) { out.innerHTML = `<span class="who">Console</span>${esc(e.message || t("Non riesco a generare le idee adesso."))}`; }
   go.disabled = false;
 }
 function copyText(b) {
-  const done = () => { b.dataset.done = "true"; b.textContent = "Copiato"; setTimeout(() => { b.dataset.done = "false"; b.textContent = "Copia"; }, 1800); };
-  const fallback = () => { const code = b.parentElement.querySelector("code"); if (code) { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } b.textContent = "Seleziona e copia"; };
+  const done = () => { b.dataset.done = "true"; b.textContent = t("Copiato"); setTimeout(() => { b.dataset.done = "false"; b.textContent = t("Copia"); }, 1800); };
+  const fallback = () => { const code = b.parentElement.querySelector("code"); if (code) { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } b.textContent = t("Seleziona e copia"); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(b.dataset.copy).then(done).catch(fallback); else fallback();
 }
 
@@ -311,6 +316,7 @@ const Console = (() => {
   // la mappa vive sopra l'immagine dell'hero: legge la palette dal suo contenitore (in "chiaro" resta scura)
   let T = Theme.from(cv.parentElement), PURPLE = T.accent, PAPER = T.paper; document.addEventListener("fw:theme", () => { T = Theme.from(cv.parentElement); PURPLE = T.accent; PAPER = T.paper; });
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
+  const L_AREA = t("AREA"), L_RADAR = t("RADAR · FONTE ESTERNA"); // etichette dei nodi (dentro draw(t) la t è il tempo)
   let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
   const deg = (d) => d * Math.PI / 180;
   const amp = () => parseFloat(getComputedStyle(html).getPropertyValue("--amp")) || 1;
@@ -388,9 +394,9 @@ const Console = (() => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
       if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : T.ink; cube(p.x, p.y, r * 2.1); ctx.fillStyle = T.inkA(.9); ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
-      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : T.ink; ctx.stroke(); label(p, nd, nd.name, "AREA", `600 14px ${SANS}`, T.ink, nd.r + 12); }
+      else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : T.ink; ctx.stroke(); label(p, nd, nd.name, L_AREA, `600 14px ${SANS}`, T.ink, nd.r + 12); }
       else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.ink2; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? T.ink : T.ink2, nd.r + 9); }
-      else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, "RADAR · FONTE ESTERNA", `400 11px ${MONO}`, PAPER, nd.r + 8); }
+      else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, L_RADAR, `400 11px ${MONO}`, PAPER, nd.r + 8); }
       ctx.restore();
     });
     last = t;
@@ -483,69 +489,69 @@ function teamHTML() {
   const team = DATA.team || []; if (!team.length) return "";
   const site = DATA.site; const key = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
   const face = (m) => m.photo ? `<img class="face" src="${media(m.photo)}" alt="" loading="lazy">` : `<span class="face gram" aria-hidden="true">${esc(initials(m.name))}</span>`;
-  return `<div class="m-text team-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Team · ${team.length} persone</div><h2 style="margin-top:8px">${em(site.team_title || "Un sistema è fatto di <em>persone.</em>")}</h2><p>${esc(site.team_text || "")}</p>
+  return `<div class="m-text team-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Team · {n} persone", { n: team.length })}</div><h2 style="margin-top:8px">${em(site.team_title || t("Un sistema è fatto di <em>persone.</em>"))}</h2><p>${esc(site.team_text || "")}</p>
     <div class="people-m">${key.map(m => `<div class="pm">${face(m)}<div><b>${esc(m.name)}</b><small>${esc(m.role)}</small></div></div>`).join("")}</div>
-    <details class="roster-m"><summary>Tutto il team · ${team.length}</summary>${units.map(u => { const l = team.filter(m => m.unit === u && !m.is_key); return l.length ? `<div class="eyebrow"><span class="dot"></span>${esc(u)}</div><ul>${l.map(m => `<li><b>${esc(m.name)}</b><span>${esc(m.role)}</span></li>`).join("")}</ul>` : ""; }).join("")}</details></div>`;
+    <details class="roster-m"><summary>${t("Tutto il team")} · ${team.length}</summary>${units.map(u => { const l = team.filter(m => m.unit === u && !m.is_key); return l.length ? `<div class="eyebrow"><span class="dot"></span>${esc(u)}</div><ul>${l.map(m => `<li><b>${esc(m.name)}</b><span>${esc(m.role)}</span></li>`).join("")}</ul>` : ""; }).join("")}</details></div>`;
 }
-const greet = () => { const h = new Date().getHours(); return h < 6 ? "Buonanotte." : h < 12 ? "Buongiorno." : h < 18 ? "Buon pomeriggio." : "Buonasera."; };
+const greet = () => { const h = new Date().getHours(); return h < 6 ? t("Buonanotte.") : h < 12 ? t("Buongiorno.") : h < 18 ? t("Buon pomeriggio.") : t("Buonasera."); };
 const App = {
   current: "home", filter: "all",
   render() {
     const app = $("#app"); if (!app) return; const site = DATA.site; const w = Ctx.weather;
     // .mk: in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla)
-    const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>Area</div><h3><span class="mk">${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</span></h3><p><span class="mk">${esc(i.short)}</span></p></button>`;
+    const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h3><span class="mk">${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</span></h3><p><span class="mk">${esc(i.short)}</span></p></button>`;
     const wtile = (x) => `<button class="tile work" type="button" data-open="${x.id}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>${esc(x.client)}</div><h3>${esc(x.title)}</h3></button>`;
-    const news = (sg, mini) => `<button class="nc ${mini ? "mini" : ""}" type="button" data-open="${sg.id}"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(sg.src)}</b><span>${esc(fmtDate(sg.date))}</span></div><h3>“${esc(sg.title)}”</h3>${mini ? "" : `<p>${esc(sg.why)}</p>`}</button>`;
+    const news = (sg, mini) => `<button class="nc ${mini ? "mini" : ""}" type="button" data-open="${sg.id}"><div class="src"><span class="chip ext">${t("Fonte esterna")}</span><b>${esc(sg.src)}</b><span>${esc(fmtDate(sg.date))}</span></div><h3>“${esc(sg.title)}”</h3>${mini ? "" : `<p>${esc(sg.why)}</p>`}</button>`;
     // le case come post: intestazione col cliente, immagine quadrata, titolo, riga di testo e hashtag dei sistemi
-    const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><div class="post-head"><i>${esc(initials(x.client))}</i><div><b>${esc(x.client)}</b><small>${esc(x.year || "")}</small></div><span class="chip ghost">${esc(x.status)}</span></div><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="post-body"><h3>${esc(x.title)}</h3><p>${esc(x.short)}</p><div class="hashtags">${x.caps.map(id => "#" + (capById(id) ? capById(id).name.replace(/[^A-Za-z0-9]+/g, "") : id)).join(" ")}</div><span class="post-more">Apri la scheda →</span></div></button>`;
+    const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><div class="post-head"><i>${esc(initials(x.client))}</i><div><b>${esc(x.client)}</b><small>${esc(x.year || "")}</small></div><span class="chip ghost">${esc(x.status)}</span></div><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="post-body"><h3>${esc(x.title)}</h3><p>${esc(x.short)}</p><div class="hashtags">${x.caps.map(id => "#" + (capById(id) ? capById(id).name.replace(/[^A-Za-z0-9]+/g, "") : id)).join(" ")}</div><span class="post-more">${t("Apri la scheda")} →</span></div></button>`;
     const reelsM = (DATA.reels || []).filter(r => r.vimeo || r.cover);
-    const reelsBlock = (title, btn) => reelsM.length ? `<div class="reels-m"><div class="row-head"><h2>${title}</h2>${btn || ""}</div><div class="reels-track reels-track-m" data-reels-track>${reelsM.map(r => `<article class="reel" data-reel data-vimeo="${r.vimeo ? esc(r.vimeo.id) : ""}" data-h="${r.vimeo ? esc(r.vimeo.h || "") : ""}" data-title="${esc(r.title)}"><div class="reel-media">${r.cover ? `<img src="${esc(media(r.cover) || r.cover)}" alt="" loading="lazy">` : ""}</div><div class="reel-meta"><div><div class="eyebrow"><span class="dot"></span>${esc(r.theme || "Reel")}${r.placeholder ? " · anteprima" : ""}</div><h3>${esc(r.title)}</h3></div>${r.vimeo ? `<button type="button" class="reel-play" data-reel-play>Guarda con audio</button>` : ""}</div></article>`).join("")}</div></div>` : "";
-    const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>Chiedi alla Console: cosa fate per…</span></button>`;
+    const reelsBlock = (title, btn) => reelsM.length ? `<div class="reels-m"><div class="row-head"><h2>${title}</h2>${btn || ""}</div><div class="reels-track reels-track-m" data-reels-track>${reelsM.map(r => `<article class="reel" data-reel data-vimeo="${r.vimeo ? esc(r.vimeo.id) : ""}" data-h="${r.vimeo ? esc(r.vimeo.h || "") : ""}" data-title="${esc(r.title)}"><div class="reel-media">${r.cover ? `<img src="${esc(media(r.cover) || r.cover)}" alt="" loading="lazy">` : ""}</div><div class="reel-meta"><div><div class="eyebrow"><span class="dot"></span>${esc(r.theme || "Reel")}${r.placeholder ? " · " + t("anteprima") : ""}</div><h3>${esc(r.title)}</h3></div>${r.vimeo ? `<button type="button" class="reel-play" data-reel-play>${t("Guarda con audio")}</button>` : ""}</div></article>`).join("")}</div></div>` : "";
+    const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>${t("Chiedi alla Console: cosa fate per…")}</span></button>`;
     const home = `<section class="screen on" data-screen="home">
-      <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.hero_concrete || site.tagline)}</p></div>
-      <div data-m-tier="2">${askBox}<p class="ask-hint">Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?</p></div>
-      <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? "Le aree del tuo percorso" : "Le quattro aree"}</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
-      ${reelsBlock("Reel", `<button type="button" data-tab="lavori">Tutti i lavori</button>`)}
-      <div data-m-tier="10" ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
-      <div class="m-context" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Il contesto</div><div class="ph df" data-datafield></div><p>${esc(site.context_text)}</p></div>
+      <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · " + t("Roma") + " " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="greet">${greet()} ${t("Siamo Frameworks.")}</div><h1>${em(site.hero_title)}</h1><p>${esc(site.hero_concrete || site.tagline)}</p></div>
+      <div data-m-tier="2">${askBox}<p class="ask-hint">${t("Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?")}</p></div>
+      <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? t("Le aree del tuo percorso") : t("Le quattro aree")}</h2><button type="button" data-tab="sistema">${t("Tutte")}</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
+      ${reelsBlock("Reel", `<button type="button" data-tab="lavori">${t("Tutti i lavori")}</button>`)}
+      <div data-m-tier="10" ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>${t("Lavori")}</h2><button type="button" data-tab="lavori">${t("Vedi tutti")}</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
+      <div class="m-context" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Il contesto")}</div><div class="ph df" data-datafield></div><p>${esc(site.context_text)}</p></div>
       <div class="m-statement" data-m-tier="10"><h2>${esc((site.statements || [])[0] || "")}</h2></div>
-      <div data-m-tier="${Focus.ids && Focus.list(DATA.signals).length ? "2" : "10"}" ${Focus.list(DATA.signals).length ? "" : "hidden"}><div class="row-head"><h2>Radar oggi</h2><button type="button" data-tab="radar">Tutto il radar</button></div><div class="news">${Focus.list(DATA.signals).slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
-      <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><h2 style="margin-top:8px">Cinque fasi, un <span class="serif">ciclo.</span></h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      <div data-m-tier="${Focus.ids && Focus.list(DATA.signals).length ? "2" : "10"}" ${Focus.list(DATA.signals).length ? "" : "hidden"}><div class="row-head"><h2>${t("Radar oggi")}</h2><button type="button" data-tab="radar">${t("Tutto il radar")}</button></div><div class="news">${Focus.list(DATA.signals).slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
+      <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Metodo")}</div><h2 style="margin-top:8px">${t("Cinque fasi, un <span class=\"serif\">ciclo.</span>")}</h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
       ${contactHTML()}
       <p class="app-foot">${esc(site.footer_note)}</p>
     </section>`;
     const sistema = `<section class="screen" data-screen="sistema">
-      <div class="m-statement"><h2>${esc((site.statements || [])[2] || "Ogni progetto è concepito come un organismo vivente.")}</h2></div>
+      <div class="m-statement"><h2>${esc((site.statements || [])[2] || t("Ogni progetto è concepito come un organismo vivente."))}</h2></div>
       <div class="m-text"><div class="eyebrow"><span class="dot"></span>${esc(site.claim)}</div><h2 style="margin-top:8px">${em(site.organism_title)}</h2><p>${esc(site.organism_text)}</p></div>
-      <div class="m-context" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>Il contesto</div><div class="ph df" data-datafield></div><p>${esc(site.context_text)}</p></div>
-      <div data-m-tier="10"><div class="vo-root vo-mobile" data-organismo="mobile" data-room=""><div class="vo-stage" aria-label="L'organismo: uno solo per tutto il sito"><canvas class="vo-glow" aria-hidden="true"></canvas><canvas class="vo-cv"></canvas><div class="vo-tip" hidden></div><div class="vo-flash" aria-hidden="true"></div></div><div class="vo-say" role="status" aria-live="polite"></div><div class="vo-m-top"><span class="eyebrow"><span class="dot"></span>L'organismo · <span class="vo-lead-m">vivo da —</span></span></div><div class="vo-bottom vo-bottom-phone"><div class="vo-presence"></div><div class="vo-ar-tools"><a class="vo-ar-link" href="/organismo/ar">Portalo nella stanza (AR)</a></div><div class="vo-hint">Tocca · trascina · inclina il telefono</div></div></div><p class="org-caption"><b>È vivo.</b> Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato.</p></div>
-      <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${((c.tech && c.tech.length) ? c.tech.slice(0, 5) : c.tags.slice(0, 4)).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><span class="card-more">Casi d'uso e tecnologie →</span></div></button>`).join("")}</div></div>
+      <div class="m-context" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>${t("Il contesto")}</div><div class="ph df" data-datafield></div><p>${esc(site.context_text)}</p></div>
+      <div data-m-tier="10"><div class="vo-root vo-mobile" data-organismo="mobile" data-room=""><div class="vo-stage" aria-label="${t("L'organismo: uno solo per tutto il sito")}"><canvas class="vo-glow" aria-hidden="true"></canvas><canvas class="vo-cv"></canvas><div class="vo-tip" hidden></div><div class="vo-flash" aria-hidden="true"></div></div><div class="vo-say" role="status" aria-live="polite"></div><div class="vo-m-top"><span class="eyebrow"><span class="dot"></span>${t("L'organismo")} · <span class="vo-lead-m">${t("vivo da")} —</span></span></div><div class="vo-bottom vo-bottom-phone"><div class="vo-presence"></div><div class="vo-ar-tools"><a class="vo-ar-link" href="/organismo/ar">${t("Portalo nella stanza (AR)")}</a></div><div class="vo-hint">${t("Tocca · trascina · inclina il telefono")}</div></div></div><p class="org-caption"><b>${t("È vivo.")}</b> ${t("Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato.")}</p></div>
+      <div><div class="row-head"><h2>${t("Le aree")}</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${((c.tech && c.tech.length) ? c.tech.slice(0, 5) : c.tags.slice(0, 4)).map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div><span class="card-more">${t("Casi d'uso e tecnologie")} →</span></div></button>`).join("")}</div></div>
       ${teamHTML()}
-      <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
-      <div class="m-text metodo-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
-      <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
+      <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(x => `<li><i>·</i><span><b>${esc(x.k)}</b>${esc(x.text)}</span></li>`).join("")}</ol></div>
+      <div class="m-text metodo-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Metodo")}</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      <div class="triad-m" data-m-tier="10">${(site.triad || []).map(x => `<div><h3>${esc(x.la)}</h3><small>${esc(x.it)}</small><p>${esc(x.text)}</p></div>`).join("")}</div>
       ${contactHTML()}
     </section>`;
     // i reel tematici (stessi del desktop, da /admin/reel): carosello a scorrimento sopra le case
     const lavori = `<section class="screen" data-screen="lavori">
       ${reelsBlock("Reel")}
-      <div><h2>Organismi in <span class="serif">azione.</span></h2><div class="chips"><button type="button" class="on" data-filter="all">Tutti</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
+      <div><h2>${t("Organismi in <span class=\"serif\">azione.</span>")}</h2><div class="chips"><button type="button" class="on" data-filter="all">${t("Tutti")}</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
       <div class="grid2m feed" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
-      <p class="app-foot">Tocca un lavoro per aprirlo e adattarlo al tuo contesto</p>
+      <p class="app-foot">${t("Tocca un lavoro per aprirlo e adattarlo al tuo contesto")}</p>
       ${contactHTML()}
     </section>`;
     const radar = `<section class="screen paper-screen" data-screen="radar">
-      <div><div class="eyebrow"><span class="dot"></span>Radar · fonti esterne${DATA.radar_at ? ` · ${fmtWhen(DATA.radar_at)}` : ""}</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="radar-intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
-      <div class="radar-live"><div class="eyebrow"><span class="dot"></span>Cerca nel mondo, adesso</div><form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="Un tema: DOOH, retail media…" maxlength="80" aria-label="Cerca nel radar" enterkeyhint="search"><button type="submit">Cerca</button></form><div class="chips radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="AI generativa pubblicità">AI generativa</button><button type="button" data-live-q="virtual production">Virtual production</button></div><div class="radar-results" data-radar-results hidden></div></div>
-      <div class="row-head" style="margin-top:22px"><h2>Selezione del Radar</h2></div>
+      <div><div class="eyebrow"><span class="dot"></span>${t("Radar · fonti esterne")}${DATA.radar_at ? ` · ${fmtWhen(DATA.radar_at)}` : ""}</div><h2 style="margin-top:8px">${em(site.radar_title)}</h2><p class="radar-intro" style="margin-top:8px">${esc(site.radar_text)}</p></div>
+      <div class="radar-live"><div class="eyebrow"><span class="dot"></span>${t("Cerca nel mondo, adesso")}</div><form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="${t("Un tema: DOOH, retail media…")}" maxlength="80" aria-label="${t("Cerca nel radar")}" enterkeyhint="search"><button type="submit">${t("Cerca")}</button></form><div class="chips radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="${t("AI generativa pubblicità")}">${t("AI generativa")}</button><button type="button" data-live-q="virtual production">Virtual production</button></div><div class="radar-results" data-radar-results hidden></div></div>
+      <div class="row-head" style="margin-top:22px"><h2>${t("Selezione del Radar")}</h2></div>
       <div class="news">${Focus.list(DATA.signals).map(sg => news(sg, false)).join("")}</div>
-      <p class="paper-note">I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.</p>
+      <p class="paper-note">${t("I titoli appartengono alle rispettive testate. Frameworks li segnala e li commenta.")}</p>
     </section>`;
     const story = Focus.ids ? Path.renderStory() : "";
     app.innerHTML = story + home + sistema + lavori + radar;
     if (story) Path.bindStory();
     // in modalità percorso la tab bar si riduce a Percorso · Console · Contatti
-    const tabs = Focus.ids ? [["percorso", "Percorso"], ["console", "Console"], ["contatti", "Contatti"]] : [["home", "Home"], ["sistema", "Sistema"], ["console", "Console"], ["lavori", "Lavori"], ["radar", "Radar"]];
+    const tabs = Focus.ids ? [["percorso", t("Percorso")], ["console", "Console"], ["contatti", t("Contatti")]] : [["home", "Home"], ["sistema", t("Sistema")], ["console", "Console"], ["lavori", t("Lavori")], ["radar", "Radar"]];
     const bar = $("#tabbar");
     bar.innerHTML = tabs.map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
     const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
@@ -569,9 +575,9 @@ const App = {
   filterWorks(id) { this.filter = id; $$("#works-grid .gc").forEach(g => g.hidden = !(id === "all" || g.dataset.caps.split(" ").includes(id))); },
   applyDensity() { const d = Modes.density; $$("[data-m-tier]").forEach(el => { const t = el.dataset.mTier; el.hidden = (d === "2" && t !== "2"); }); }
 };
-function contactHTML() { const site = DATA.site; return `<div class="contact-m" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>Contatti</div><h2 style="margin-top:8px">${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p></div>`; }
+function contactHTML() { const site = DATA.site; return `<div class="contact-m" data-m-tier="2"><div class="eyebrow"><span class="dot"></span>${t("Contatti")}</div><h2 style="margin-top:8px">${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">${t("Copia")}</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p></div>`; }
 function openSheet(html, eyebrow) { $("#sheet-body").innerHTML = html; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; scrim.dataset.state = "open"; $("#sheet-body").scrollTop = 0; }
-function openContactSheet() { openSheet(`<div class="d-in">${contactHTML().replace('class="contact-m"', 'class="contact-m" style="border:0;padding:0;background:none"')}</div>`, "Contatti"); }
+function openContactSheet() { openSheet(`<div class="d-in">${contactHTML().replace('class="contact-m"', 'class="contact-m" style="border:0;padding:0;background:none"')}</div>`, t("Contatti")); }
 function renderApp() { if (isMobile()) App.render(); }
 function initialTab() { const h = (location.hash || "").replace("#", ""); const map = { home: "home", sistema: "sistema", aree: "sistema", lavori: "lavori", radar: "radar", metodo: "sistema", contatti: "home", console: "home" }; if (map[h]) App.current = map[h]; if (Focus.ids) App.current = "percorso"; if (h === "contatti") setTimeout(openContactSheet, 400); }
 
@@ -602,7 +608,7 @@ const Focus = {
     if (Console) Console.setFocus(this.ids);
     // barra
     const bar = $("#focusbar"); if (bar) {
-      if (on) { const n = this.items().length; $("#focus-text", bar).innerHTML = `<b>${esc(this.label || "Percorso")}</b> · ${n} ${n === 1 ? "tappa" : "tappe"}`; bar.hidden = false; }
+      if (on) { const n = this.items().length; $("#focus-text", bar).innerHTML = `<b>${esc(this.label || t("Percorso"))}</b> · ${n} ${n === 1 ? t("tappa") : t("tappe")}`; bar.hidden = false; }
       else bar.hidden = true;
     }
     if (isMobile()) { const cur = App.current; App.render(); App.show(on ? "percorso" : (cur === "percorso" ? "home" : cur), true); }
@@ -617,7 +623,7 @@ const Focus = {
    ========================================================= */
 const Path = {
   counts() { const it = Focus.items(); const n = (k) => it.filter(i => i.kind === k).length; return { items: it, caps: n("cap"), works: n("work"), sigs: n("signal") }; },
-  metaText() { const c = this.counts(); const pl = (n, s, p) => `${n} ${n === 1 ? s : p}`; return `${pl(c.items.length, "tappa", "tappe")} · ${pl(c.caps, "area", "aree")} · ${pl(c.works, "lavoro", "lavori")}${c.sigs ? ` · ${pl(c.sigs, "segnale radar", "segnali radar")}` : ""}`; },
+  metaText() { const c = this.counts(); const pl = (n, s, p) => `${n} ${n === 1 ? t(s) : t(p)}`; return `${pl(c.items.length, "tappa", "tappe")} · ${pl(c.caps, "area", "aree")} · ${pl(c.works, "lavoro", "lavori")}${c.sigs ? ` · ${pl(c.sigs, "segnale radar", "segnali radar")}` : ""}`; },
   // DESKTOP: clona le schede già presenti nella pagina (stesso aspetto), nell'ordine del percorso
   renderDesktop() {
     const sec = $("#percorso"); if (!sec) return;
@@ -628,18 +634,18 @@ const Path = {
     const caps = c.items.filter(i => i.kind === "cap"), works = c.items.filter(i => i.kind === "work"), sigs = c.items.filter(i => i.kind === "signal");
     sec.innerHTML = `
       <div class="path-head">
-        <div class="eyebrow"><span class="dot"></span>Percorso della Console${Focus.label ? ` · ${esc(Focus.label)}` : ""}</div>
-        ${Focus.q ? `<p class="path-q">Hai chiesto: “${esc(Focus.q)}”</p>` : ""}
-        <h2 class="serif">${esc(Focus.text || "Ecco il percorso che ti propongo.")}</h2>
+        <div class="eyebrow"><span class="dot"></span>${t("Percorso della Console")}${Focus.label ? ` · ${esc(Focus.label)}` : ""}</div>
+        ${Focus.q ? `<p class="path-q">${t("Hai chiesto:")} “${esc(Focus.q)}”</p>` : ""}
+        <h2 class="serif">${esc(Focus.text || t("Ecco il percorso che ti propongo."))}</h2>
         <p class="path-meta">${this.metaText()}</p>
-        ${Focus.sections.length ? `<div class="path-also"><span>Vedi anche</span>${Focus.sections.map(x => `<button type="button" class="btn ghost" data-goto="${x}">${esc(SECTIONS[x].name)} →</button>`).join("")}</div>` : ""}
+        ${Focus.sections.length ? `<div class="path-also"><span>${t("Vedi anche")}</span>${Focus.sections.map(x => `<button type="button" class="btn ghost" data-goto="${x}">${esc(SECTIONS[x].name)} →</button>`).join("")}</div>` : ""}
       </div>
-      ${caps.length ? step("Aree", `${caps.length} ${caps.length === 1 ? "area" : "aree"}`) + `<div class="caps path-caps">${caps.map(x => clone(`#aree .cap[data-open="${x.id}"]`)).join("")}</div>` : ""}
-      ${works.length ? step("Lavori", `${works.length} ${works.length === 1 ? "lavoro" : "lavori"}`) + `<div class="works path-works">${works.map(x => clone(`#lavori .work[data-open="${x.id}"]`)).join("")}</div>` : ""}
-      ${sigs.length ? step("Radar · fonti esterne", `${sigs.length} ${sigs.length === 1 ? "segnale" : "segnali"}`) + `<div class="paper path-paper"><div class="signals">${sigs.map(x => clone(`#radar .signal[data-id="${x.id}"]`)).join("")}</div><p class="note">I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.</p></div>` : ""}
+      ${caps.length ? step(t("Aree"), `${caps.length} ${caps.length === 1 ? t("area") : t("aree")}`) + `<div class="caps path-caps">${caps.map(x => clone(`#aree .cap[data-open="${x.id}"]`)).join("")}</div>` : ""}
+      ${works.length ? step(t("Lavori"), `${works.length} ${works.length === 1 ? t("lavoro") : t("lavori")}`) + `<div class="works path-works">${works.map(x => clone(`#lavori .work[data-open="${x.id}"]`)).join("")}</div>` : ""}
+      ${sigs.length ? step(t("Radar · fonti esterne"), `${sigs.length} ${sigs.length === 1 ? t("segnale") : t("segnali")}`) + `<div class="paper path-paper"><div class="signals">${sigs.map(x => clone(`#radar .signal[data-id="${x.id}"]`)).join("")}</div><p class="note">${t("I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.")}</p></div>` : ""}
       <div class="path-end">
-        <div><h3 class="serif">Questo era il percorso su misura per te.</h3><p>Frameworks è un sistema più grande: il contesto, il metodo, il radar, l'organismo intero.</p></div>
-        <div class="path-actions"><button class="btn accent" type="button" data-discover>Scopri tutta Frameworks <span>→</span></button><a class="btn primary" href="#contatti">Parliamone</a><button class="btn ghost" type="button" data-tab="console">Chiedi ancora alla Console</button></div>
+        <div><h3 class="serif">${t("Questo era il percorso su misura per te.")}</h3><p>${t("Frameworks è un sistema più grande: il contesto, il metodo, il radar, l'organismo intero.")}</p></div>
+        <div class="path-actions"><button class="btn accent" type="button" data-discover>${t("Scopri tutta Frameworks")} <span>→</span></button><a class="btn primary" href="#contatti">${t("Parliamone")}</a><button class="btn ghost" type="button" data-tab="console">${t("Chiedi ancora alla Console")}</button></div>
       </div>`;
     sec.hidden = false;
   },
@@ -649,18 +655,18 @@ const Path = {
     const site = DATA.site; const total = c.items.length + 1; const label = Focus.label ? ` · ${esc(Focus.label)}` : "";
     const next = (lab) => `<button type="button" class="story-next" data-story-next>${lab} <span>→</span></button>`;
     const zones = `<div class="tapzones" aria-hidden="true"><span data-story-prev></span><span data-story-next></span></div>`;
-    const tappa = (i, k) => `<div class="eyebrow"><span class="dot"></span>Tappa ${String(i).padStart(2, "0")} di ${c.items.length} · ${k}</div>`;
+    const tappa = (i, k) => `<div class="eyebrow"><span class="dot"></span>${t("Tappa {i} di {n}", { i: String(i).padStart(2, "0"), n: c.items.length })} · ${k}</div>`;
     const img = (src, fallback, i) => `<div class="slide-img"><img src="${media(src) || media(fallback)}" alt="" loading="lazy"><span class="num">${String(i).padStart(2, "0")} / ${c.items.length}</span>${zones}</div>`;
     const body = c.items.map((it, k) => {
-      const i = k + 1, last = i === c.items.length, go = next(last ? "Fine" : "Avanti");
+      const i = k + 1, last = i === c.items.length, go = next(last ? t("Fine") : t("Avanti"));
       // area: il testo intero sta qui, così non serve aprire la scheda per leggerlo; la scheda aggiunge casi d'uso, tecnologie, lavori e "tre idee"
-      if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Area · tappa ${i} di ${c.items.length}</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="body">${esc(it.body || it.short)}</p><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}" data-to=".d-concrete">Casi d'uso e tecnologie</button></div></div></article>`;
-      if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>Lavoro · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}">Apri il lavoro</button></div></div></article>`;
-      return `<article class="slide slide-signal"><div class="slide-in">${tappa(i, "Radar · fonte esterna")}<div class="paper-card"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(it.src)}</b><span>${esc(fmtDate(it.date))} · ${esc(domain(it.url))}</span></div><h2>“${esc(it.title)}”</h2>${it.summary ? `<p class="sum">${esc(it.summary)}</p>` : ""}<p class="why"><small>La nostra lettura</small>${esc(it.why)}</p><p class="ext">Contenuto di terzi: titolo e riassunto appartengono a ${esc(it.src)}. Frameworks lo segnala e lo commenta.</p></div><div class="slide-actions"><a class="btn src-link" href="${esc(it.url)}" target="_blank" rel="noopener nofollow">Leggi la fonte ↗</a>${go}</div></div></article>`;
+      if (it.kind === "cap") return `<article class="slide slide-cap">${img(it.image, "/media/frames.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>${t("Area")} · ${t("tappa {i} di {n}", { i, n: c.items.length })}</div><h2>${it.accent && it.name.includes(it.accent) ? esc(it.name).replace(esc(it.accent), '<span class="serif">' + esc(it.accent) + '</span>') : esc(it.name)}</h2><p class="body">${esc(it.body || it.short)}</p><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}" data-to=".d-concrete">${t("Casi d'uso e tecnologie")}</button></div></div></article>`;
+      if (it.kind === "work") return `<article class="slide slide-work">${img(it.image, "/media/monolith.jpg", i)}<div class="slide-in"><div class="eyebrow"><span class="dot"></span>${t("Lavoro")} · ${esc(it.client)}</div><h2>${esc(it.title)}</h2><p class="short">${esc(it.short)}</p><div class="tags">${(it.caps || []).slice(0, 2).map(id => `<span class="tag">${esc(capName(id))}</span>`).join("")}<span class="chip ghost">${esc(it.status || "")}</span></div><div class="slide-actions">${go}<button class="btn" type="button" data-open="${it.id}">${t("Apri il lavoro")}</button></div></div></article>`;
+      return `<article class="slide slide-signal"><div class="slide-in">${tappa(i, t("Radar · fonte esterna"))}<div class="paper-card"><div class="src"><span class="chip ext">${t("Fonte esterna")}</span><b>${esc(it.src)}</b><span>${esc(fmtDate(it.date))} · ${esc(domain(it.url))}</span></div><h2>“${esc(it.title)}”</h2>${it.summary ? `<p class="sum">${esc(it.summary)}</p>` : ""}<p class="why"><small>${t("La nostra lettura")}</small>${esc(it.why)}</p><p class="ext">${t("Contenuto di terzi: titolo e riassunto appartengono a {src}. Frameworks lo segnala e lo commenta.", { src: esc(it.src) })}</p></div><div class="slide-actions"><a class="btn src-link" href="${esc(it.url)}" target="_blank" rel="noopener nofollow">${t("Leggi la fonte")} ↗</a>${go}</div></div></article>`;
     }).join("");
-    const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>Fine del percorso · Parliamone</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">Copia</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><p class="more">Questo era il percorso su misura per te. Frameworks è un sistema più grande.</p><div class="slide-actions col"><button class="btn accent" type="button" data-discover>Scopri tutta Frameworks <span>→</span></button><button class="btn" type="button" data-tab="console">Chiedi ancora alla Console</button></div></div></article>`;
-    return `<section class="screen story" data-screen="percorso" aria-label="Percorso">
-      <div class="story-head"><div class="story-progress" id="story-progress" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div><div class="story-bar"><span class="story-label">Percorso${label}</span><span class="story-count" id="story-count">1 / ${total}</span><button type="button" class="story-exit" data-focus-reset>Esci ✕</button></div></div>
+    const end = `<article class="slide slide-end"><div class="slide-in"><div class="eyebrow"><span class="dot"></span>${t("Fine del percorso · Parliamone")}</div><h2>${em(site.contact_title)}</h2><code>${esc(site.contact_email)}</code><button class="copy" type="button" data-copy="${esc(site.contact_email)}">${t("Copia")}</button><p class="addr">${esc(site.contact_address).replace(/\n/g, "<br>")}</p><p class="more">${t("Questo era il percorso su misura per te. Frameworks è un sistema più grande.")}</p><div class="slide-actions col"><button class="btn accent" type="button" data-discover>${t("Scopri tutta Frameworks")} <span>→</span></button><button class="btn" type="button" data-tab="console">${t("Chiedi ancora alla Console")}</button></div></div></article>`;
+    return `<section class="screen story" data-screen="percorso" aria-label="${t("Percorso")}">
+      <div class="story-head"><div class="story-progress" id="story-progress" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div><div class="story-bar"><span class="story-label">${t("Percorso")}${label}</span><span class="story-count" id="story-count">1 / ${total}</span><button type="button" class="story-exit" data-focus-reset>${t("Esci")} ✕</button></div></div>
       <div class="story-track" id="story-track">${body}${end}</div>
     </section>`;
   },
@@ -678,7 +684,7 @@ const Path = {
 };
 
 /* Sezioni del sito proponibili dalla Console: nome e destinazione su desktop (ancora) e su mobile (schermata + blocco) */
-const SECTIONS = { sistema: { name: "Sistema", m: ["sistema", null] }, aree: { name: "Aree", m: ["sistema", ".list-cards"] }, lavori: { name: "Lavori", m: ["lavori", null] }, metodo: { name: "Metodo", m: ["sistema", ".m-text.metodo-m"] }, team: { name: "Team", m: ["sistema", ".team-m"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: "Contatti", m: ["contatti", null] } };
+const SECTIONS = { sistema: { name: t("Sistema"), m: ["sistema", null] }, aree: { name: t("Aree"), m: ["sistema", ".list-cards"] }, lavori: { name: t("Lavori"), m: ["lavori", null] }, metodo: { name: t("Metodo"), m: ["sistema", ".m-text.metodo-m"] }, team: { name: "Team", m: ["sistema", ".team-m"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: t("Contatti"), m: ["contatti", null] } };
 // Una sezione chiesta esplicitamente vince sulla densità "2 minuti": se è nascosta, si riapre tutto
 function showAll() { if (Modes.density !== "all") { Modes.set("density", "all"); Prefs.set({ ...(Prefs.get() || {}), time: "all" }); } }
 function goSection(id) {
@@ -715,11 +721,11 @@ function resolveIds(list, text) {
    ========================================================= */
 const ConsoleWin = {
   el: $("#cwin"), thread: $("#cwin-thread"), history: [], last: null, busy: false,
-  suggestions: ["Ho fretta: l'essenziale", "Cosa fate per il retail?", "Quali visori usate?", "Quali formati e canali coprite?", "Come usate l'AI?", "Cosa dice il radar oggi?", "Voglio approfondire tutto"],
+  suggestions: ["Ho fretta: l'essenziale", "Cosa fate per il retail?", "Quali visori usate?", "Quali formati e canali coprite?", "Come usate l'AI?", "Cosa dice il radar oggi?", "Voglio approfondire tutto"].map(s => t(s)),
   open(q) {
     if (!this.el) return;
     this.el.hidden = false; document.body.classList.add("cwin-open");
-    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.${isMobile() ? " Per esempio: cosa fate per il retail, quali visori usate, come usate l'AI." : ""}</p></div>`; }
+    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? t("Hai scelto {prefs}: ne tengo conto. ", { prefs: esc(pt) }) : ""}${pt ? t("Dimmi cosa cerchi: ti propongo un percorso e configuro il sito.") : t("Dimmi cosa cerchi, o quanto tempo hai: ti propongo un percorso e configuro il sito.")}${isMobile() ? " " + t("Per esempio: cosa fate per il retail, quali visori usate, come usate l'AI.") : ""}</p></div>`; }
     // su mobile niente pillole di suggerimento: vengono scambiate per un menu; gli esempi stanno nel messaggio di benvenuto
     const chips = $("#cwin-chips"); chips.hidden = isMobile(); chips.innerHTML = isMobile() ? "" : this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
     if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
@@ -729,7 +735,7 @@ const ConsoleWin = {
   async send(q) {
     q = String(q || "").trim(); if (!q || this.busy) return; this.busy = true;
     this.add(`<div class="msg user"><p>${esc(q)}</p></div>`);
-    const think = this.add(`<div class="msg bot thinking"><span class="who">Console</span><p>sto leggendo il sistema…</p></div>`);
+    const think = this.add(`<div class="msg bot thinking"><span class="who">Console</span><p>${t("sto leggendo il sistema…")}</p></div>`);
     try {
       const r = await AI.console(q, this.history.slice(-3));
       this.history.push({ q, a: r.answer || "" }); this.last = r;
@@ -741,9 +747,9 @@ const ConsoleWin = {
       const secs = (r.sections || []).filter(x => SECTIONS[x]);
       if (items.length || secs.length) {
         const id = "p" + Date.now().toString(36); this.proposals = this.proposals || {}; this.proposals[id] = { ids: items.map(i => i.id), sections: secs, label: r.label || "", answer: r.answer || "", q, density: r.mode && r.mode.density ? String(r.mode.density) : null, energy: r.mode && r.mode.energy ? r.mode.energy : null };
-        const secGroup = secs.length ? `<div class="prop-group"><small>${items.length ? "Vedi anche" : "Sezioni del sito"}</small>${secs.map(x => `<button type="button" class="prop-item sec" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : "";
+        const secGroup = secs.length ? `<div class="prop-group"><small>${items.length ? t("Vedi anche") : t("Sezioni del sito")}</small>${secs.map(x => `<button type="button" class="prop-item sec" data-goto="${x}">${esc(SECTIONS[x].name)}</button>`).join("")}</div>` : "";
         const n = items.length;
-        html += `<div class="proposal"><div class="eyebrow"><span class="dot"></span>${n ? "Percorso proposto" : "Navigazione proposta"}${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", "Aree")}${group("work", "Lavori")}${group("signal", "Radar · fonti esterne")}${secGroup}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">${n ? `Apri il percorso · ${n} ${n === 1 ? "tappa" : "tappe"}` : "Portami lì"}</button><button type="button" class="btn" data-focus-reset>Mostrami tutto</button></div></div>`;
+        html += `<div class="proposal"><div class="eyebrow"><span class="dot"></span>${n ? t("Percorso proposto") : t("Navigazione proposta")}${r.label ? ` · ${esc(r.label)}` : ""}</div>${group("cap", t("Aree"))}${group("work", t("Lavori"))}${group("signal", t("Radar · fonti esterne"))}${secGroup}<div class="prop-actions"><button type="button" class="btn primary" data-apply="${id}">${n ? `${t("Apri il percorso")} · ${n} ${n === 1 ? t("tappa") : t("tappe")}` : t("Portami lì")}</button><button type="button" class="btn" data-focus-reset>${t("Mostrami tutto")}</button></div></div>`;
       }
       html += `</div>`;
       const d = document.createElement("div"); d.innerHTML = html; const node = d.firstElementChild; think.replaceWith(node);
@@ -751,7 +757,7 @@ const ConsoleWin = {
       this.thread.scrollTop = Math.max(0, node.offsetTop - 12);
       if (Console && items.length) Console.highlight(items.map(i => i.id));
     } catch (err) {
-      think.className = "msg bot"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || "Non riesco a rispondere adesso.")}</p>`;
+      think.className = "msg bot"; think.innerHTML = `<span class="who">Console</span><p>${esc(err.message || t("Non riesco a rispondere adesso."))}</p>`;
     }
     this.busy = false;
   },
@@ -781,19 +787,19 @@ const RadarLive = {
     const box = $("[data-radar-results]", form.parentElement); if (!box) return;
     $$(".radar-chips button", form.parentElement).forEach(b => b.classList.toggle("on", b.dataset.liveQ === q));
     const input = $("input", form); if (input && input.value !== q) input.value = q;
-    box.hidden = false; box.innerHTML = `<p class="live-status">Cerco “${esc(q)}” nelle notizie degli ultimi 14 giorni…</p>`;
-    if (PREVIEW) { box.innerHTML = `<p class="live-status">La ricerca dal vivo funziona sul sito pubblicato (qui è solo l'anteprima).</p>`; return; }
+    box.hidden = false; box.innerHTML = `<p class="live-status">${t("Cerco “{q}” nelle notizie degli ultimi 14 giorni…", { q: esc(q) })}</p>`;
+    if (PREVIEW) { box.innerHTML = `<p class="live-status">${t("La ricerca dal vivo funziona sul sito pubblicato (qui è solo l'anteprima).")}</p>`; return; }
     try {
-      const r = await fetch(`/api/radar/search?q=${encodeURIComponent(q)}`); const j = await r.json(); if (!r.ok) throw new Error(j.error || "Errore");
-      if (!j.items.length) { box.innerHTML = `<p class="live-status">Nessuna notizia recente su “${esc(q)}”. Prova un tema più ampio.</p>`; return; }
-      box.innerHTML = `<div class="live-list">${j.items.map(i => `<a class="live-item" href="${esc(i.url)}" target="_blank" rel="noopener nofollow"><span class="src"><span class="chip ext">Fonte esterna</span><b>${esc(i.src)}</b><span>${esc(fmtDate(i.date))}${i.lang === "en" ? " · en" : ""}</span></span><h4>“${esc(i.title)}”</h4></a>`).join("")}</div><p class="live-status">${j.items.length} risultati in tempo reale da Google News · fonti esterne, non curate da Frameworks · ${esc(fmtWhen(j.at))}</p>`;
-    } catch (e) { box.innerHTML = `<p class="live-status">${esc(e.message || "Ricerca non disponibile adesso.")}</p>`; }
+      const r = await fetch(`/api/radar/search?q=${encodeURIComponent(q)}`); const j = await r.json(); if (!r.ok) throw new Error(j.error || t("Errore"));
+      if (!j.items.length) { box.innerHTML = `<p class="live-status">${t("Nessuna notizia recente su “{q}”. Prova un tema più ampio.", { q: esc(q) })}</p>`; return; }
+      box.innerHTML = `<div class="live-list">${j.items.map(i => `<a class="live-item" href="${esc(i.url)}" target="_blank" rel="noopener nofollow"><span class="src"><span class="chip ext">${t("Fonte esterna")}</span><b>${esc(i.src)}</b><span>${esc(fmtDate(i.date))}${i.lang === "en" ? " · en" : (LANG === "en" && i.lang === "it" ? " · it" : "")}</span></span><h4>“${esc(i.title)}”</h4></a>`).join("")}</div><p class="live-status">${t("{n} risultati in tempo reale da Google News · fonti esterne, non curate da Frameworks", { n: j.items.length })} · ${esc(fmtWhen(j.at))}</p>`;
+    } catch (e) { box.innerHTML = `<p class="live-status">${esc(e.message || t("Ricerca non disponibile adesso."))}</p>`; }
   }
 };
 document.addEventListener("click", e => { // Radar desktop: 5 notizie alla volta
   const b = e.target.closest("[data-radar-more]"); if (!b) return;
   const hidden = $$("#radar .signal.more[hidden]"); hidden.slice(0, 5).forEach(el => { el.hidden = false; el.dataset.shown = "1"; if (hasGsap && !reduced) gsap.fromTo(el, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: .7, ease: "power3.out" }); });
-  const left = hidden.length - 5; if (left > 0) $("span", b).textContent = `+${Math.min(5, left)} di ${left}`; else b.closest(".radar-more-row").hidden = true;
+  const left = hidden.length - 5; if (left > 0) $("span", b).textContent = `+${Math.min(5, left)} ${t("di")} ${left}`; else b.closest(".radar-more-row").hidden = true;
   if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 100);
 });
 document.addEventListener("submit", e => { const f = e.target.closest("[data-radar-search]"); if (!f) return; e.preventDefault(); const i = $("input", f); if (isMobile() && i) i.blur(); RadarLive.search(f, i ? i.value : ""); });
@@ -838,17 +844,17 @@ const Intro = {
   step(n) {
     $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n)));
     this.el.dataset.step = String(n);
-    const q = $("#intro-q", this.el); if (q && n === 2) q.placeholder = "Cosa cerchi? Terrò conto del tempo scelto";
+    const q = $("#intro-q", this.el); if (q && n === 2) q.placeholder = t("Cosa cerchi? Terrò conto del tempo scelto");
   },
   configure() {
     Prefs.set({ time: this.time, mood: this.mood });
     Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
     const c = Ctx.local(); const w = Ctx.weather;
-    const timeTxt = { "2": "ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci", "10": "ti mostro il sistema, le aree, i lavori, il metodo e il radar", all: "apro tutto: l'esperienza completa, con calma" }[this.time] || "";
-    const moodTxt = { calm: "in blu notte, con un ritmo disteso", vivid: "in nero e viola, con tutta l'energia accesa", nervous: "in verde e menta, senza rumore, dritto al punto", light: "in chiaro, tutto in luce" }[this.mood] || "";
-    $("#intro-msg").textContent = `Va bene: ${timeTxt}, ${moodTxt}.`;
+    const timeTxt = { "2": t("ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci"), "10": t("ti mostro il sistema, le aree, i lavori, il metodo e il radar"), all: t("apro tutto: l'esperienza completa, con calma") }[this.time] || "";
+    const moodTxt = { calm: t("in blu notte, con un ritmo disteso"), vivid: t("in nero e viola, con tutta l'energia accesa"), nervous: t("in verde e menta, senza rumore, dritto al punto"), light: t("in chiaro, tutto in luce") }[this.mood] || "";
+    $("#intro-msg").textContent = t("Va bene: {time}, {mood}.", { time: timeTxt, mood: moodTxt });
     const log = $("#intro-log"); log.innerHTML = "";
-    const lines = [`<b>Densità</b> ${this.time === "2" ? "essenziale" : this.time === "all" ? "completa" : "media"}`, `<b>Ritmo</b> ${this.mood === "nervous" ? "essenziale" : this.mood === "vivid" ? "vivace" : "calmo"}`, `<b>Contesto</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · Roma ${w.temp}° ${weatherLabel(w)}` : ""}`, `<b>Sistema</b> on air`];
+    const lines = [`<b>${t("Densità")}</b> ${this.time === "2" ? t("essenziale") : this.time === "all" ? t("completa") : t("media")}`, `<b>${t("Ritmo")}</b> ${this.mood === "nervous" ? t("essenziale") : this.mood === "vivid" ? t("vivace") : t("calmo")}`, `<b>${t("Contesto")}</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · ${t("Roma")} ${w.temp}° ${weatherLabel(w)}` : ""}`, `<b>${t("Sistema")}</b> on air`];
     this.step(3);
     lines.forEach((l, i) => { const li = document.createElement("li"); li.innerHTML = l; li.style.animationDelay = (0.35 + i * 0.45) + "s"; log.appendChild(li); });
     clearTimeout(this.timer); this.timer = setTimeout(() => this.finish(), 4200);
@@ -879,7 +885,7 @@ if (window.Diffusion) Diffusion.mountAll(); // Denoise (desktop: sezione Adaptiv
 if (window.Organismo) Organismo.mountAll(); // L'organismo (desktop: sezione Adaptive Content Systems)
 if (window.DataField) DataField.mountAll(); // Il contesto: campo dati (desktop)
 Focus.apply();
-Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · Roma ${w.temp}° ${weatherLabel(w)}`; });
+Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · ${t("Roma")} ${w.temp}° ${weatherLabel(w)}`; });
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
 // la densità cambia la composizione del feed

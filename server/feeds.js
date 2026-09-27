@@ -87,6 +87,7 @@ async function runRadar({ force = false } = {}) {
     }
     lastRun = { at: new Date().toISOString(), stats };
     store.setSetting("radar_last_run", lastRun);
+    if (stats.added) { try { require("./i18n").refreshSoon(); } catch (e) { /* la versione inglese si aggiorna al giro dopo */ } } // le letture nuove vanno tradotte
     return lastRun;
   } finally { running = false; }
 }

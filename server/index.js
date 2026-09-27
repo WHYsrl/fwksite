@@ -9,6 +9,7 @@ const ai = require("./ai");
 const feeds = require("./feeds");
 const weather = require("./weather");
 const admin = require("./admin");
+const i18n = require("./i18n"); // versione inglese: contenuti tradotti nel DB, interfaccia da public/js/i18n.js
 
 store.seedIfEmpty();
 store.seedTeamIfEmpty();
@@ -26,7 +27,7 @@ store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(
 
 // Versione degli asset per il cache-busting: cambia a ogni modifica di css/js, così i browser non tengono file vecchi.
 const fs = require("fs");
-const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/diffusion.js", "public/js/datafield.js", "public/css/admin.css", "public/css/organismo.css", "public/js/organismo.js", "public/js/organismo-ar.js", "public/js/reels.js", "public/css/vetrina.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
+const ASSET_V = (() => { try { const h = crypto.createHash("md5"); ["public/css/site.css", "public/js/site.js", "public/js/diffusion.js", "public/js/datafield.js", "public/css/admin.css", "public/css/organismo.css", "public/js/organismo.js", "public/js/organismo-ar.js", "public/js/reels.js", "public/css/vetrina.css", "public/js/i18n.js"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 10); } catch { return Date.now().toString(36); } })();
 
 const app = express();
 app.locals.v = ASSET_V;
@@ -43,13 +44,19 @@ app.use("/media", express.static(path.join(__dirname, "..", "public", "media"), 
 app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 
 // ---------- sito pubblico ----------
-app.get("/", (req, res) => {
+// Lingua: "/" la decide il cookie (scelta fatta col selettore) o il browser (italiano → it, tutto il resto → en, solo se
+// l'inglese è stato reso pubblico dal backoffice); "/en" e "/it" forzano la lingua e la ricordano nel cookie.
+function renderSite(req, res, lang) {
   feeds.maybeRefresh(); // se il Radar è vecchio, si aggiorna in background
-  const content = withImage(concrete.decorate(store.getContent()));
-  res.set("Cache-Control", "no-cache");
-  res.render("index", { content, preview: false, aiOn: ai.isConfigured() });
-});
-app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(withImage(concrete.decorate(store.getContent()))); });
+  const content = i18n.apply(withImage(concrete.decorate(store.getContent())), lang);
+  res.set("Cache-Control", "no-cache"); res.set("Vary", "Cookie, Accept-Language");
+  res.render("index", { content, preview: false, aiOn: ai.isConfigured(), lang, t: i18n.ui.make(lang), enPublic: i18n.isPublic() });
+}
+app.get("/", (req, res) => renderSite(req, res, i18n.resolve(req)));
+app.get("/en", (req, res) => { i18n.setCookie(res, "en"); renderSite(req, res, "en"); });
+app.get("/it", (req, res) => { i18n.setCookie(res, "it"); renderSite(req, res, "it"); });
+const reqLang = (req) => { const l = String((req.query && req.query.lang) || (req.body && req.body.lang) || "").toLowerCase(); return i18n.LANGS.includes(l) ? l : "it"; };
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); res.json(i18n.apply(withImage(concrete.decorate(store.getContent())), reqLang(req))); });
 // il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
 function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; content.figures = figures.list(); content.reels = reels.list(); return content; }
 const reels = require("./reels"); reels.seedIfMissing(); // i video tematici del carosello (gestiti da /admin/reel)
@@ -66,7 +73,7 @@ app.get("/api/brand", limit, async (req, res) => {
   try { res.set("Cache-Control", "public, max-age=3600"); res.json(await brand.brandFromSite(String(req.query.url || "").trim().slice(0, 200))); }
   catch (e) { res.status(422).json({ error: e.message || "Logo non trovato" }); }
 });
-app.get("/api/radar/fresh", (req, res) => res.json({ signals: store.freshSignals(), at: (feeds.lastRun() || {}).at || null }));
+app.get("/api/radar/fresh", (req, res) => res.json({ signals: i18n.apply({ signals: store.freshSignals() }, reqLang(req)).signals, at: (feeds.lastRun() || {}).at || null }));
 app.get("/api/context", async (req, res) => {
   const w = await weather.getWeather();
   res.json({ weather: w, server_time: new Date().toISOString(), rome_time: new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" }).format(new Date()) });
@@ -93,12 +100,12 @@ app.post("/api/ai/console", limit, async (req, res) => {
   const history = Array.isArray(req.body.history) ? req.body.history.slice(-3).map(h => ({ q: String(h.q || "").slice(0, 300), a: String(h.a || "").slice(0, 400) })) : [];
   const p = req.body.prefs || {}; // scelte fatte nell'intro: tempo e umore
   const prefs = { time: ["2", "10", "all"].includes(String(p.time)) ? String(p.time) : null, mood: ["calm", "vivid", "nervous", "light"].includes(p.mood) ? p.mood : null };
-  try { res.json(await ai.consoleQuery(q, history, prefs)); } catch (e) { aiError(res, e); }
+  try { res.json(await ai.consoleQuery(q, history, prefs, reqLang(req))); } catch (e) { aiError(res, e); }
 });
 app.post("/api/ai/adapt", limit, async (req, res) => {
   const { itemId, sector, goal, channel } = req.body || {};
   if (!ai.config().features.adapt) return res.status(503).json({ error: "Funzione disattivata", code: "disabled" });
-  try { res.json(await ai.adapt({ itemId: String(itemId || ""), sector: String(sector || "").slice(0, 80), goal: String(goal || "").slice(0, 120), channel: String(channel || "").slice(0, 80) })); } catch (e) { aiError(res, e); }
+  try { res.json(await ai.adapt({ itemId: String(itemId || ""), sector: String(sector || "").slice(0, 80), goal: String(goal || "").slice(0, 120), channel: String(channel || "").slice(0, 80), lang: reqLang(req) })); } catch (e) { aiError(res, e); }
 });
 // Denoise: genera l'immagine di un oggetto (limite più stretto per IP: 4 al minuto)
 const imgBuckets = new Map();
@@ -129,4 +136,5 @@ app.listen(PORT, () => {
   if (!process.env.ADMIN_PASSWORD) console.warn("ATTENZIONE: ADMIN_PASSWORD non impostata, uso la password di default 'frameworks'. Cambiala nel file .env");
   if (!ai.isConfigured()) console.warn("AI non configurata: imposta ANTHROPIC_API_KEY o OPENAI_API_KEY (o inseriscila in /admin/ai)");
   if (process.env.RADAR_SCHEDULE !== "off") feeds.schedule();
+  i18n.refreshSoon(45000); // versione inglese: traduce in background quello che manca (contenuti nuovi o cambiati)
 });

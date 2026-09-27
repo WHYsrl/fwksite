@@ -14,6 +14,9 @@
   "use strict";
   const TAU = Math.PI * 2, DAY = 86400000;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Lingua: tr("testo italiano") → inglese dal dizionario di i18n.js quando <html lang="en">, altrimenti il testo com'è
+  const LANG = String(document.documentElement.lang || "it").toLowerCase().startsWith("en") ? "en" : "it"; const LOCALE = LANG === "en" ? "en-GB" : "it-IT";
+  const tr = window.FW_I18N ? window.FW_I18N.make(LANG) : Object.assign((x, vars) => { let o = String(x); if (vars) Object.keys(vars).forEach(k => { o = o.split("{" + k + "}").join(vars[k]); }); return o; }, { lang: "it" });
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
   const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -23,8 +26,8 @@
   const SECTOR_ANGLE = [-Math.PI / 2, 0, Math.PI / 2, Math.PI]; // alto · destra · basso · sinistra
   const MOOD = { vivid: { name: "acceso", rgb: [191, 0, 255] }, calm: { name: "notturno", rgb: [138, 124, 255] }, nervous: { name: "quieto", rgb: [95, 191, 165] }, light: { name: "chiaro", rgb: [214, 150, 255] } };
   const WEATHER = { sun: { energy: 1.05, label: "sereno" }, cloud: { energy: .8, label: "nuvoloso" }, rain: { energy: .55, label: "piove", droop: 1 }, storm: { energy: 1.35, label: "temporale", storm: 1 }, snow: { energy: .45, label: "neve", droop: .5 }, night: { energy: .5, label: "notte" }, unknown: { energy: .8, label: "" } };
-  const fmtDay = (ms) => new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(new Date(ms));
-  const fmtDate = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" }).format(new Date(iso)); } catch { return ""; } };
+  const fmtDay = (ms) => new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "long" }).format(new Date(ms));
+  const fmtDate = (iso) => { try { return new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short" }).format(new Date(iso)); } catch { return ""; } };
   const cssVar = (n, d) => (getComputedStyle(document.documentElement).getPropertyValue(n) || "").trim() || d;
   const hexRgb = (h) => { h = h.replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); const v = parseInt(h, 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
   const mix = (a, b, k) => [Math.round(lerp(a[0], b[0], k)), Math.round(lerp(a[1], b[1], k)), Math.round(lerp(a[2], b[2], k))];
@@ -275,37 +278,37 @@
     })();
     const weatherSay = (w) => {
       const k = (w && w.kind) || "unknown", t = w && w.temp != null ? ", " + w.temp + "°" : "";
-      const base = { sun: `Sereno${t}: col sole si espande e il cuore batte più forte.`, cloud: `Nuvoloso${t}: ritmo medio, respira piano.`, rain: `Piove${t}: rallenta, e i rami si afflosciano un po'.`, storm: `Temporale${t}: è agitato, e ogni tanto lampeggia.`, snow: `Neve${t}: quasi fermo.`, night: `È notte${t}: si spegne quasi, e brilla piano.` }[k] || "Meteo non disponibile: va a ritmo medio.";
-      return base + (w && w.wind > 8 ? ` Vento a ${Math.round(w.wind)} km/h: ondeggia.` : "");
+      const base = { sun: tr("Sereno{t}: col sole si espande e il cuore batte più forte.", { t }), cloud: tr("Nuvoloso{t}: ritmo medio, respira piano.", { t }), rain: tr("Piove{t}: rallenta, e i rami si afflosciano un po'.", { t }), storm: tr("Temporale{t}: è agitato, e ogni tanto lampeggia.", { t }), snow: tr("Neve{t}: quasi fermo.", { t }), night: tr("È notte{t}: si spegne quasi, e brilla piano.", { t }) }[k] || tr("Meteo non disponibile: va a ritmo medio.");
+      return base + (w && w.wind > 8 ? " " + tr("Vento a {v} km/h: ondeggia.", { v: Math.round(w.wind) }) : "");
     };
-    const moodsSay = () => { const c = org.moodCounts || {}; return Object.keys(MOOD).filter(k => c[k]).sort((a, b) => c[b] - c[a]).map(k => `${c[k]} ${MOOD[k].name}`).join(" · "); };
+    const moodsSay = () => { const c = org.moodCounts || {}; return Object.keys(MOOD).filter(k => c[k]).sort((a, b) => c[b] - c[a]).map(k => `${c[k]} ${tr(MOOD[k].name)}`).join(" · "); };
     let introEnd = 0, introDone = false;
     function intro() {
       if (introDone || !stato) return; introDone = true;
       const days = Math.max(1, Math.ceil((org.now - org.born) / DAY)); const last = org.signals[org.signals.length - 1]; const w = stato.weather || {};
       const list = [
-        { k: "Un solo organismo", t: `È lo stesso per chiunque apra questo sito. Vive da <b>${days === 1 ? "un giorno" : days + " giorni"}</b> e non lo accudisce nessuno: lo nutre il mondo.` },
-        { k: "Il Radar lo nutre", t: `Ogni notizia che il Radar pubblica diventa un nodo, nel settore del suo sistema. Finora ne ha assimilate <b>${(stato.totals.signals || 0).toLocaleString("it-IT")}</b>${last ? `; l'ultima: «${esc(last.title)}».` : "."}` },
-        { k: "Il meteo di Roma", t: weatherSay(w) + " Il meteo decide il ritmo." },
-        { k: "Gli umori", t: org.moodN ? `I visitatori hanno dichiarato: ${moodsSay()}. I colori sono la loro media.${DESK ? " Il tuo, dal tasto Modalità, entra nel conto." : ""}` : `Nessun visitatore ha ancora dichiarato un umore: i colori sono quelli di base.${DESK ? " Il tuo, dal tasto Modalità, entra nel suo temperamento." : ""}` },
-        { k: "Gli stimoli", t: `${MOBILE ? "Tocchi e clic" : "Clic e tocchi"} lasciano un nodo bianco che resta per tutti: finora <b>${stato.totals.stimoli || 0}</b>. ${MOBILE ? "Tocca nel vuoto per lasciare il tuo; tocca un nodo per sapere da quale notizia è nato." : "Clicca nel vuoto per lasciare il tuo; clicca un nodo per sapere da quale notizia è nato."}` },
-        DESK ? { k: "Continua sul telefono", t: "Inquadra il QR: l'organismo passa sul telefono, sullo schermo o nella stanza in AR, e i due schermi restano collegati." } : { k: "Nella stanza", t: "Con «Portalo nella stanza» esce dallo schermo: in realtà aumentata, a un metro da te." }
+        { k: tr("Un solo organismo"), t: tr("È lo stesso per chiunque apra questo sito. Vive da <b>{days}</b> e non lo accudisce nessuno: lo nutre il mondo.", { days: days === 1 ? tr("un giorno") : tr("{n} giorni", { n: days }) }) },
+        { k: tr("Il Radar lo nutre"), t: tr("Ogni notizia che il Radar pubblica diventa un nodo, nel settore del suo sistema. Finora ne ha assimilate <b>{n}</b>", { n: (stato.totals.signals || 0).toLocaleString(LOCALE) }) + (last ? tr("; l'ultima: «{title}».", { title: esc(last.title) }) : ".") },
+        { k: tr("Il meteo di Roma"), t: weatherSay(w) + " " + tr("Il meteo decide il ritmo.") },
+        { k: tr("Gli umori"), t: org.moodN ? tr("I visitatori hanno dichiarato: {moods}. I colori sono la loro media.", { moods: moodsSay() }) + (DESK ? " " + tr("Il tuo, dal tasto Modalità, entra nel conto.") : "") : tr("Nessun visitatore ha ancora dichiarato un umore: i colori sono quelli di base.") + (DESK ? " " + tr("Il tuo, dal tasto Modalità, entra nel suo temperamento.") : "") },
+        { k: tr("Gli stimoli"), t: tr("{who} lasciano un nodo bianco che resta per tutti: finora <b>{n}</b>.", { who: MOBILE ? tr("Tocchi e clic") : tr("Clic e tocchi"), n: stato.totals.stimoli || 0 }) + " " + (MOBILE ? tr("Tocca nel vuoto per lasciare il tuo; tocca un nodo per sapere da quale notizia è nato.") : tr("Clicca nel vuoto per lasciare il tuo; clicca un nodo per sapere da quale notizia è nato.")) },
+        DESK ? { k: tr("Continua sul telefono"), t: tr("Inquadra il QR: l'organismo passa sul telefono, sullo schermo o nella stanza in AR, e i due schermi restano collegati.") } : { k: tr("Nella stanza"), t: tr("Con «Portalo nella stanza» esce dallo schermo: in realtà aumentata, a un metro da te.") }
       ];
       introEnd = performance.now() + Say.seq(list, 9200, 1800);
     }
     const AMBIENT = [
-      () => "Gli impulsi corrono dal cuore verso i rami: è il contenuto che viaggia tra i touchpoint.",
-      () => `I nodi più vecchi finiscono nel cuore: ne ha già assimilati <b>${org.assimilated}</b>.`,
-      () => `Batte a circa <b>${Math.round(46 + 34 * org.weather.energy)}</b> al minuto: il ritmo lo decide il meteo.`,
-      () => "Le stesse posizioni valgono in 16:9 e in 9:16: si riconfigura per costruzione, non per ritaglio.",
-      () => "Alto: Content System · destra: Activation System · basso: Spatial Experiences · sinistra: Adaptive Media.",
-      () => (org.now - org.born > DAY ? (DESK ? "Cresce di giorno in giorno: trascina «Com'era» per vederlo com'era." : "Cresce di giorno in giorno, da quando il sito è on air.") : "È il suo primo giorno: da domani si vedrà come cresce.")
+      () => tr("Gli impulsi corrono dal cuore verso i rami: è il contenuto che viaggia tra i touchpoint."),
+      () => tr("I nodi più vecchi finiscono nel cuore: ne ha già assimilati <b>{n}</b>.", { n: org.assimilated }),
+      () => tr("Batte a circa <b>{n}</b> al minuto: il ritmo lo decide il meteo.", { n: Math.round(46 + 34 * org.weather.energy) }),
+      () => tr("Le stesse posizioni valgono in 16:9 e in 9:16: si riconfigura per costruzione, non per ritaglio."),
+      () => tr("Alto: Content System · destra: Activation System · basso: Spatial Experiences · sinistra: Adaptive Media."),
+      () => (org.now - org.born > DAY ? (DESK ? tr("Cresce di giorno in giorno: trascina «Com'era» per vederlo com'era.") : tr("Cresce di giorno in giorno, da quando il sito è on air.")) : tr("È il suo primo giorno: da domani si vedrà come cresce."))
     ];
     let lastAmbient = -1;
     setInterval(() => {
       if (PHONE || !stato || !onScreen || performance.now() < introEnd || !Say.idle() || Math.random() > .4 || org.until !== Infinity) return;
       let i; do { i = Math.floor(Math.random() * AMBIENT.length); } while (i === lastAmbient); lastAmbient = i;
-      Say.push("L'organismo", AMBIENT[i](), { ms: 7000 });
+      Say.push(tr("L'organismo"), AMBIENT[i](), { ms: 7000 });
     }, 12000);
     let seen = false;
     function firstSight() { if (seen) return; seen = true; if (!PHONE) { if (stato) intro(); Say.kick(); } }
@@ -315,7 +318,7 @@
     async function dichiara(m, mine) {
       if (!MOOD[m]) return; org.temperament();
       if (!umoreSent) { umoreSent = true; try { sessionStorage.setItem("vo.umore", "1"); } catch { } await post("umore", { mood: m }); org.addUmore(m); hud(); feedTick("f-mood"); }
-      if (mine) Say.once("umore-mio", "Il tuo umore", `«${MOOD[m].name}» entra nel temperamento: i colori dell'organismo sono la media di tutti gli umori dichiarati (${moodsSay() || "il tuo è il primo"}). La pagina invece segue solo te.`, { front: true });
+      if (mine) Say.once("umore-mio", tr("Il tuo umore"), tr("«{mood}» entra nel temperamento: i colori dell'organismo sono la media di tutti gli umori dichiarati ({moods}). La pagina invece segue solo te.", { mood: tr(MOOD[m].name), moods: moodsSay() || tr("il tuo è il primo") }), { front: true });
     }
     document.addEventListener("fw:theme", () => { org.temperament(); const m = document.documentElement.dataset.mood; if (MOOD[m] && !STANDALONE) dichiara(m, seen); }); // "il tuo umore" solo se l'organismo è già in vista
     if (STANDALONE) {
@@ -333,10 +336,10 @@
         if (!prev) { if (seen && !PHONE) intro(); return; }
         if (stato.totals.signals > prev.totals.signals) { // il Radar ha mangiato
           feedTick("f-radar"); const n = stato.totals.signals - prev.totals.signals; const last = org.signals[org.signals.length - 1];
-          Say.push("Il Radar ha appena mangiato", `<b>${n}</b> ${n === 1 ? "notizia nuova" : "notizie nuove"} in questo giro${last ? `; l'ultima: «${esc(last.title)}» (${esc(last.src)})` : ""}. ${n === 1 ? "Un nodo nuovo" : "Nodi nuovi"} in superficie.`, { key: "radar", front: true });
+          Say.push(tr("Il Radar ha appena mangiato"), `<b>${n}</b> ${n === 1 ? tr("notizia nuova") : tr("notizie nuove")} ${tr("in questo giro")}${last ? tr("; l'ultima: «{title}» ({src})", { title: esc(last.title), src: esc(last.src) }) : ""}. ${n === 1 ? tr("Un nodo nuovo") : tr("Nodi nuovi")} ${tr("in superficie")}.`, { key: "radar", front: true });
         }
         const wk = (k) => (k && k.weather && k.weather.kind) || "unknown";
-        if (wk(stato) !== wk(prev)) Say.push("A Roma è cambiato il tempo", weatherSay(stato.weather), { key: "meteo", front: true });
+        if (wk(stato) !== wk(prev)) Say.push(tr("A Roma è cambiato il tempo"), weatherSay(stato.weather), { key: "meteo", front: true });
       } catch (e) { console.warn("Organismo: stato non disponibile", e); }
     }
     carica(); setInterval(() => { if (org.until === Infinity) carica(); }, 180000);
@@ -344,36 +347,36 @@
     // ---- pannello ----
     function hud() {
       if (!stato) return; const past = org.until !== Infinity; const ref = past ? org.until : org.now; const days = Math.max(1, Math.ceil((ref - org.born) / DAY));
-      const lead = q("vo-lead"); if (lead) lead.innerHTML = past ? `Così era <b>${days === 1 ? "il primo giorno" : "a " + days + " giorni"}</b>, il ${fmtDay(ref)}. Nato il ${fmtDay(org.born)}.` : `Questo è vivo da <b>${days === 1 ? "un giorno" : days + " giorni"}</b>, dal ${fmtDay(org.born)}. Non lo accudisce nessuno: lo nutre il mondo.`;
-      const leadM = q("vo-lead-m"); if (leadM) leadM.textContent = `vivo da ${days === 1 ? "un giorno" : days + " giorni"} · ${(stato.totals.signals || 0)} segnali · ${stato.totals.stimoli || 0} stimoli`;
+      const lead = q("vo-lead"); if (lead) lead.innerHTML = past ? tr("Così era <b>{age}</b>, il {day}. Nato il {born}.", { age: days === 1 ? tr("il primo giorno") : tr("a {n} giorni", { n: days }), day: fmtDay(ref), born: fmtDay(org.born) }) : tr("Questo è vivo da <b>{age}</b>, dal {born}. Non lo accudisce nessuno: lo nutre il mondo.", { age: days === 1 ? tr("un giorno") : tr("{n} giorni", { n: days }), born: fmtDay(org.born) });
+      const leadM = q("vo-lead-m"); if (leadM) leadM.textContent = `${tr("vivo da")} ${days === 1 ? tr("un giorno") : tr("{n} giorni", { n: days })} · ${(stato.totals.signals || 0)} ${tr("segnali")} · ${stato.totals.stimoli || 0} ${tr("stimoli")}`;
       const sig = past ? org.signals.filter(s => s.ms <= ref).length : (stato.totals.signals || org.signals.length); const vis = Math.min(sig, org.MAX_NODES);
-      if (f("signals")) { f("signals").textContent = sig.toLocaleString("it-IT"); f("signals-sub").textContent = `ogni notizia del Radar è un nodo nel settore del suo sistema · ${vis} in superficie, ${Math.max(0, sig - vis)} già nel cuore`; }
-      if (f("moods")) { f("moods").textContent = org.moodN ? moodsSay() : "nessuno ancora"; f("moods-sub").textContent = org.moodN ? "gli umori dichiarati dai visitatori danno il temperamento: i colori" : "dichiara il tuo dal tasto Modalità: entra nel suo temperamento"; }
-      const w = stato.weather || {}; const lab = (WEATHER[w.kind] || WEATHER.unknown).label;
-      if (f("weather")) { f("weather").textContent = w.temp != null ? `${w.temp}°${lab ? " · " + lab : ""}${w.wind != null ? ` · vento ${Math.round(w.wind)} km/h` : ""}` : "meteo non disponibile"; f("weather-sub").textContent = ({ sun: "col sole si espande e batte più forte", cloud: "nuvoloso: ritmo medio", rain: "piove: rallenta e si affloscia un po'", storm: "temporale: è agitato, ogni tanto lampeggia", snow: "neve: quasi fermo", night: "di notte si spegne quasi, e brilla piano" })[w.kind] || "il meteo regola il ritmo, il vento lo fa ondeggiare"; }
-      if (f("stimoli")) { const n = past ? org.stimoli.filter(k => k.ms <= ref).length : (stato.totals.stimoli || 0); f("stimoli").textContent = n ? n.toLocaleString("it-IT") : "nessuno"; }
+      if (f("signals")) { f("signals").textContent = sig.toLocaleString(LOCALE); f("signals-sub").textContent = tr("ogni notizia del Radar è un nodo nel settore del suo sistema · {vis} in superficie, {core} già nel cuore", { vis, core: Math.max(0, sig - vis) }); }
+      if (f("moods")) { f("moods").textContent = org.moodN ? moodsSay() : tr("nessuno ancora"); f("moods-sub").textContent = org.moodN ? tr("gli umori dichiarati dai visitatori danno il temperamento: i colori") : tr("dichiara il tuo dal tasto Modalità: entra nel suo temperamento"); }
+      const w = stato.weather || {}; const lab0 = (WEATHER[w.kind] || WEATHER.unknown).label; const lab = lab0 ? tr(lab0) : "";
+      if (f("weather")) { f("weather").textContent = w.temp != null ? `${w.temp}°${lab ? " · " + lab : ""}${w.wind != null ? ` · ${tr("vento")} ${Math.round(w.wind)} km/h` : ""}` : tr("meteo non disponibile"); const ws = ({ sun: "col sole si espande e batte più forte", cloud: "nuvoloso: ritmo medio", rain: "piove: rallenta e si affloscia un po'", storm: "temporale: è agitato, ogni tanto lampeggia", snow: "neve: quasi fermo", night: "di notte si spegne quasi, e brilla piano" })[w.kind]; f("weather-sub").textContent = ws ? tr(ws) : tr("il meteo regola il ritmo, il vento lo fa ondeggiare"); }
+      if (f("stimoli")) { const n = past ? org.stimoli.filter(k => k.ms <= ref).length : (stato.totals.stimoli || 0); f("stimoli").textContent = n ? n.toLocaleString(LOCALE) : tr("nessuno"); }
     }
     function presence(p) {
       const box = q("vo-presence"); if (!box || !p) return;
-      if (PHONE) { box.innerHTML = p.desktops ? `<b>Collegato</b> allo schermo principale` : `Schermo principale <b>non trovato</b>: vive lo stesso`; return; }
-      const v = p.viewers || 1; box.innerHTML = v <= 1 ? `Adesso lo guardi <b>solo tu</b>` : `<b>${v}</b> persone lo guardano adesso`;
-      if (v > 1) Say.once("non-solo", "Non sei solo", `<b>${v}</b> persone lo guardano in questo momento, ognuna dal suo schermo: ogni stimolo lo vedete tutti.`);
+      if (PHONE) { box.innerHTML = p.desktops ? tr("<b>Collegato</b> allo schermo principale") : tr("Schermo principale <b>non trovato</b>: vive lo stesso"); return; }
+      const v = p.viewers || 1; box.innerHTML = v <= 1 ? tr("Adesso lo guardi <b>solo tu</b>") : tr("<b>{n}</b> persone lo guardano adesso", { n: v });
+      if (v > 1) Say.once("non-solo", tr("Non sei solo"), tr("<b>{n}</b> persone lo guardano in questo momento, ognuna dal suo schermo: ogni stimolo lo vedete tutti.", { n: v }));
     }
 
     // ---- timeline (desktop) ----
     const tl = q("vo-tl-range"), tlLabel = q("vo-tl-label"), tlToday = q("vo-tl-today");
     function timeline() {
       if (!tl) return; const days = Math.max(0, Math.floor((org.now - org.born) / DAY)); tl.max = days; if (org.until === Infinity) tl.value = days;
-      tl.disabled = days === 0; tl.closest(".vo-tl").style.opacity = days === 0 ? .45 : 1; if (days === 0 && tlLabel) tlLabel.textContent = "Oggi · il primo giorno";
+      tl.disabled = days === 0; tl.closest(".vo-tl").style.opacity = days === 0 ? .45 : 1; if (days === 0 && tlLabel) tlLabel.textContent = tr("Oggi · il primo giorno");
     }
     if (tl) {
       const startOf = (ms) => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
       tl.addEventListener("input", () => {
         const v = +tl.value, days = +tl.max;
-        if (v >= days) { org.setUntil(Infinity); hud(); tlLabel.textContent = "Oggi"; tlToday.hidden = true; return; }
+        if (v >= days) { org.setUntil(Infinity); hud(); tlLabel.textContent = tr("Oggi"); tlToday.hidden = true; return; }
         const until = Math.min(org.now, startOf(org.born) + (v + 1) * DAY - 1); org.setUntil(until); hud();
-        tlLabel.textContent = `${days - v} ${days - v === 1 ? "giorno" : "giorni"} fa · ${fmtDay(until)}`; tlToday.hidden = false;
-        Say.once("comera", "Com'era", "La storia si ricostruisce dagli eventi: le notizie, gli umori e gli stimoli fino a quel giorno. Più è giovane, più è piccolo.", { front: true });
+        tlLabel.textContent = `${days - v === 1 ? tr("un giorno fa") : tr("{n} giorni fa", { n: days - v })} · ${fmtDay(until)}`; tlToday.hidden = false;
+        Say.once("comera", tr("Com'era"), tr("La storia si ricostruisce dagli eventi: le notizie, gli umori e gli stimoli fino a quel giorno. Più è giovane, più è piccolo."), { front: true });
       });
       tlToday.addEventListener("click", () => { tl.value = tl.max; tl.dispatchEvent(new Event("input")); });
     }
@@ -383,9 +386,9 @@
     const pt = (e) => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     const showTip = (n, remote) => {
       if (!tip || !n) return; tipNode = n; clearTimeout(tipTimer);
-      const who = remote ? (PHONE ? "Dallo schermo principale" : "Dal telefono") + " · " : "";
-      if (n.kind === "sig") { const s = n.sig; tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${who}Radar${n.free ? "" : " · " + SECTOR_NAME[n.sec]}</span><b>${esc(s.title)}</b><small>${esc(s.src)}${s.date ? " · " + fmtDate(s.date) : ""}${s.score ? " · rilevanza " + s.score : ""}</small>`; }
-      else { tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${who}Stimolo</span><b>Qualcuno ha toccato qui</b><small>${fmtDate(n.stim.t)}${n.stim.src === "phone" ? " · dal telefono" : ""}${n.stim.mood && MOOD[n.stim.mood] ? " · umore " + MOOD[n.stim.mood].name : ""}</small>`; }
+      const who = remote ? (PHONE ? tr("Dallo schermo principale") : tr("Dal telefono")) + " · " : "";
+      if (n.kind === "sig") { const s = n.sig; tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${who}Radar${n.free ? "" : " · " + SECTOR_NAME[n.sec]}</span><b>${esc(s.title)}</b><small>${esc(s.src)}${s.date ? " · " + fmtDate(s.date) : ""}${s.score ? " · " + tr("rilevanza") + " " + s.score : ""}</small>`; }
+      else { tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${who}${tr("Stimolo")}</span><b>${tr("Qualcuno ha toccato qui")}</b><small>${fmtDate(n.stim.t)}${n.stim.src === "phone" ? " · " + tr("dal telefono") : ""}${n.stim.mood && MOOD[n.stim.mood] ? " · " + tr("umore") + " " + tr(MOOD[n.stim.mood].name) : ""}</small>`; }
       tip.classList.toggle("remote", !!remote); tip.hidden = false; n.flash = 1;
       if (remote || MOBILE) tipTimer = setTimeout(hideTip, 9000);
     };
@@ -413,7 +416,7 @@
           const local = org.addStimolo({ a: u.a, r: u.r, mood: m, src: PHONE ? "phone" : "desktop", t: new Date().toISOString() });
           if (stato) { stato.totals.stimoli = (stato.totals.stimoli || 0) + 1; hud(); feedTick("f-stim"); }
           post("stimolo", { a: u.a, r: u.r, mood: m }).then(res => { if (res && res.t) org.retime(local, res.t); });
-          Say.once("stimolo-mio", "Il tuo stimolo", PHONE ? "È arrivato anche sullo schermo principale, e resta: lo vedrà chiunque lo guardi." : "Resta: lo vedrà chiunque lo guardi, da qualsiasi schermo. " + (MOBILE ? "Tocca" : "Clicca") + " un nodo per sapere da quale notizia è nato.");
+          Say.once("stimolo-mio", tr("Il tuo stimolo"), PHONE ? tr("È arrivato anche sullo schermo principale, e resta: lo vedrà chiunque lo guardi.") : tr("Resta: lo vedrà chiunque lo guardi, da qualsiasi schermo.") + " " + (MOBILE ? tr("Tocca un nodo per sapere da quale notizia è nato.") : tr("Clicca un nodo per sapere da quale notizia è nato.")));
         }
       } else if (room) post("gesto", { kind: "up" });
       press = null; if (e.pointerType !== "mouse") org.pointer = null; else org.pointer = { x: p.x, y: p.y, drag: false };
@@ -441,9 +444,9 @@
         if (stato) { stato.totals.stimoli = (stato.totals.stimoli || 0) + 1; hud(); feedTick("f-stim"); }
         const mine = d.room === room && d.room;
         if (DESK && mine && d.src === "phone") { org.tendril = 1; org.tendrilDir = -1; }
-        Say.push("Uno stimolo adesso", mine ? (PHONE ? "Dallo schermo principale: è arrivato anche qui, e resta." : "Dal telefono collegato: è arrivato qui lungo il filamento, e resta.") : "Qualcuno, da un altro schermo, l'ha appena toccato: il nodo resta anche per te.", { key: "stim-remote", ms: 5500 });
+        Say.push(tr("Uno stimolo adesso"), mine ? (PHONE ? tr("Dallo schermo principale: è arrivato anche qui, e resta.") : tr("Dal telefono collegato: è arrivato qui lungo il filamento, e resta.")) : tr("Qualcuno, da un altro schermo, l'ha appena toccato: il nodo resta anche per te."), { key: "stim-remote", ms: 5500 });
       });
-      es.addEventListener("umore", e => { const d = J(e); if (!d || d.from === me) return; org.addUmore(d.mood); hud(); feedTick("f-mood"); if (MOOD[d.mood]) Say.push("Un umore nuovo", `Un visitatore si è dichiarato «${MOOD[d.mood].name}»: entra nella media dei colori.`, { key: "umore-remote", ms: 6000 }); });
+      es.addEventListener("umore", e => { const d = J(e); if (!d || d.from === me) return; org.addUmore(d.mood); hud(); feedTick("f-mood"); if (MOOD[d.mood]) Say.push(tr("Un umore nuovo"), tr("Un visitatore si è dichiarato «{mood}»: entra nella media dei colori.", { mood: tr(MOOD[d.mood].name) }), { key: "umore-remote", ms: 6000 }); });
       es.addEventListener("tilt", e => { const d = J(e); if (!d || d.from === me) return; org.setTilt(d.gx, d.gy); });
       es.addEventListener("gesto", e => {
         const d = J(e); if (!d || d.from === me) return;
@@ -456,20 +459,20 @@
     function phoneState(on, silent, ar) {
       const c = q("vo-qr"); if (!c) return;
       if (on && !!ar !== arOn) { // il telefono è passato nella stanza (o è tornato sullo schermo)
-        arOn = !!ar; const p = q("vo-qr-on-text"); if (p) p.textContent = arOn ? "Il telefono lo guarda nella stanza, in realtà aumentata: dove punta lo sguardo, qui si inclina. Un tocco di là arriva qui." : "Inclina il telefono: l'organismo lo sente. Toccalo: risponde qui.";
-        if (arOn && !silent) Say.push("È nella stanza", "Il telefono lo sta guardando in realtà aumentata, a un metro da chi lo tiene: lo stesso organismo, in tre dimensioni. Dove punta lo sguardo, qui si inclina.", { key: "ar-on", front: true, ms: 9000 });
+        arOn = !!ar; const p = q("vo-qr-on-text"); if (p) p.textContent = arOn ? tr("Il telefono lo guarda nella stanza, in realtà aumentata: dove punta lo sguardo, qui si inclina. Un tocco di là arriva qui.") : tr("Inclina il telefono: l'organismo lo sente. Toccalo: risponde qui.");
+        if (arOn && !silent) Say.push(tr("È nella stanza"), tr("Il telefono lo sta guardando in realtà aumentata, a un metro da chi lo tiene: lo stesso organismo, in tre dimensioni. Dove punta lo sguardo, qui si inclina."), { key: "ar-on", front: true, ms: 9000 });
       }
       if (on === phoneOn) return; phoneOn = on;
       c.classList.toggle("on", on); c.querySelector(".vo-qr-on").hidden = !on; org.phoneOn = on;
-      if (on) { org.tendril = 1.6; org.tendrilDir = 1; if (!silent) { org.shock(org.anchor ? org.anchor.x : org.cx, org.anchor ? org.anchor.y : org.cy, 1.2); Say.push("Telefono collegato", "Lo stesso organismo, riconfigurato in verticale sul telefono. Inclinalo: si sposta anche qui. Toccalo: lascia uno stimolo su entrambi gli schermi. Tocca un nodo di là: la sua notizia si apre qui.", { key: "tel-on", front: true, ms: 9000 }); } }
-      else { org.ghost = null; if (!silent) Say.push("Telefono scollegato", "L'organismo resta com'è: gli stimoli lasciati dal telefono sono rimasti.", { key: "tel-off", ms: 5500 }); }
+      if (on) { org.tendril = 1.6; org.tendrilDir = 1; if (!silent) { org.shock(org.anchor ? org.anchor.x : org.cx, org.anchor ? org.anchor.y : org.cy, 1.2); Say.push(tr("Telefono collegato"), tr("Lo stesso organismo, riconfigurato in verticale sul telefono. Inclinalo: si sposta anche qui. Toccalo: lascia uno stimolo su entrambi gli schermi. Tocca un nodo di là: la sua notizia si apre qui."), { key: "tel-on", front: true, ms: 9000 }); } }
+      else { org.ghost = null; if (!silent) Say.push(tr("Telefono scollegato"), tr("L'organismo resta com'è: gli stimoli lasciati dal telefono sono rimasti."), { key: "tel-off", ms: 5500 }); }
     }
 
     // ---- QR (desktop) ----
     const qrBox = q("vo-qr-img");
     if (DESK && qrBox && window.qrcode) {
       try { const url = location.origin + "/organismo/telefono?r=" + room; const qr = qrcode(0, "M"); qr.addData(url); qr.make(); qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); qrBox.title = url; }
-      catch (e) { qrBox.textContent = "QR non disponibile"; }
+      catch (e) { qrBox.textContent = tr("QR non disponibile"); }
     }
 
     // ---- telefono e mobile: inclinazione (con permesso, su iOS, dopo un gesto) ----
@@ -483,7 +486,7 @@
     const onMotion = (e) => { const a = e.accelerationIncludingGravity; if (!a) return; if (lastAcc) { const d = Math.abs(a.x - lastAcc.x) + Math.abs(a.y - lastAcc.y) + Math.abs(a.z - lastAcc.z); if (d > 26) org.shake = .6; } lastAcc = { x: a.x, y: a.y, z: a.z }; };
     async function arm() {
       if (armed) return; armed = true;
-      try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") { const s = await DeviceOrientationEvent.requestPermission(); if (s !== "granted" && q("vo-hint")) q("vo-hint").textContent = "Senza il permesso al movimento: tocca e trascina"; } } catch { }
+      try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") { const s = await DeviceOrientationEvent.requestPermission(); if (s !== "granted" && q("vo-hint")) q("vo-hint").textContent = tr("Senza il permesso al movimento: tocca e trascina"); } } catch { }
       try { if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function") await DeviceMotionEvent.requestPermission(); } catch { }
       window.addEventListener("deviceorientation", onOrient); window.addEventListener("devicemotion", onMotion);
     }
@@ -500,7 +503,7 @@
         ], 8500, 2500);
       });
     } else connect();
-    if (MOBILE && !("ontouchstart" in window)) { const h = q("vo-hint"); if (h) h.textContent = "Tocca · trascina"; }
+    if (MOBILE && !("ontouchstart" in window)) { const h = q("vo-hint"); if (h) h.textContent = tr("Tocca · trascina"); }
     start();
   }
 
