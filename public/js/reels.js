@@ -44,25 +44,34 @@
   // ---- lightbox: uno solo per pagina ----
   const Box = (() => {
     let el = null;
+    // dove si era quando si è aperto il reel: chiudendo si torna lì, non in cima (lo scroll-behavior "smooth" e l'uscita dallo schermo intero lo perdono)
+    let from = null;
+    const restore = () => {
+      if (from == null) return; const y = from; const root = document.documentElement; const prev = root.style.scrollBehavior; root.style.scrollBehavior = "auto";
+      try { window.scrollTo({ top: y, left: 0, behavior: "instant" }); } catch { window.scrollTo(0, y); }
+      root.style.scrollBehavior = prev;
+    };
+    const settle = () => { restore(); requestAnimationFrame(restore); [80, 300, 600].forEach(t => setTimeout(restore, t)); setTimeout(() => { from = null; }, 700); };
     const build = () => {
       el = document.createElement("div"); el.className = "reel-box"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
       el.innerHTML = `<button type="button" class="reel-box-x" aria-label="Chiudi">✕</button><div class="reel-box-in"><iframe title="Reel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div><div class="reel-box-cap"></div>`;
       document.body.appendChild(el);
       el.addEventListener("click", e => { if (e.target === el || e.target.closest(".reel-box-x")) close(); });
       document.addEventListener("keydown", e => { if (e.key === "Escape" && el.classList.contains("on")) close(); });
-      document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && el.classList.contains("on") && el.dataset.fs === "1") close(); });
+      document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && el.classList.contains("on") && el.dataset.fs === "1") close(); else if (!document.fullscreenElement) restore(); });
     };
     const open = (reel) => {
       const id = reel.dataset.vimeo, h = reel.dataset.h; if (!id) return; if (!el) build();
       el.querySelector("iframe").src = `https://player.vimeo.com/video/${id}?${h ? "h=" + h + "&" : ""}dnt=1&playsinline=1&autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0`;
       el.querySelector(".reel-box-cap").textContent = reel.dataset.title || (reel.querySelector("h3") && reel.querySelector("h3").textContent) || "";
+      from = window.scrollY || (document.scrollingElement || document.documentElement).scrollTop || 0;
       el.classList.add("on"); document.body.classList.add("reel-box-open"); el.dataset.fs = "0";
       // schermo intero dove il browser lo permette su un elemento (desktop, Android); su iPhone la lightbox copre già tutto e il player ha il suo tasto
       try { if (el.requestFullscreen) el.requestFullscreen().then(() => { el.dataset.fs = "1"; }).catch(() => {}); } catch {}
     };
     const close = () => {
       if (!el) return; el.classList.remove("on"); document.body.classList.remove("reel-box-open"); el.querySelector("iframe").src = "about:blank";
-      if (document.fullscreenElement === el) { try { document.exitFullscreen().catch(() => {}); } catch {} }
+      if (document.fullscreenElement === el) { try { document.exitFullscreen().then(settle).catch(settle); } catch { settle(); } } else settle();
     };
     return { open, close };
   })();
