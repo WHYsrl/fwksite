@@ -1,0 +1,36 @@
+<%- include('../partials/admin-head', { title: 'Reel' }) %>
+<h1>Reel · i video tematici del carosello</h1>
+<p class="muted">Compaiono sul sito (desktop) nel carosello "Organismi in movimento", fra l'organismo e i lavori. Un reel per tema: cultura, spazio, moda… Il link è quello di Vimeo (vimeo.com/ID o vimeo.com/ID/HASH per i video non in elenco): nel carosello gira muto in loop, con "Guarda con audio" si apre il player. Le voci segnate come segnaposto usano il loop di una case: sostituisci il link con il reel vero.</p>
+<div class="grid2">
+<section class="card">
+  <h2>Reel pubblicati</h2>
+  <% if (!reels.length) { %><p class="muted">Nessun reel: il carosello non compare.</p><% } %>
+  <table><tr><th>#</th><th>Reel</th><th>Video</th><th></th></tr>
+  <% reels.forEach((r, i) => { %><tr>
+    <td><%= r.sort %></td>
+    <td><b><%= r.title %></b><br><small class="mono"><%= r.theme %><%= r.placeholder ? ' · SEGNAPOSTO' : '' %></small></td>
+    <td><small class="mono"><%= r.vimeo ? 'vimeo ' + r.vimeo.id : (r.url ? r.url : '— nessun video') %></small></td>
+    <td class="row">
+      <form method="post" action="/admin/reel/<%= r.id %>/move"><input type="hidden" name="dir" value="-1"><button class="btn" type="submit" title="Su" <%= i === 0 ? 'disabled' : '' %>>↑</button></form>
+      <form method="post" action="/admin/reel/<%= r.id %>/move"><input type="hidden" name="dir" value="1"><button class="btn" type="submit" title="Giù" <%= i === reels.length - 1 ? 'disabled' : '' %>>↓</button></form>
+      <a class="btn" href="/admin/reel?edit=<%= r.id %>">Modifica</a>
+      <form method="post" action="/admin/reel/<%= r.id %>/delete" onsubmit="return confirm('Eliminare questo reel?')"><button class="btn danger" type="submit">Elimina</button></form>
+    </td>
+  </tr><% }) %>
+  </table>
+</section>
+<section class="card">
+  <h2><%= edit ? 'Modifica reel' : 'Aggiungi un reel' %></h2>
+  <form method="post" action="/admin/reel" class="form">
+    <input type="hidden" name="id" value="<%= edit ? edit.id : '' %>">
+    <label>Titolo <input name="title" required value="<%= edit ? edit.title : '' %>" placeholder="es. Cultura e musei"></label>
+    <label>Tema (etichetta breve) <input name="theme" value="<%= edit ? edit.theme : '' %>" placeholder="es. Cultura"></label>
+    <label>Link Vimeo <input name="url" value="<%= edit ? edit.url : '' %>" placeholder="https://vimeo.com/123456789/abcdef1234"></label>
+    <label>Copertina (URL immagine, opzionale: si vede prima che il video parta) <input name="cover" value="<%= edit ? edit.cover : '' %>" placeholder="/media/…jpg"></label>
+    <label>Ordine <input name="sort" type="number" value="<%= edit ? edit.sort : reels.length + 1 %>" min="1"></label>
+    <button class="btn primary" type="submit">Salva</button>
+    <% if (edit) { %> <a class="btn" href="/admin/reel">Annulla</a><% } %>
+  </form>
+</section>
+</div>
+<%- include('../partials/admin-foot') %>

@@ -212,11 +212,40 @@ function openDetail(item) {
   if (!item) return;
   const h = detailHTML(item); const eyebrow = item.kind === "core" ? "Frameworks" : item.kind === "cap" ? "Area" : item.kind === "work" ? "Lavoro" : "Radar";
   if (isMobile()) { $("#sheet-body").innerHTML = h; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; }
-  else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.state = "open"; drawer.querySelector(".drawer-body").scrollTop = 0; }
+  else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.state = "open"; drawer.querySelector(".drawer-body").scrollTop = 0; $$("#drawer-body iframe").forEach(f => { f.inert = true; f.tabIndex = -1; }); DrawerNav.update(item); } // il loop video non prende il fuoco: ← → restano al drawer
   scrim.dataset.state = "open";
   AI.check().then(ok => { if (!ok) $$(".adapt").forEach(a => a.hidden = true); });
 }
 function closeDetail() { drawer.dataset.state = "closed"; sheet.dataset.state = "closed"; scrim.dataset.state = "closed"; }
+// ---- drawer: avanti/indietro fra le schede dello stesso tipo senza chiudere (anche con ← →), ed "espandi" ----
+const DrawerNav = {
+  item: null,
+  siblings(item) {
+    if (!item) return [];
+    if (item.kind === "work") { const f = WorksFilter.current; return DATA.works.filter(w => f === "all" || (w.caps || []).includes(f)); }
+    if (item.kind === "cap") return DATA.caps;
+    if (item.kind === "signal") return DATA.signals;
+    return [];
+  },
+  update(item) { this.item = item; const nav = $("#drawer-nav"); if (!nav) return; const list = this.siblings(item); const i = list.findIndex(x => x.id === item.id); nav.hidden = list.length < 2 || i < 0; const pos = $("#drawer-pos"); if (pos && !nav.hidden) pos.textContent = `${i + 1} / ${list.length}`; drawer.tabIndex = -1; this.openedAt = performance.now(); setTimeout(() => { try { drawer.focus({ preventScroll: true }); } catch {} }, 60); },
+  go(dir) {
+    const list = this.siblings(this.item); if (list.length < 2) return; const i = list.findIndex(x => x.id === this.item.id); const next = list[(i + dir + list.length) % list.length];
+    const body = drawer.querySelector(".drawer-body"); body.classList.add("swap-out"); setTimeout(() => { openDetail(byId(next.id)); body.classList.remove("swap-out"); }, 220);
+  },
+  expand() { const on = drawer.classList.toggle("wide"); const b = $("#drawer-expand"); if (b) b.textContent = on ? "Riduci" : "Espandi"; }
+};
+// il loop video nella scheda (senza controlli) si prende il fuoco appena carica: lo restituiamo al drawer, così ← → funzionano
+window.addEventListener("blur", () => { const a = document.activeElement; if (a && a.tagName === "IFRAME" && drawer.dataset.state === "open" && (drawer.contains(a) || a.inert)) setTimeout(() => { try { drawer.focus({ preventScroll: true }); } catch {} }, 0); });
+$("#drawer-prev") && $("#drawer-prev").addEventListener("click", () => DrawerNav.go(-1));
+$("#drawer-next") && $("#drawer-next").addEventListener("click", () => DrawerNav.go(1));
+$("#drawer-expand") && $("#drawer-expand").addEventListener("click", () => DrawerNav.expand());
+document.addEventListener("keydown", e => { if (drawer.dataset.state !== "open" || /input|textarea|select/i.test((e.target && e.target.tagName) || "")) return; if (e.key === "ArrowRight") DrawerNav.go(1); else if (e.key === "ArrowLeft") DrawerNav.go(-1); });
+// ---- lavori (desktop): chip filtro per sistema ----
+const WorksFilter = {
+  current: "all",
+  set(id) { this.current = id; $$("[data-wfilter]").forEach(b => b.classList.toggle("on", b.dataset.wfilter === id)); const cards = $$("#lavori .work"); let n = 0; cards.forEach(w => { const on = id === "all" || (w.dataset.caps || "").split(" ").includes(id); w.classList.toggle("is-filtered", !on); if (on) n++; }); const grid = $("#lavori .works"); if (grid) { let e = grid.querySelector(".works-empty"); if (!n) { if (!e) { e = document.createElement("div"); e.className = "works-empty"; e.textContent = "Nessun lavoro in questa area, per ora."; grid.appendChild(e); } } else if (e) e.remove(); } }
+};
+document.addEventListener("click", e => { const b = e.target.closest("[data-wfilter]"); if (b) WorksFilter.set(b.dataset.wfilter); });
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
@@ -465,7 +494,8 @@ const App = {
     const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>Area</div><h3>${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</h3><p>${esc(i.short)}</p></button>`;
     const wtile = (x) => `<button class="tile work" type="button" data-open="${x.id}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>${esc(x.client)}</div><h3>${esc(x.title)}</h3></button>`;
     const news = (sg, mini) => `<button class="nc ${mini ? "mini" : ""}" type="button" data-open="${sg.id}"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(sg.src)}</b><span>${esc(fmtDate(sg.date))}</span></div><h3>“${esc(sg.title)}”</h3>${mini ? "" : `<p>${esc(sg.why)}</p>`}</button>`;
-    const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div><small>${esc(x.client)}</small><h3>${esc(x.title)}</h3></div></button>`;
+    // le case come post: intestazione col cliente, immagine quadrata, titolo, riga di testo e hashtag dei sistemi
+    const gc = (x) => `<button class="gc" type="button" data-open="${x.id}" data-caps="${x.caps.join(" ")}"><div class="post-head"><i>${esc(initials(x.client))}</i><div><b>${esc(x.client)}</b><small>${esc(x.year || "")}</small></div><span class="chip ghost">${esc(x.status)}</span></div><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="post-body"><h3>${esc(x.title)}</h3><p>${esc(x.short)}</p><div class="hashtags">${x.caps.map(id => "#" + (capById(id) ? capById(id).name.replace(/[^A-Za-z0-9]+/g, "") : id)).join(" ")}</div><span class="post-more">Apri la scheda →</span></div></button>`;
     const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>Chiedi alla Console: cosa fate per…</span></button>`;
     const home = `<section class="screen on" data-screen="home">
       <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
@@ -493,7 +523,7 @@ const App = {
     </section>`;
     const lavori = `<section class="screen" data-screen="lavori">
       <div><h2>Organismi in <span class="serif">azione.</span></h2><div class="chips"><button type="button" class="on" data-filter="all">Tutti</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
-      <div class="grid2m" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
+      <div class="grid2m feed" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
       <p class="app-foot">Tocca un lavoro per aprirlo e adattarlo al tuo contesto</p>
       ${contactHTML()}
     </section>`;

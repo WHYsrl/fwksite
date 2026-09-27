@@ -44,6 +44,13 @@ router.get("/", (req, res) => {
   res.render("admin/dashboard", { counts: { caps: store.listCaps(true).length, works: store.listWorks(true).length, team: store.listTeam(true).length, signals: store.countSignals(), sources: store.listSources().length }, radar: feeds.lastRun(), ai: ai.config(), aiStats: store.aiStats(), aiToday: store.aiCallsToday() });
 });
 
+// ---------- reel: i video tematici del carosello (setting "reels") ----------
+const reels = require("./reels");
+router.get("/reel", (req, res) => { const all = reels.list(); res.render("admin/reels", { reels: all, edit: req.query.edit ? all.find(r => r.id === req.query.edit) || null : null }); });
+router.post("/reel", (req, res) => { const b = req.body || {}; if (!String(b.title || "").trim()) { flash(req, "Serve almeno il titolo", "err"); return res.redirect("/admin/reel"); } reels.upsert(b); flash(req, "Reel salvato"); res.redirect("/admin/reel"); });
+router.post("/reel/:id/move", (req, res) => { reels.move(req.params.id, +req.body.dir || 1); res.redirect("/admin/reel"); });
+router.post("/reel/:id/delete", (req, res) => { reels.remove(req.params.id); flash(req, "Reel eliminato"); res.redirect("/admin/reel"); });
+
 // ---------- testi ----------
 const lines = (s) => String(s || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
 const arr = (v) => Array.isArray(v) ? v : (v && typeof v === "object" ? Object.values(v) : []);

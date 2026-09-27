@@ -2,7 +2,7 @@
    L'ORGANISMO NELLA STANZA — realtà aumentata dal telefono.
    Motore: binario 8th Wall (world tracking) + three.js. Stessi dati e stesse regole di posizione
    dell'organismo 2D (settore = angolo, età = raggio), più una profondità dal hash del segnale: la
-   colonia diventa volumetrica e galleggia a un metro dal telefono. Stessa stanza SSE del desktop:
+   colonia diventa volumetrica e galleggia a un metro e mezzo dal telefono. Stessa stanza SSE del desktop:
    un tocco lascia uno stimolo su tutti gli schermi, un nodo toccato apre la sua notizia anche di là,
    e lo sguardo del telefono (dove punta la camera) inclina l'organismo sul desktop.
    ========================================================= */
@@ -22,7 +22,7 @@ const SECTOR_NAME = ["Content System", "Activation System", "Spatial Experiences
 const SECTOR_ANGLE = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
 const MOOD = { vivid: { name: "acceso", rgb: [191, 0, 255] }, calm: { name: "notturno", rgb: [138, 124, 255] }, nervous: { name: "quieto", rgb: [95, 191, 165] }, light: { name: "chiaro", rgb: [214, 150, 255] } };
 const WEATHER = { sun: 1.05, cloud: .8, rain: .55, storm: 1.35, snow: .45, night: .5, unknown: .8 };
-const MAX_NODES = 80, MAX_STIM = 40, R = .34; // raggio in metri
+const MAX_NODES = 80, MAX_STIM = 40, R = .62; // raggio in metri (diametro ~1,2 m)
 const fmtDate = (iso) => { try { return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" }).format(new Date(iso)); } catch { return ""; } };
 
 // ---------- didascalie (versione breve di quelle della pagina 2D) ----------
@@ -36,11 +36,13 @@ const Say = (() => {
 })();
 
 // ---------- texture del punto luminoso ----------
-function glowTexture(size = 128) {
+function glowTexture(size = 128, ring = false) {
   const c = document.createElement("canvas"); c.width = c.height = size; const x = c.getContext("2d");
   const g = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.18, "rgba(255,255,255,.9)"); g.addColorStop(.45, "rgba(255,255,255,.22)"); g.addColorStop(1, "rgba(255,255,255,0)");
-  x.fillStyle = g; x.fillRect(0, 0, size, size); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.16, "rgba(255,255,255,.95)"); g.addColorStop(.4, "rgba(255,255,255,.2)"); g.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = g; x.fillRect(0, 0, size, size);
+  if (ring) { x.strokeStyle = "rgba(255,255,255,.9)"; x.lineWidth = size * .035; x.beginPath(); x.arc(size / 2, size / 2, size * .3, 0, Math.PI * 2); x.stroke(); } // il bordo: un anello netto intorno al nucleo
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
 // ================= l'organismo in tre dimensioni =================
@@ -48,13 +50,16 @@ class Organismo3D {
   constructor() {
     this.group = new THREE.Group(); this.nodes = new Map(); this.list = []; this.pulses = []; this.t = 0; this.phase = 0; this.heart = 0;
     this.signals = []; this.stimoli = []; this.umori = []; this.energy = .8; this.color = new THREE.Color(0xbf00ff); this.assimilated = 0; this.yaw = 0; this.yawV = 0;
-    this.tex = glowTexture();
-    this.linkGeo = new THREE.BufferGeometry(); this.linkMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .32, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.tex = glowTexture(); this.texRing = glowTexture(128, true);
+    this.linkGeo = new THREE.BufferGeometry(); this.linkMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .55, depthWrite: false });
     this.links = new THREE.LineSegments(this.linkGeo, this.linkMat); this.group.add(this.links);
     // il cuore: il cubo del logo, con la sua aura
-    this.core = new THREE.Mesh(new THREE.BoxGeometry(.05, .05, .05), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .95 }));
-    this.coreEdges = new THREE.LineSegments(new THREE.EdgesGeometry(this.core.geometry), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6 })); this.core.add(this.coreEdges);
-    this.aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex, color: this.color, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false })); this.aura.scale.setScalar(.5);
+    this.core = new THREE.Mesh(new THREE.BoxGeometry(.09, .09, .09), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .95 }));
+    this.coreEdges = new THREE.LineSegments(new THREE.EdgesGeometry(this.core.geometry), new THREE.LineBasicMaterial({ color: this.color, transparent: true, opacity: .95 })); this.core.add(this.coreEdges);
+    // la membrana: una sfera wireframe nel colore del temperamento, che dà corpo e bordo alla colonia
+    this.membrane = new THREE.Mesh(new THREE.IcosahedronGeometry(R * 1.04, 2), new THREE.MeshBasicMaterial({ color: this.color, wireframe: true, transparent: true, opacity: .13, depthWrite: false }));
+    this.membrane.scale.set(1, .85, 1); this.group.add(this.membrane);
+    this.aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex, color: this.color, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false })); this.aura.scale.setScalar(.9);
     this.group.add(this.core, this.aura);
     this.pulseMat = new THREE.SpriteMaterial({ map: this.tex, color: 0xffffff, transparent: true, opacity: .95, blending: THREE.AdditiveBlending, depthWrite: false });
     this.pulsePool = [];
@@ -70,6 +75,7 @@ class Organismo3D {
     let rgb = [0, 0, 0]; if (!n) rgb = MOOD.vivid.rgb.slice(); else for (const k in cnt) rgb = rgb.map((v, i) => v + MOOD[k].rgb[i] * cnt[k] / n);
     this.color.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); this.aura.material.color.copy(this.color); this.linkMat.color.copy(this.color).lerp(new THREE.Color(1, 1, 1), .35);
     for (const nd of this.list) if (nd.kind === "sig") nd.sprite.material.color.copy(this.color);
+    if (this.membrane) this.membrane.material.color.copy(this.color); if (this.coreEdges) this.coreEdges.material.color.copy(this.color);
   }
   addStimolo(e) { const ms = Date.parse(e.t) || Date.now(); const k = { ...e, ms }; this.stimoli.push(k); this.rebuild(); return k; }
   rebuild() {
@@ -88,7 +94,7 @@ class Organismo3D {
     }
     for (const [id, w] of want) {
       const ex = this.nodes.get(id); if (ex) { Object.assign(ex, { a: w.a, r: w.r, z: w.z, size: w.size, parent: w.parent, dying: false }); continue; }
-      const mat = new THREE.SpriteMaterial({ map: this.tex, color: w.kind === "stim" ? new THREE.Color(1, 1, 1) : this.color.clone(), transparent: true, opacity: .95, blending: THREE.AdditiveBlending, depthWrite: false });
+      const mat = new THREE.SpriteMaterial({ map: this.texRing, color: w.kind === "stim" ? new THREE.Color(1, 1, 1) : this.color.clone(), transparent: true, opacity: .95, depthWrite: false });
       const sprite = new THREE.Sprite(mat); const pn = w.parent ? this.nodes.get(w.parent) : null; sprite.position.copy(pn ? pn.pos : new THREE.Vector3(0, 0, 0)); sprite.scale.setScalar(0.0001);
       this.group.add(sprite);
       this.nodes.set(id, { ...w, sprite, pos: sprite.position, vel: new THREE.Vector3(), age: 0, scale: 0, flash: 0, ph: Math.random() * TAU, dying: false, children: [] });
@@ -100,7 +106,7 @@ class Organismo3D {
     const pos = new Float32Array(this.list.length * 6); this.linkGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); this.linkGeo.setDrawRange(0, this.list.length * 2);
   }
   shock(p, k = 1) { for (const n of this.list) { const d = n.pos.clone().sub(p); const L = d.length() || 1; const f = Math.max(0, 1 - L / (.5 * k)) * .06 * k; n.vel.addScaledVector(d.normalize(), f); } this.heartKick = 1; }
-  nearest(ray) { let best = null, bd = 1e9; const v = new THREE.Vector3(); for (const n of this.list) { if (n.dying) continue; v.copy(n.pos).applyMatrix4(this.group.matrixWorld); const d = ray.distanceToPoint(v); if (d < .045 && d < bd) { bd = d; best = n; } } return best; }
+  nearest(ray) { let best = null, bd = 1e9; const v = new THREE.Vector3(); for (const n of this.list) { if (n.dying) continue; v.copy(n.pos).applyMatrix4(this.group.matrixWorld); const d = ray.distanceToPoint(v); if (d < .07 && d < bd) { bd = d; best = n; } } return best; }
   update(dt) {
     this.t += dt; const E = this.energy; const bpm = 46 + 34 * E; this.phase += dt * bpm / 60 * TAU; this.heart = Math.pow(Math.max(0, Math.sin(this.phase)), 10);
     const breath = 1 + .012 * Math.sin(this.phase * .5) + .012 * this.heart;
@@ -110,7 +116,7 @@ class Organismo3D {
       n.age += dt; n.scale = n.dying ? Math.max(0, n.scale - dt * 1.6) : Math.min(1, n.age / 1.3); n.flash = Math.max(0, n.flash - dt * 1.8);
       const h = this.home(n).multiplyScalar(breath); h.x += Math.sin(this.t * 1.1 + n.ph) * .006 * E; h.y += Math.cos(this.t * .9 + n.ph * 1.3) * .006 * E; h.z += Math.sin(this.t * .7 + n.ph * .7) * .005 * E;
       tmp.copy(h).sub(n.pos).multiplyScalar(.05); n.vel.add(tmp); n.vel.multiplyScalar(Math.pow(.86, dt * 60)); n.pos.add(n.vel);
-      const s = (n.size * 3 + n.flash * .04) * (n.scale || .0001) * (1 + this.heart * .06); n.sprite.scale.setScalar(Math.max(.0001, s));
+      const s = (n.size * 5.2 + n.flash * .06) * (n.scale || .0001) * (1 + this.heart * .06); n.sprite.scale.setScalar(Math.max(.0001, s));
       n.sprite.material.opacity = Math.min(1, .8 + n.flash * .4) * (n.dying ? n.scale : 1);
     }
     if (this.list.some(n => n.dying && n.scale <= 0)) { for (const [id, n] of this.nodes) if (n.dying && n.scale <= 0) { this.group.remove(n.sprite); n.sprite.material.dispose(); this.nodes.delete(id); } this.rebuild(); }
@@ -124,7 +130,8 @@ class Organismo3D {
       if (kids.length && Math.random() < .85) { p.from = p.to; p.to = kids[Math.floor(Math.random() * kids.length)]; p.t = 0; } else { this.group.remove(p.sp); this.pulsePool.push(p.sp); this.pulses.splice(i, 1); }
     }
     const cs = 1 + this.heart * .18 + (this.heartKick || 0) * .3; this.heartKick = Math.max(0, (this.heartKick || 0) - dt * 2); this.core.scale.setScalar(cs); this.core.rotation.y += dt * .4; this.core.rotation.x = .615;
-    this.aura.scale.setScalar(.45 + .12 * this.heart); this.aura.material.opacity = .4 + .2 * E;
+    this.aura.scale.setScalar(.8 + .2 * this.heart); this.aura.material.opacity = .35 + .2 * E;
+    if (this.membrane) { this.membrane.rotation.y -= dt * .05; this.membrane.rotation.z = Math.sin(this.t * .2) * .1; const ms = 1 + .012 * this.heart; this.membrane.scale.set(ms, .85 * ms, ms); }
   }
 }
 
@@ -178,9 +185,9 @@ const organismoModule = () => ({
     xrScene = XR8.Threejs.xrScene(); const { scene, camera, renderer } = xrScene;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     camera.position.set(0, 1.4, 0); XR8.XrController.updateCameraProjectionMatrix({ origin: camera.position, facing: camera.quaternion });
-    org.group.position.set(0, 1.25, -1.15); scene.add(org.group); started = true; placed = false; organismoModule.frames = 0;
+    org.group.position.set(0, 1.25, -1.6); scene.add(org.group); started = true; placed = false; organismoModule.frames = 0;
     $("vo-arrive").classList.add("off"); connect();
-    Say.push("È nella stanza", "A un metro da te. Giraci intorno, avvicinati: i nodi sono le notizie del Radar, il cubo è il cuore.", { ms: 7000 });
+    Say.push("È nella stanza", "A un metro e mezzo da te, grande come una persona. Giraci intorno, avvicinati: i nodi sono le notizie del Radar, il cubo è il cuore.", { ms: 7000 });
     Say.push("Tocca", "Un tocco nel vuoto lascia uno stimolo che arriva anche sullo schermo principale; un nodo toccato apre la sua notizia di là. Trascina per girarlo.", { ms: 8000 });
     // tocco / trascinamento
     let press = null; const ray = new THREE.Raycaster();
@@ -214,11 +221,11 @@ const organismoModule = () => ({
     }
   }
 });
-// mette l'organismo a un metro davanti alla camera, all'altezza degli occhi (senza riavviare il tracking)
+// mette l'organismo a un metro e mezzo davanti alla camera, all'altezza degli occhi (senza riavviare il tracking)
 function placeAhead(flat = true) {
   if (!xrScene) return; const cam = xrScene.camera; const fwd = cam.getWorldDirection(new THREE.Vector3());
   if (flat) { fwd.y = 0; if (fwd.length() < .2) fwd.set(0, 0, -1); fwd.normalize(); }
-  org.group.position.copy(cam.position).addScaledVector(fwd, 1.15); if (flat) org.group.position.y = cam.position.y - .12;
+  org.group.position.copy(cam.position).addScaledVector(fwd, 1.6); if (flat) org.group.position.y = cam.position.y - .1;
   org.yaw = Math.atan2(cam.position.x - org.group.position.x, cam.position.z - org.group.position.z); yaw0 = null;
 }
 window.__placeAhead = placeAhead;
@@ -237,4 +244,4 @@ $("vo-arrive-btn").addEventListener("click", () => {
   const btn = $("vo-arrive-btn"); btn.disabled = true; btn.textContent = "Apro la fotocamera…";
   if (window.XR8) avvia(); else window.addEventListener("xrloaded", avvia, { once: true });
 });
-$("vo-ar-recenter").addEventListener("click", () => { if (window.XR8 && started) { placeAhead(); Say.push("Davanti a te", "L'ho rimesso a un metro da te, all'altezza degli occhi.", { ms: 4000, front: true }); } });
+$("vo-ar-recenter").addEventListener("click", () => { if (window.XR8 && started) { placeAhead(); Say.push("Davanti a te", "L'ho rimesso a un metro e mezzo da te, all'altezza degli occhi.", { ms: 4000, front: true }); } });

@@ -24,6 +24,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="<%= preview ? 'site.css' : '/public/css/site.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
 <link rel="stylesheet" href="<%= preview ? 'organismo.css' : '/public/css/organismo.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
+<link rel="stylesheet" href="<%= preview ? 'vetrina.css' : '/public/css/vetrina.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -3 63 65'><rect x='-6' y='-3' width='63' height='65' rx='12' fill='%23050307'/><g fill='%23fff'><polygon points='51.09 14.75 25.55 59 51.09 44.25 51.09 14.75'/><polygon points='25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5'/><polygon points='25.55 29.5 25.55 59 0 44.25 25.55 29.5'/></g></svg>">
 </head>
 <body class="<%= content.lightMedia && Object.keys(content.lightMedia).length ? "light-media" : "" %>">
@@ -189,14 +190,37 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 </section>
 
 <!-- ============================ STATEMENT ============================ -->
-<section class="statement desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="0.25"><%= site.statements[2] %></h2></section>
+<%# Reel: i video tematici (Vimeo) in un carosello, al posto dello statement scorrevole; si gestiscono da /admin/reel %>
+<% const reels = (content.reels || []).filter(r => r.vimeo || r.cover); if (reels.length) { %>
+<section class="section reels desktop-only" data-tier="10" id="reel" aria-label="Reel">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Reel</div><div><h2 class="rv">Organismi in <span class="serif">movimento.</span></h2><p class="rv">Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu.</p></div></div>
+  <div class="reels-wrap rv">
+    <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="Reel precedente">←</button>
+    <div class="reels-track" id="reels-track">
+      <% reels.forEach((r, i) => { %>
+      <article class="reel" data-reel data-vimeo="<%= r.vimeo ? r.vimeo.id : '' %>" data-h="<%= r.vimeo ? r.vimeo.h : '' %>" style="--i:<%= i %>">
+        <div class="reel-media"><% if (r.cover) { %><img src="<%= r.cover %>" alt="" loading="lazy"><% } %></div>
+        <div class="reel-meta">
+          <div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · anteprima<% } %></div>
+          <h3><%= r.title %></h3>
+          <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play>Guarda con audio</button><% } %>
+        </div>
+      </article>
+      <% }) %>
+    </div>
+    <button type="button" class="reels-arrow next" data-reels-nav="1" aria-label="Reel successivo">→</button>
+  </div>
+</section>
+<% } %>
 
 <!-- ============================ LAVORI ============================ -->
 <section class="section desktop-only" id="lavori" data-tier="2">
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Lavori</div><div><h2 class="rv">Organismi in <span class="serif">azione.</span></h2><p class="rv">Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.</p></div></div>
+  <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro %>
+  <div class="works-chips rv" role="group" aria-label="Filtra i lavori"><button type="button" class="on" data-wfilter="all">Tutti <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
   <div class="works">
     <% content.works.forEach((w, i) => { %>
-    <button class="work rv" type="button" data-open="<%= w.id %>" data-tilt style="--i:<%= i %>">
+    <button class="work rv" type="button" data-open="<%= w.id %>" data-caps="<%= w.caps.join(' ') %>" data-tilt style="--i:<%= i %>">
       <div class="art"><img src="<%= w.image || '/media/monolith.jpg' %>" alt="" loading="lazy"></div>
       <div class="meta"><div class="eyebrow"><span><%= w.client %></span><span class="chip ghost"><%= w.status %></span></div><h3><%= w.title %></h3><p><%= w.short %></p><div class="tags"><% w.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div></div>
     </button>
@@ -303,7 +327,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 </main>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer desktop-only" id="drawer" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="drawer-head"><span class="eyebrow" id="drawer-eyebrow"></span><button class="x" type="button" id="drawer-close" aria-label="Chiudi">✕</button></div><div class="drawer-body" id="drawer-body"></div></aside>
+<aside class="drawer desktop-only" id="drawer" role="dialog" aria-modal="true" aria-label="Dettaglio"><div class="drawer-head"><span class="eyebrow" id="drawer-eyebrow"></span><div class="drawer-nav" id="drawer-nav" hidden><button type="button" id="drawer-prev" aria-label="Scheda precedente" title="Precedente (←)">←</button><span class="pos" id="drawer-pos"></span><button type="button" id="drawer-next" aria-label="Scheda successiva" title="Successiva (→)">→</button><button type="button" class="expand" id="drawer-expand" title="Allarga la scheda">Espandi</button></div><button class="x" type="button" id="drawer-close" aria-label="Chiudi">✕</button></div><div class="drawer-body" id="drawer-body"></div></aside>
 
 <script>window.__DATA__ = <%- JSON.stringify(content).replace(/</g, "\\u003c") %>; window.__PREVIEW__ = <%= preview ? 'true' : 'false' %>; window.__AI__ = <%= aiOn ? 'true' : 'false' %>;</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -312,6 +336,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <script src="<%= preview ? 'datafield.js' : '/public/js/datafield.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'vendor/qrcode.js' : '/public/js/vendor/qrcode.js' %>"></script>
 <script src="<%= preview ? 'organismo.js' : '/public/js/organismo.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
+<script src="<%= preview ? 'reels.js' : '/public/js/reels.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'site.js' : '/public/js/site.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 </body>
 </html>
