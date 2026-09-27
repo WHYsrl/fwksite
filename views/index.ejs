@@ -23,6 +23,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="<%= preview ? 'site.css' : '/public/css/site.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
+<link rel="stylesheet" href="<%= preview ? 'organismo.css' : '/public/css/organismo.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -3 63 65'><rect x='-6' y='-3' width='63' height='65' rx='12' fill='%23050307'/><g fill='%23fff'><polygon points='51.09 14.75 25.55 59 51.09 44.25 51.09 14.75'/><polygon points='25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5'/><polygon points='25.55 29.5 25.55 59 0 44.25 25.55 29.5'/></g></svg>">
 </head>
 <body class="<%= content.lightMedia && Object.keys(content.lightMedia).length ? "light-media" : "" %>">
@@ -178,19 +179,13 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 </section>
 
 <!-- ============================ ORGANISMO ============================ -->
-<section class="section organism desktop-only" data-tier="10">
-  <div class="split2 rev">
-    <div>
-      <div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div>
-      <h2 class="rv"><%- em(site.organism_title) %></h2>
-      <p class="lead rv"><%= site.organism_text %></p>
-      <div class="morph rv" id="morph" aria-hidden="true"><div class="morph-frame"><span class="morph-label">16:9</span></div><div class="morph-cap">Un asset, tutti i formati: lo stesso sistema si riconfigura.</div></div>
-    </div>
-    <div class="rv">
-      <% if (content.features.image !== false) { %><div class="org-lab dn-lab" data-diffusion></div>
-      <p class="org-caption"><b>Provalo.</b> Nomina un oggetto, anche impossibile: il modello lo campiona dal rumore. Ogni clic è un passo di denoising; alla fine, adatta l'asset ai formati. È il nostro mestiere, in piccolo: generare e adattare.</p><% } %>
-    </div>
+<section class="section organism desktop-only" data-tier="10" id="organismo">
+  <div class="section-head">
+    <div><div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div></div>
+    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv"><%= site.organism_text %></p></div>
   </div>
+  <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
+  <div class="rv"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
 </section>
 
 <!-- ============================ STATEMENT ============================ -->
@@ -315,6 +310,8 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="<%= preview ? 'diffusion.js' : '/public/js/diffusion.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'datafield.js' : '/public/js/datafield.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
+<script src="<%= preview ? 'vendor/qrcode.js' : '/public/js/vendor/qrcode.js' %>"></script>
+<script src="<%= preview ? 'organismo.js' : '/public/js/organismo.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 <script src="<%= preview ? 'site.js' : '/public/js/site.js?v=' + (typeof v !== 'undefined' ? v : '1') %>"></script>
 </body>
 </html>

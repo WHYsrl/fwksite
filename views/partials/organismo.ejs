@@ -1,0 +1,77 @@
+<%
+/* L'Organismo — blocco riutilizzabile (prefisso vo-). Modalità:
+   "desktop": nel sito e nella pagina a sé (pannello, QR per il secondo schermo, timeline);
+   "phone":   secondo schermo aperto dal QR (accoglienza, inclinazione);
+   "mobile":  dentro l'app mobile del sito (tocco, inclinazione dopo il primo tocco, link all'AR).
+   Variabili: mode, room (solo phone), standalone (true nelle pagine a sé: mostra il titolo nel pannello). */
+const _mode = typeof mode === "string" ? mode : "desktop"; const _room = typeof room === "string" ? room : ""; const _standalone = typeof standalone !== "undefined" && !!standalone;
+%>
+<div class="vo-root vo-<%= _mode %>" data-organismo="<%= _mode %>" data-room="<%= _room %>">
+  <div class="vo-stage" aria-label="L'organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori dei visitatori e dal meteo di Roma">
+    <canvas class="vo-glow" aria-hidden="true"></canvas>
+    <canvas class="vo-cv"></canvas>
+    <div class="vo-tip" hidden></div>
+    <div class="vo-flash" aria-hidden="true"></div>
+  </div>
+  <div class="vo-say" role="status" aria-live="polite"></div>
+
+  <% if (_mode === "desktop") { %>
+  <aside class="vo-side">
+    <% if (_standalone) { %><h1 class="vo-title">Ogni progetto è concepito come un <span class="serif">organismo vivente.</span></h1><% } %>
+    <p class="vo-lead">Questo è vivo da <b>—</b>. Non lo accudisce nessuno: lo nutre il mondo.</p>
+    <dl class="vo-feed" aria-live="polite">
+      <div class="f f-radar"><dt>Radar</dt><dd><b data-f="signals">—</b> segnali assimilati<small data-f="signals-sub">ogni notizia pubblicata dal Radar è un nodo, nel settore del suo sistema</small></dd></div>
+      <div class="f f-mood"><dt>Umori</dt><dd><b data-f="moods">—</b><small data-f="moods-sub">gli umori dichiarati dai visitatori danno il temperamento: i colori</small></dd></div>
+      <div class="f f-weather"><dt>Meteo · Roma</dt><dd><b data-f="weather">—</b><small data-f="weather-sub">il meteo regola il ritmo, il vento lo fa ondeggiare</small></dd></div>
+      <div class="f f-stim"><dt>Stimoli</dt><dd><b data-f="stimoli">—</b><small data-f="stimoli-sub">clic e tocchi: reagisce, e ne resta una traccia per tutti</small></dd></div>
+    </dl>
+    <p class="vo-hint">Clicca nel vuoto: reagisce. Clicca un nodo: ti dice da quale notizia è nato.</p>
+    <p class="vo-hint vo-legend">Cresce per settori · alto Content System · destra Activation System · basso Spatial Experiences · sinistra Adaptive Media</p>
+  </aside>
+  <aside class="vo-qr">
+    <div class="vo-qr-in">
+      <span class="eyebrow"><span class="dot"></span>Continua sul telefono</span>
+      <div class="vo-qr-img" role="img" aria-label="QR code per aprire l'organismo sul telefono"></div>
+      <p>Inquadra con la fotocamera: l'organismo passa sul telefono, sullo schermo o nella stanza in AR, e i due restano collegati.</p>
+    </div>
+    <div class="vo-qr-on" hidden>
+      <span class="eyebrow"><span class="dot"></span>Telefono collegato</span>
+      <div class="vo-phone-ico" aria-hidden="true"><i></i></div>
+      <p class="vo-qr-on-text">Inclina il telefono: l'organismo lo sente. Toccalo: risponde qui.</p>
+    </div>
+  </aside>
+  <div class="vo-bottom">
+    <div class="vo-tl">
+      <span class="eyebrow"><span class="dot"></span>Com'era</span>
+      <input type="range" class="vo-tl-range" min="0" max="0" value="0" step="1" aria-label="Torna indietro nel tempo">
+      <span class="vo-tl-label">Oggi</span>
+      <button type="button" class="vo-tl-today" hidden>Oggi</button>
+    </div>
+    <div class="vo-presence"></div>
+  </div>
+  <% } else if (_mode === "phone") { %>
+  <div class="vo-arrive">
+    <div>
+      <span class="eyebrow"><span class="dot"></span>Secondo schermo</span>
+      <h1>L'organismo sta per <span class="serif">passare qui.</span></h1>
+      <p>Lo stesso organismo dello schermo principale, riconfigurato per il tuo telefono. Inclinalo: lo sente anche di là. Toccalo: risponde su entrambi.</p>
+      <div class="vo-arrive-btns">
+        <button type="button" class="vo-arrive-btn">Accoglilo qui</button>
+        <a class="vo-arrive-ar" href="/organismo/ar?r=<%= _room %>">Nella stanza (AR) →</a>
+      </div>
+    </div>
+  </div>
+  <div class="vo-bottom vo-bottom-phone">
+    <div class="vo-presence"></div>
+    <div class="vo-ar-tools"><a href="/organismo/ar?r=<%= _room %>">Portalo nella stanza (AR)</a></div>
+    <div class="vo-hint">Inclina · tocca · trascina</div>
+  </div>
+  <% } else { %>
+  <div class="vo-m-top"><span class="eyebrow"><span class="dot"></span>L'organismo · <span class="vo-lead-m">vivo da —</span></span></div>
+  <div class="vo-bottom vo-bottom-phone">
+    <div class="vo-presence"></div>
+    <div class="vo-ar-tools"><a class="vo-ar-link" href="/organismo/ar">Portalo nella stanza (AR)</a></div>
+    <div class="vo-hint">Tocca · trascina · inclina il telefono</div>
+  </div>
+  <% } %>
+</div>

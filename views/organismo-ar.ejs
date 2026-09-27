@@ -1,0 +1,58 @@
+<%
+/* L'Organismo nella stanza — AR dal telefono (8th Wall engine, world tracking) + three.js.
+   Stessa stanza (`room`) del desktop: tocchi e sguardo viaggiano fra i due schermi. */
+const brand = (site && site.brand) || "Frameworks";
+%><!doctype html>
+<html lang="it" class="vo-page vo-phone vo-ar" data-mood="vivid" data-energy="auto" data-weather="unknown" data-density="all">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="robots" content="noindex">
+<title>L'Organismo nella stanza · <%= brand %></title>
+<meta name="theme-color" content="#050307">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/public/css/site.css?v=<%= typeof v !== 'undefined' ? v : '1' %>">
+<link rel="stylesheet" href="/public/css/organismo.css?v=<%= typeof v !== "undefined" ? v : "1" %>">
+<script>window.__ORG__ = { phone: true, ar: true, room: "<%= room %>" };</script>
+<!-- motore AR: binario 8th Wall (Niantic Spatial), licenza d'uso limitata — attribuzione in pagina -->
+<script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+</head>
+<body class="vo-body vo-body-ar">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="fw-mark" viewBox="0 0 51.09 59"><g fill="currentColor"><polygon points="51.09 14.75 25.55 59 51.09 44.25 51.09 14.75"/><polygon points="25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5"/><polygon points="25.55 29.5 25.55 59 0 44.25 25.55 29.5"/></g></symbol>
+</svg>
+
+<canvas id="vo-ar-canvas" class="vo-ar-canvas"></canvas>
+<div class="vo-tip" id="vo-tip" hidden></div>
+<div class="vo-say" id="vo-say" role="status" aria-live="polite"></div>
+
+<header class="vo-top">
+  <a class="vo-logo" href="/" aria-label="<%= brand %>"><svg viewBox="0 0 51.09 59" width="18" height="21" aria-hidden="true"><use href="#fw-mark"/></svg><span><%= brand %></span></a>
+  <span class="eyebrow vo-eyebrow"><span class="dot"></span>Nella stanza</span>
+</header>
+
+<div class="vo-arrive" id="vo-arrive">
+  <div>
+    <span class="eyebrow"><span class="dot"></span>Realtà aumentata</span>
+    <h1>L'organismo esce <span class="serif">nella stanza.</span></h1>
+    <p>Serve la fotocamera: apparirà davanti a te, a un metro. Giraci intorno, toccalo: ogni stimolo arriva anche sullo schermo principale.</p>
+    <button type="button" id="vo-arrive-btn">Apri la fotocamera</button>
+    <p class="vo-ar-note">Funziona su iPhone (Safari) e Android (Chrome). Su desktop non c'è la stanza: usa il telefono.</p>
+  </div>
+</div>
+
+<footer class="vo-bottom vo-bottom-phone vo-bottom-ar">
+  <div class="vo-presence" id="vo-presence"></div>
+  <div class="vo-ar-tools">
+    <button type="button" id="vo-ar-recenter" title="Rimettilo davanti a te">Davanti a me</button>
+    <a href="/organismo/telefono?r=<%= room %>">Torna sullo schermo</a>
+  </div>
+  <div class="vo-hint" id="vo-hint">Tocca · trascina per girarlo · muoviti intorno</div>
+  <div class="vo-credit">AR con il motore <a href="https://github.com/8thwall/engine/blob/main/LICENSE" target="_blank" rel="noopener">8th Wall</a> di Niantic Spatial, licenza d'uso limitata</div>
+</footer>
+
+<script type="module" src="/public/js/organismo-ar.js?v=<%= typeof v !== "undefined" ? v : "1" %>"></script>
+</body>
+</html>

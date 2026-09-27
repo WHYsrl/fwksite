@@ -61,13 +61,13 @@ let nextId = 1;
 const send = (c, event, data) => { try { c.res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch { } };
 const broadcast = (event, data, filter) => { for (const c of clients) if (!filter || filter(c)) send(c, event, data); };
 const roomOf = (room) => [...clients].filter(c => c.room === room);
-const presenza = (room) => { const rc = roomOf(room); return { viewers: clients.size, desktops: rc.filter(c => c.role === "desktop").length, phones: rc.filter(c => c.role === "phone").length }; };
+const presenza = (room) => { const rc = roomOf(room); return { viewers: clients.size, desktops: rc.filter(c => c.role === "desktop").length, phones: rc.filter(c => c.role === "phone").length, ar: rc.filter(c => c.role === "phone" && c.ar).length }; };
 
 router.get("/stream", (req, res) => {
-  const room = ROOM.test(String(req.query.r || "")) ? String(req.query.r) : ""; const role = req.query.role === "phone" ? "phone" : "desktop";
+  const room = ROOM.test(String(req.query.r || "")) ? String(req.query.r) : ""; const role = req.query.role === "phone" ? "phone" : "desktop"; const ar = req.query.ar === "1";
   res.set({ "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
   res.flushHeaders();
-  const c = { id: "c" + (nextId++).toString(36) + Math.random().toString(36).slice(2, 6), res, room, role };
+  const c = { id: "c" + (nextId++).toString(36) + Math.random().toString(36).slice(2, 6), res, room, role, ar };
   clients.add(c);
   send(c, "ciao", { id: c.id, ...presenza(room) });
   if (room) broadcast("presenza", presenza(room), x => x.room === room && x !== c);
@@ -123,12 +123,12 @@ router.post("/api/gesto", limiter(300, 60000), (req, res) => { // tocco/trascina
 
 router.get("/api/stato", async (req, res) => { res.set("Cache-Control", "no-store"); res.json(await stato()); });
 
-// ---------- pagine ----------
-const path = require("path"), fs = require("fs"), crypto = require("crypto");
-const OV = (() => { try { const h = crypto.createHash("md5"); ["public/js/organismo.js", "public/css/organismo.css"].forEach(f => h.update(fs.readFileSync(path.join(__dirname, "..", f)))); return h.digest("hex").slice(0, 8); } catch { return Date.now().toString(36); } })();
-const isPhoneUA = (req) => /iPhone|Android.+Mobile|Mobile Safari/i.test(req.get("user-agent") || "");
-const page = (req, res, phone, room) => { res.set("Cache-Control", "no-cache"); res.render("organismo", { phone, room, ov: OV, mobileUA: isPhoneUA(req), site: store.getSetting("site", {}) }); };
-router.get("/", (req, res) => page(req, res, false, ""));
-router.get("/telefono", (req, res) => page(req, res, true, ROOM.test(String(req.query.r || "")) ? String(req.query.r) : ""));
+// ---------- pagine a sé: schermo intero (proiettore / demo), secondo schermo dal QR, AR ----------
+const page = (res, view, data) => { res.set("Cache-Control", "no-cache"); res.render(view, { site: store.getSetting("site", {}), ...data }); };
+const roomOf_ = (req) => (ROOM.test(String(req.query.r || "")) ? String(req.query.r) : "");
+router.get("/", (req, res) => page(res, "organismo", { phone: false, room: "" }));
+router.get("/telefono", (req, res) => page(res, "organismo", { phone: true, room: roomOf_(req) }));
+// nella stanza: AR dal telefono (8th Wall world tracking + three.js), stessa stanza del desktop
+router.get("/ar", (req, res) => page(res, "organismo-ar", { room: roomOf_(req) }));
 
 module.exports = router;
