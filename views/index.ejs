@@ -105,7 +105,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
         <button type="button" data-intro-ask="Cosa fate per il retail?">Retail</button>
         <button type="button" data-intro-ask="Come usate l'AI?">AI</button>
         <button type="button" data-intro-ask="Mostrami le esperienze immersive">Immersivo</button>
-        <button type="button" data-intro-ask="Cosa dice il radar sul DOOH?">DOOH</button>
+        <button type="button" data-intro-ask="Cosa dice il radar oggi?">Radar</button>
       </div>
     </div>
     <section class="intro-step" data-step="3">
@@ -132,7 +132,7 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core">Apri il sistema</button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
       <label class="eyebrow" for="prompt-q"><span class="dot"></span>Chiedi alla Console</label>
-      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · quali visori usate? · che formati servono per il DOOH?"><button type="submit" aria-label="Apri la Console">→</button></div>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="es. cosa fate per il retail? · quali visori usate? · come usate l'AI?"><button type="submit" aria-label="Apri la Console">→</button></div>
     </form>
   </div>
   <div class="hint" aria-hidden="true"><span>trascina i nodi <i></i></span><span>clic per aprire <i></i></span><span>punti chiari = radar, fonti esterne <i></i></span></div>
@@ -158,14 +158,6 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
   </div>
 </section>
 
-<!-- ============================ TRIADE ============================ -->
-<section class="section triad desktop-only" data-tier="all">
-  <div class="eyebrow rv"><span class="dot"></span>Firmitas · Utilitas · Venustas</div>
-  <div class="triad-grid">
-    <% (site.triad || []).forEach((t, i) => { %><div class="triad-item rv" style="--i:<%= i %>"><h3 class="serif"><%= t.la %></h3><p class="k"><%= t.it %></p><p><%= t.text %></p></div><% }) %>
-  </div>
-</section>
-
 <!-- ============================ AREE ============================ -->
 <section class="section desktop-only" id="aree" data-tier="2">
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Aree</div><h2 class="rv">Quattro sistemi, un <span class="serif">organismo.</span></h2></div>
@@ -173,7 +165,8 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
-      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></h3><p><%= c.short %></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(t => { %><span class="tag"><%= t %></span><% }) %></div><span class="cap-more">Casi d'uso e tecnologie →</span></div>
+      <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
+      <div class="cap-body"><div class="eyebrow">Area <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(t => { %><span class="tag"><%= t %></span><% }) %></div><span class="cap-more">Casi d'uso e tecnologie →</span></div>
     </button>
     <% }) %>
   </div>
@@ -305,6 +298,14 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 <section class="section desktop-only" id="contesto" data-tier="10">
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Narrowcasting</div><h2 class="rv">Questa pagina si è composta <span class="serif">per te.</span></h2></div>
   <div class="context"><p class="big" id="context-text"></p><div class="kv" id="context-kv"></div></div>
+</section>
+
+<!-- ============================ TRIADE (in fondo, prima della chiusura) ============================ -->
+<section class="section triad desktop-only" data-tier="all">
+  <div class="eyebrow rv"><span class="dot"></span>Firmitas · Utilitas · Venustas</div>
+  <div class="triad-grid">
+    <% (site.triad || []).forEach((t, i) => { %><div class="triad-item rv" style="--i:<%= i %>"><h3 class="serif"><%= t.la %></h3><p class="k"><%= t.it %></p><p><%= t.text %></p></div><% }) %>
+  </div>
 </section>
 
 <!-- ============================ CHIUSURA + CONTATTI ============================ -->

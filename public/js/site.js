@@ -492,7 +492,8 @@ const App = {
   current: "home", filter: "all",
   render() {
     const app = $("#app"); if (!app) return; const site = DATA.site; const w = Ctx.weather;
-    const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>Area</div><h3>${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</h3><p>${esc(i.short)}</p></button>`;
+    // .mk: in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla)
+    const tile = (i) => `<button class="tile" type="button" data-open="${i.id}"><img src="${media(i.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>Area</div><h3><span class="mk">${i.accent && i.name.includes(i.accent) ? esc(i.name).replace(esc(i.accent), '<span class="serif">' + esc(i.accent) + '</span>') : esc(i.name)}</span></h3><p><span class="mk">${esc(i.short)}</span></p></button>`;
     const wtile = (x) => `<button class="tile work" type="button" data-open="${x.id}"><img src="${media(x.image) || media("/media/monolith.jpg")}" alt="" loading="lazy"><div class="eyebrow"><span class="dot"></span>${esc(x.client)}</div><h3>${esc(x.title)}</h3></button>`;
     const news = (sg, mini) => `<button class="nc ${mini ? "mini" : ""}" type="button" data-open="${sg.id}"><div class="src"><span class="chip ext">Fonte esterna</span><b>${esc(sg.src)}</b><span>${esc(fmtDate(sg.date))}</span></div><h3>“${esc(sg.title)}”</h3>${mini ? "" : `<p>${esc(sg.why)}</p>`}</button>`;
     // le case come post: intestazione col cliente, immagine quadrata, titolo, riga di testo e hashtag dei sistemi
@@ -502,7 +503,7 @@ const App = {
     const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>Chiedi alla Console: cosa fate per…</span></button>`;
     const home = `<section class="screen on" data-screen="home">
       <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.hero_concrete || site.tagline)}</p></div>
-      <div data-m-tier="2">${askBox}<p class="ask-hint">Per esempio: cosa fate per il retail? · quali visori usate? · che formati servono per il DOOH?</p></div>
+      <div data-m-tier="2">${askBox}<p class="ask-hint">Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?</p></div>
       <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? "Le aree del tuo percorso" : "Le quattro aree"}</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
       ${reelsBlock("Reel", `<button type="button" data-tab="lavori">Tutti i lavori</button>`)}
       <div data-m-tier="10" ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
@@ -520,9 +521,9 @@ const App = {
       <div data-m-tier="10"><div class="vo-root vo-mobile" data-organismo="mobile" data-room=""><div class="vo-stage" aria-label="L'organismo: uno solo per tutto il sito"><canvas class="vo-glow" aria-hidden="true"></canvas><canvas class="vo-cv"></canvas><div class="vo-tip" hidden></div><div class="vo-flash" aria-hidden="true"></div></div><div class="vo-say" role="status" aria-live="polite"></div><div class="vo-m-top"><span class="eyebrow"><span class="dot"></span>L'organismo · <span class="vo-lead-m">vivo da —</span></span></div><div class="vo-bottom vo-bottom-phone"><div class="vo-presence"></div><div class="vo-ar-tools"><a class="vo-ar-link" href="/organismo/ar">Portalo nella stanza (AR)</a></div><div class="vo-hint">Tocca · trascina · inclina il telefono</div></div></div><p class="org-caption"><b>È vivo.</b> Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato.</p></div>
       <div><div class="row-head"><h2>Le aree</h2></div><div class="list-cards">${Focus.list(DATA.caps).map(c => `<button class="area-card" type="button" data-open="${c.id}"><img src="${media(c.image) || media("/media/frames.jpg")}" alt="" loading="lazy"><div><div class="eyebrow"><span class="dot"></span>Area</div><h3 style="margin-top:6px">${c.accent && c.name.includes(c.accent) ? esc(c.name).replace(esc(c.accent), '<span class="serif">' + esc(c.accent) + '</span>') : esc(c.name)}</h3><p>${esc(c.short)}</p><div class="tags">${((c.tech && c.tech.length) ? c.tech.slice(0, 5) : c.tags.slice(0, 4)).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><span class="card-more">Casi d'uso e tecnologie →</span></div></button>`).join("")}</div></div>
       ${teamHTML()}
-      <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
       <div class="m-text" data-m-tier="10"><h2>${em(site.tech_title)}</h2><ol class="steps" style="margin-top:14px">${(site.tech || []).map(t => `<li><i>·</i><span><b>${esc(t.k)}</b>${esc(t.text)}</span></li>`).join("")}</ol></div>
       <div class="m-text metodo-m" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>Metodo</div><p>${esc(site.method_intro)}</p><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
+      <div class="triad-m" data-m-tier="10">${(site.triad || []).map(t => `<div><h3>${esc(t.la)}</h3><small>${esc(t.it)}</small><p>${esc(t.text)}</p></div>`).join("")}</div>
       ${contactHTML()}
     </section>`;
     // i reel tematici (stessi del desktop, da /admin/reel): carosello a scorrimento sopra le case
@@ -714,11 +715,11 @@ function resolveIds(list, text) {
    ========================================================= */
 const ConsoleWin = {
   el: $("#cwin"), thread: $("#cwin-thread"), history: [], last: null, busy: false,
-  suggestions: ["Ho fretta: l'essenziale", "Cosa fate per il retail?", "Quali visori usate?", "Che formati servono per il DOOH?", "Come usate l'AI?", "Cosa dice il radar sul DOOH?", "Voglio approfondire tutto"],
+  suggestions: ["Ho fretta: l'essenziale", "Cosa fate per il retail?", "Quali visori usate?", "Quali formati e canali coprite?", "Come usate l'AI?", "Cosa dice il radar oggi?", "Voglio approfondire tutto"],
   open(q) {
     if (!this.el) return;
     this.el.hidden = false; document.body.classList.add("cwin-open");
-    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.${isMobile() ? " Per esempio: cosa fate per il retail, quali visori usate, che formati servono per il DOOH." : ""}</p></div>`; }
+    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.${isMobile() ? " Per esempio: cosa fate per il retail, quali visori usate, come usate l'AI." : ""}</p></div>`; }
     // su mobile niente pillole di suggerimento: vengono scambiate per un menu; gli esempi stanno nel messaggio di benvenuto
     const chips = $("#cwin-chips"); chips.hidden = isMobile(); chips.innerHTML = isMobile() ? "" : this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
     if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
