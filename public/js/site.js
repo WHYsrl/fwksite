@@ -460,7 +460,7 @@ const App = {
     const home = `<section class="screen on" data-screen="home">
       <div class="cover"><img src="${media(site.hero_image_mobile || site.hero_image)}" alt=""><span class="status" id="m-status">On Air${w && w.temp != null ? " · Roma " + w.temp + "° " + labelWeather(w.kind) : ""}</span><div class="greet">${greet()} Siamo Frameworks.</div><h1>${em(site.hero_title)}</h1><p>${esc(site.tagline)}</p></div>
       ${site.hero_concrete ? `<p class="m-concrete" data-m-tier="2"><b>In pratica:</b> ${esc(site.hero_concrete)}</p>` : ""}
-      <div data-m-tier="2">${askBox}<div class="chips"><button type="button" data-tab="console" data-q="Cosa fate per il retail?">Cosa fate per il retail?</button><button type="button" data-tab="console" data-q="Quali visori usate per le esperienze immersive?">Visori e immersivo</button><button type="button" data-tab="console" data-q="Che formati servono per una campagna DOOH?">Formati DOOH</button><button type="button" data-tab="console" data-q="Come usate l'AI?">Come usate l'AI?</button></div></div>
+      <div data-m-tier="2">${askBox}<p class="ask-hint">Per esempio: cosa fate per il retail? · quali visori usate? · che formati servono per il DOOH?</p></div>
       <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? "Le aree del tuo percorso" : "Le quattro aree"}</h2><button type="button" data-tab="sistema">Tutte</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
       <div ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>Lavori</h2><button type="button" data-tab="lavori">Vedi tutti</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
       <div class="m-statement" data-m-tier="10"><h2>${esc((site.statements || [])[0] || "")}</h2></div>
@@ -667,8 +667,9 @@ const ConsoleWin = {
   open(q) {
     if (!this.el) return;
     this.el.hidden = false; document.body.classList.add("cwin-open");
-    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.</p></div>`; }
-    $("#cwin-chips").innerHTML = this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
+    if (!this.thread.children.length) { const pt = Prefs.text(); this.thread.innerHTML = `<div class="msg bot"><span class="who">Console</span><p>${pt ? `Hai scelto ${esc(pt)}: ne tengo conto. ` : ""}Dimmi cosa cerchi${pt ? "" : ", o quanto tempo hai"}: ti propongo un percorso e configuro il sito.${isMobile() ? " Per esempio: cosa fate per il retail, quali visori usate, che formati servono per il DOOH." : ""}</p></div>`; }
+    // su mobile niente pillole di suggerimento: vengono scambiate per un menu; gli esempi stanno nel messaggio di benvenuto
+    const chips = $("#cwin-chips"); chips.hidden = isMobile(); chips.innerHTML = isMobile() ? "" : this.suggestions.map(t => `<button type="button" data-ask="${esc(t)}">${esc(t)}</button>`).join("");
     if (q) this.send(q); else setTimeout(() => $("#cwin-q").focus(), 350);
   },
   close() { if (!this.el) return; this.el.hidden = true; document.body.classList.remove("cwin-open"); },

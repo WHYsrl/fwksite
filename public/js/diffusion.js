@@ -81,11 +81,27 @@ window.Diffusion = (() => {
       const [x0, x1] = span(col), [y0, y1] = span(row);
       const out = { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 }; salCache.set(img, out); return out;
     }
-    // Ritaglio al formato centrato sul soggetto (nessuna estensione: i formati veri li genera il modello)
+    // Bande piatte sopra e sotto (il 32:9 nasce come fascia con bande nere, stile cinemascope): ritorna la fascia utile [y0,y1] in 0..1
+    const barCache = new WeakMap();
+    function bars(img) {
+      if (barCache.has(img)) return barCache.get(img);
+      const W = 96, H = 64; const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"); x.drawImage(img, 0, 0, W, H);
+      const d = x.getImageData(0, 0, W, H).data;
+      const rowStat = (y) => { let r = 0, g = 0, b = 0; for (let i = 0; i < W; i++) { const k = (y * W + i) * 4; r += d[k]; g += d[k + 1]; b += d[k + 2]; } r /= W; g /= W; b /= W; let dev = 0; for (let i = 0; i < W; i++) { const k = (y * W + i) * 4; dev += Math.abs(d[k] - r) + Math.abs(d[k + 1] - g) + Math.abs(d[k + 2] - b); } return { r, g, b, dev: dev / (W * 3) }; };
+      const flat = (s, ref) => s.dev < 7 && Math.abs(s.r - ref.r) + Math.abs(s.g - ref.g) + Math.abs(s.b - ref.b) < 36;
+      const top = rowStat(0), bot = rowStat(H - 1); let y0 = 0, y1 = H;
+      if (top.dev < 7) while (y0 < H && flat(rowStat(y0), top)) y0++;
+      if (bot.dev < 7) while (y1 > y0 && flat(rowStat(y1 - 1), bot)) y1--;
+      // bande vere solo se sono almeno il 6% e lasciano una fascia utile di almeno un quinto
+      const out = (y0 + (H - y1)) >= H * 0.06 && (y1 - y0) >= H * 0.2 ? { y0: y0 / H, y1: y1 / H } : { y0: 0, y1: 1 };
+      barCache.set(img, out); return out;
+    }
+    // Ritaglio al formato centrato sul soggetto, dentro la fascia utile (nessuna estensione: i formati veri li genera il modello)
     function reframe(img, ratio) {
-      const iw = img.naturalWidth || img.width || 512, ih = img.naturalHeight || img.height || 512; const sal = analyze(img);
-      let sw = iw, sh = iw / ratio; if (sh > ih) { sh = ih; sw = ih * ratio; }
-      const sx = Math.min(Math.max(0, sal.cx * iw - sw / 2), iw - sw), sy = Math.min(Math.max(0, sal.cy * ih - sh / 2), ih - sh);
+      const iw = img.naturalWidth || img.width || 512, ih = img.naturalHeight || img.height || 512; const sal = analyze(img), b = bars(img);
+      const by = b.y0 * ih, bh = (b.y1 - b.y0) * ih; // fascia utile
+      let sw = iw, sh = iw / ratio; if (sh > bh) { sh = bh; sw = bh * ratio; } // se la fascia è più bassa del formato si stringe anche in larghezza, mai dentro le bande
+      const sx = Math.min(Math.max(0, sal.cx * iw - sw / 2), iw - sw), sy = Math.min(Math.max(by, sal.cy * ih - sh / 2), by + bh - sh);
       return { sx, sy, sw, sh };
     }
     function drawAdapted(src, fr, ratio) { const r = reframe(src, ratio); ctx.save(); ctx.beginPath(); ctx.rect(fr.x, fr.y, fr.w, fr.h); ctx.clip(); ctx.imageSmoothingEnabled = true; ctx.drawImage(src, r.sx, r.sy, r.sw, r.sh, fr.x, fr.y, fr.w, fr.h); ctx.restore(); }

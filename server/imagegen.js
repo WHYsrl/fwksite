@@ -36,15 +36,25 @@ async function moderate(text, key) {
   } catch { return true; }
 }
 
+// Ogni formato chiede una composizione che riempia il quadro, non un ritaglio: il soggetto cambia posa o disposizione.
+// Il 32:9 nasce su tela 3:2 come fascia centrale con bande nere sopra e sotto (il client le toglie): così il soggetto può davvero occupare tutta la larghezza.
+const FRAMING = {
+  landscape: " Inquadratura orizzontale 16:9: il soggetto è ricomposto per sfruttare la larghezza (disteso, coricato, di profilo, o con più elementi affiancati) e la scena si estende ai lati; nulla di importante nella fascia alta e in quella bassa.",
+  portrait: " Inquadratura verticale 9:16: il soggetto è ricomposto per sfruttare l'altezza (in piedi, eretto, ripreso da vicino dall'alto in basso) e la scena si estende sopra e sotto; nulla di importante ai bordi laterali.",
+  wide: " Formato ultra-panoramico 32:9 per un maxi-schermo (largo quasi quattro volte l'altezza): la fotografia occupa soltanto una fascia orizzontale al centro della tela, alta circa il 40% e larga quanto tutta la tela; sopra e sotto la fascia ci sono bande nere piatte e uniformi, come un cinemascope. Dentro la fascia il soggetto riempie quasi tutta la larghezza: un animale è sdraiato per lungo, un oggetto è coricato o ripreso di profilo da vicino, altrimenti più esemplari in fila; nulla di importante fuori dalla fascia."
+};
 function buildPrompt(subject, mood, frame) {
   const style = STYLE[mood] || STYLE.vivid;
-  const framing = frame === "landscape" ? " Inquadratura orizzontale: il soggetto al centro, la scena e lo sfondo si estendono ai lati."
-    : frame === "portrait" ? " Inquadratura verticale: il soggetto al centro, la scena e lo sfondo si estendono sopra e sotto."
-    : frame === "wide" ? " Composizione panoramica per un maxi-schermo molto largo: il soggetto è piccolo e al centro, occupa al massimo un terzo dell'altezza, con molto spazio di set vuoto ai lati e una fascia orizzontale uniforme; nulla di importante in alto o in basso." : "";
-  return `Fotografia still life di ${subject}: oggetto singolo al centro dell'inquadratura, set da studio, ${style}, superfici lucide e materiali credibili, resa CGI fotorealistica, composizione pulita ed elegante, nessun testo, nessuna scritta, nessuna persona.${framing}`;
+  return `Fotografia still life di ${subject}: ${FRAMING[frame] ? "" : "oggetto singolo al centro dell'inquadratura, "}set da studio, ${style}, superfici lucide e materiali credibili, resa CGI fotorealistica, composizione pulita ed elegante, nessun testo, nessuna scritta, nessuna persona.${FRAMING[frame] || ""}`;
 }
 // Formati che chiedono al modello una ri-inquadratura vera (le dimensioni disponibili sono 3:2 e 2:3)
 const FRAMES = { "16:9": { frame: "landscape", size: "1536x1024" }, "32:9": { frame: "wide", size: "1536x1024" }, "9:16": { frame: "portrait", size: "1024x1536" } };
+// Con l'immagine base come riferimento: stesso soggetto, posa nuova
+const RECOMPOSE = {
+  landscape: "in orizzontale 16:9: lo stesso soggetto in una posa o disposizione che riempie la larghezza (disteso, coricato, di profilo), set esteso ai lati",
+  portrait: "in verticale 9:16: lo stesso soggetto in una posa che riempie l'altezza (in piedi, eretto, da vicino), set esteso sopra e sotto",
+  wide: "in ultra-panoramico 32:9: la fotografia occupa una fascia orizzontale al centro della tela, alta circa il 40% e larga quanto tutta la tela, con bande nere piatte sopra e sotto; nella fascia lo stesso soggetto in una posa che riempie quasi tutta la larghezza (un animale sdraiato per lungo, un oggetto coricato o di profilo da vicino)"
+};
 
 // Genera (o ripesca dalla cache) l'immagine per un soggetto. Ritorna { image: dataURL, subject, model, cached }.
 async function generate({ q, mood, format }) {
@@ -70,8 +80,7 @@ async function generate({ q, mood, format }) {
   if (base && base.image) {
     const fd = new FormData();
     fd.append("image", new Blob([Buffer.from(base.image.split(",")[1], "base64")], { type: "image/jpeg" }), "base.jpg");
-    const how = fr.frame === "landscape" ? "in formato orizzontale: estendi il set e lo sfondo ai lati" : fr.frame === "portrait" ? "in formato verticale: estendi il set e lo sfondo sopra e sotto" : "in una composizione panoramica: l'oggetto molto più piccolo e al centro, ampio spazio di set vuoto ai lati, nulla di importante in alto o in basso";
-    fd.append("model", c.model); fd.append("prompt", `Stesso oggetto e stessa scena dell'immagine di riferimento (identici materiali, colori, luce e stile), ricomposti ${how}. ${prompt}`);
+    fd.append("model", c.model); fd.append("prompt", `Stesso oggetto e stessa scena dell'immagine di riferimento (identici materiali, colori, luce e stile), ricomposti ${RECOMPOSE[fr.frame]}. ${prompt}`);
     fd.append("n", "1"); fd.append("size", size); fd.append("quality", c.quality); fd.append("output_format", "jpeg"); fd.append("output_compression", "82");
     r = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { authorization: `Bearer ${c.key}` }, body: fd });
   } else {
