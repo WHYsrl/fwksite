@@ -14,6 +14,7 @@
   const TAU = Math.PI * 2, DAY = 86400000;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (s, r = document) => r.querySelector(s);
+  const el = (id) => document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
   const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -31,6 +32,7 @@
   const mix = (a, b, k) => [Math.round(lerp(a[0], b[0], k)), Math.round(lerp(a[1], b[1], k)), Math.round(lerp(a[2], b[2], k))];
   const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   const ease = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+  const esc = (s) => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- sprite (punto luminoso) con cache per colore ----------
   const sprites = new Map();
@@ -249,6 +251,53 @@
   org.resize();
 
   const feedTick = (cls) => { const f = document.querySelector(".vo-feed ." + cls); if (!f) return; f.classList.remove("tick"); void f.offsetWidth; f.classList.add("tick"); };
+
+  // ---- didascalie: raccontano cosa lo nutre, una alla volta, in basso; un clic le chiude ----
+  const Say = (() => {
+    const box = el("vo-say"); const q = []; const shown = new Set(); let showing = false, timer = 0, lastHide = -1e9;
+    const render = () => { if (!box || showing || !q.length) return; const m = q.shift(); showing = true; box.innerHTML = `<span class="eyebrow"><span class="dot"></span>${m.k}</span>${m.t}<i class="say-bar" style="animation-duration:${m.ms}ms"></i>`; box.classList.add("on"); timer = setTimeout(hide, m.ms); };
+    const hide = () => { if (!box) return; box.classList.remove("on"); clearTimeout(timer); lastHide = performance.now(); setTimeout(() => { showing = false; render(); }, 650); };
+    if (box) box.addEventListener("click", hide);
+    const push = (k, t, o = {}) => { if (!box) return; if (o.key && q.some(m => m.key === o.key)) return; const m = { k, t, ms: o.ms || 7500, key: o.key }; if (o.front) q.unshift(m); else q.push(m); if (q.length > 4) q.length = 4; render(); };
+    return {
+      push, once(key, k, t, o) { if (shown.has(key)) return; shown.add(key); push(k, t, { ...(o || {}), key }); },
+      idle: () => !showing && !q.length && performance.now() - lastHide > 14000,
+      seq(list, gap, delay) { list.forEach((m, i) => setTimeout(() => push(m.k, m.t, { ms: m.ms || 8000 }), (delay || 0) + i * gap)); return (delay || 0) + list.length * gap; }
+    };
+  })();
+  const weatherSay = (w) => {
+    const k = (w && w.kind) || "unknown", t = w && w.temp != null ? ", " + w.temp + "°" : "";
+    const base = { sun: `Sereno${t}: col sole si espande e il cuore batte più forte.`, cloud: `Nuvoloso${t}: ritmo medio, respira piano.`, rain: `Piove${t}: rallenta, e i rami si afflosciano un po'.`, storm: `Temporale${t}: è agitato, e ogni tanto lampeggia.`, snow: `Neve${t}: quasi fermo.`, night: `È notte${t}: si spegne quasi, e brilla piano.` }[k] || "Meteo non disponibile: va a ritmo medio.";
+    return base + (w && w.wind > 8 ? ` Vento a ${Math.round(w.wind)} km/h: ondeggia.` : "");
+  };
+  const moodsSay = () => { const c = org.moodCounts || {}; return Object.keys(MOOD).filter(k => c[k]).sort((a, b) => c[b] - c[a]).map(k => `${c[k]} ${MOOD[k].name}`).join(" · "); };
+  let introEnd = 0;
+  function intro() {
+    const days = Math.max(1, Math.ceil((org.now - org.born) / DAY)); const last = org.signals[org.signals.length - 1]; const w = stato.weather || {};
+    const list = [
+      { k: "Un solo organismo", t: `È lo stesso per chiunque apra questa pagina. Vive da <b>${days === 1 ? "un giorno" : days + " giorni"}</b> e non lo accudisce nessuno: lo nutre il mondo.` },
+      { k: "Il Radar lo nutre", t: `Ogni notizia che il Radar pubblica diventa un nodo, nel settore del suo sistema. Finora ne ha assimilate <b>${(stato.totals.signals || 0).toLocaleString("it-IT")}</b>${last ? `; l'ultima: «${esc(last.title)}».` : "."}` },
+      { k: "Il meteo di Roma", t: weatherSay(w) + " Il meteo decide il ritmo." },
+      { k: "Gli umori", t: org.moodN ? `I visitatori hanno dichiarato: ${moodsSay()}. I colori sono la loro media. Dichiara il tuo, in alto a destra.` : "Nessun visitatore ha ancora dichiarato un umore: i colori sono quelli di base. Dichiara il tuo, in alto a destra: entra nel suo temperamento." },
+      { k: "Gli stimoli", t: `Clic e tocchi lasciano un nodo bianco che resta per tutti: finora <b>${stato.totals.stimoli || 0}</b>. Clicca nel vuoto per lasciare il tuo; clicca un nodo per sapere da quale notizia è nato.` },
+      { k: "Continua sul telefono", t: "Inquadra il QR: l'organismo passa sul telefono, riconfigurato in verticale, e i due schermi restano collegati." }
+    ];
+    introEnd = performance.now() + Say.seq(list, 9200, 2500);
+  }
+  const AMBIENT = [
+    () => "Gli impulsi corrono dal cuore verso i rami: è il contenuto che viaggia tra i touchpoint.",
+    () => `I nodi più vecchi finiscono nel cuore: ne ha già assimilati <b>${org.assimilated}</b>.`,
+    () => `Batte a circa <b>${Math.round(46 + 34 * org.weather.energy)}</b> al minuto: il ritmo lo decide il meteo.`,
+    () => "Le stesse posizioni valgono in 16:9 e in 9:16: si riconfigura per costruzione, non per ritaglio.",
+    () => "Alto: Content System · destra: Activation System · basso: Spatial Experiences · sinistra: Adaptive Media.",
+    () => (org.now - org.born > DAY ? "Cresce di giorno in giorno: trascina «Com'era» per vederlo com'era." : "È il suo primo giorno: da domani «Com'era» mostrerà come cresce.")
+  ];
+  let lastAmbient = -1;
+  setInterval(() => {
+    if (PHONE || !stato || performance.now() < introEnd || !Say.idle() || Math.random() > .4 || org.until !== Infinity) return;
+    let i; do { i = Math.floor(Math.random() * AMBIENT.length); } while (i === lastAmbient); lastAmbient = i;
+    Say.push("L'organismo", AMBIENT[i](), { ms: 7000 });
+  }, 12000);
   const mood = { get() { try { const m = sessionStorage.getItem("fw.mood"); return MOOD[m] ? m : null; } catch { return null; } }, set(m) { try { sessionStorage.setItem("fw.mood", m); } catch { } } };
   const applyMood = (m) => { document.documentElement.dataset.mood = m || "vivid"; document.querySelectorAll(".vo-mood [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === m)); org.temperament(); };
   applyMood(mood.get());
@@ -259,14 +308,19 @@
     try {
       const r = await fetch("/organismo/api/stato", { cache: "no-store" }); const prev = stato; stato = await r.json(); org.setStato(stato);
       document.documentElement.dataset.weather = (stato.weather && stato.weather.kind) || "unknown"; hud(); timeline(); start();
-      if (prev && stato.totals.signals > prev.totals.signals) feedTick("f-radar"); // il Radar ha mangiato
+      if (!prev) { if (!PHONE) intro(); return; }
+      if (stato.totals.signals > prev.totals.signals) { // il Radar ha mangiato
+        feedTick("f-radar"); const n = stato.totals.signals - prev.totals.signals; const last = org.signals[org.signals.length - 1];
+        Say.push("Il Radar ha appena mangiato", `<b>${n}</b> ${n === 1 ? "notizia nuova" : "notizie nuove"} in questo giro${last ? `; l'ultima: «${esc(last.title)}» (${esc(last.src)})` : ""}. ${n === 1 ? "Un nodo nuovo" : "Nodi nuovi"} in superficie.`, { key: "radar", front: true });
+      }
+      const wk = (k) => (k && k.weather && k.weather.kind) || "unknown";
+      if (wk(stato) !== wk(prev)) Say.push("A Roma è cambiato il tempo", weatherSay(stato.weather), { key: "meteo", front: true });
     }
     catch (e) { console.warn("Organismo: stato non disponibile", e); }
   }
   carica(); setInterval(() => { if (org.until === Infinity) carica(); }, 180000);
 
   // ---- HUD (desktop) ----
-  const el = (id) => document.getElementById(id);
   function hud() {
     if (!stato) return; const past = org.until !== Infinity; const ref = past ? org.until : org.now; const days = Math.max(1, Math.ceil((ref - org.born) / DAY));
     const lead = el("vo-lead"); if (lead) lead.innerHTML = past ? `Così era <b>${days === 1 ? "il primo giorno" : "a " + days + " giorni"}</b>, il ${fmtDay(ref)}. Nato il ${fmtDay(org.born)}.` : `Questo è vivo da <b>${days === 1 ? "un giorno" : days + " giorni"}</b>, dal ${fmtDay(org.born)}. Non lo accudisce nessuno: lo nutre il mondo.`;
@@ -282,12 +336,14 @@
     const box = el("vo-presence"); if (!box || !p) return;
     if (PHONE) { box.innerHTML = p.desktops ? `<b>Collegato</b> allo schermo principale` : `Schermo principale <b>non trovato</b>: vive lo stesso`; return; }
     const v = p.viewers || 1; box.innerHTML = v <= 1 ? `Adesso lo guardi <b>solo tu</b>` : `<b>${v}</b> persone lo guardano adesso`;
+    if (v > 1) Say.once("non-solo", "Non sei solo", `<b>${v}</b> persone lo guardano in questo momento, ognuna dal suo schermo: ogni stimolo lo vedete tutti.`);
   }
 
   // ---- timeline (desktop) ----
   const tl = el("vo-tl"), tlLabel = el("vo-tl-label"), tlToday = el("vo-tl-today");
   function timeline() {
     if (!tl) return; const days = Math.max(0, Math.floor((org.now - org.born) / DAY)); tl.max = days; if (org.until === Infinity) tl.value = days;
+    tl.disabled = days === 0; tl.closest(".vo-tl").style.opacity = days === 0 ? .45 : 1; if (days === 0 && tlLabel) tlLabel.textContent = "Oggi · il primo giorno";
   }
   if (tl) {
     const startOf = (ms) => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
@@ -296,6 +352,7 @@
       if (v >= days) { org.setUntil(Infinity); hud(); tlLabel.textContent = "Oggi"; tlToday.hidden = true; return; }
       const until = Math.min(org.now, startOf(org.born) + (v + 1) * DAY - 1); org.setUntil(until); hud();
       tlLabel.textContent = `${days - v} ${days - v === 1 ? "giorno" : "giorni"} fa · ${fmtDay(until)}`; tlToday.hidden = false;
+      Say.once("comera", "Com'era", "La storia si ricostruisce dagli eventi: le notizie, gli umori e gli stimoli fino a quel giorno. Più è giovane, più è piccolo.", { front: true });
     });
     tl.addEventListener("change", () => { if (+tl.value >= +tl.max) hud(); });
     tlToday.addEventListener("click", () => { tl.value = tl.max; tl.dispatchEvent(new Event("input")); });
@@ -306,19 +363,26 @@
     const m = b.dataset.mood; mood.set(m); applyMood(m);
     let sent = false; try { sent = sessionStorage.getItem("vo.umore") === "1"; } catch { }
     if (!sent) { try { sessionStorage.setItem("vo.umore", "1"); } catch { } await post("umore", { mood: m }); org.addUmore(m); hud(); feedTick("f-mood"); }
+    Say.once("umore-mio", "Il tuo umore", `«${MOOD[m].name}» entra nel temperamento: i colori dell'organismo sono la media di tutti gli umori dichiarati (${moodsSay() || "il tuo è il primo"}). La pagina invece segue solo te.`, { front: true });
   }));
 
   // ---- puntatore: curiosità, trascinamento, clic ----
-  const tip = el("vo-tip"); let press = null, tipNode = null;
+  const tip = el("vo-tip"); let press = null, tipNode = null, tipTimer = 0;
   const pt = (e) => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  const showTip = (n) => {
-    if (!tip || !n) return; tipNode = n;
-    if (n.kind === "sig") { const s = n.sig; tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>Nodo · ${n.free ? "senza settore" : SECTOR_NAME[n.sec]}</span><b>${s.title}</b><small>${s.src || ""}${s.date ? " · " + fmtDate(s.date) : ""}${s.score ? " · rilevanza " + s.score : ""}</small>`; }
-    else { tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>Stimolo</span><b>Qualcuno ha toccato qui</b><small>${fmtDate(n.stim.t)}${n.stim.src === "phone" ? " · dal telefono" : ""}${n.stim.mood ? " · umore " + MOOD[n.stim.mood].name : ""}</small>`; }
-    tip.hidden = false;
+  // il descrittore del nodo: da che notizia è nato (o chi lo ha toccato); `remote` = aperto dall'altro schermo
+  const showTip = (n, remote) => {
+    if (!tip || !n) return; tipNode = n; clearTimeout(tipTimer);
+    if (n.kind === "sig") { const s = n.sig; tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${remote ? (PHONE ? "Dallo schermo principale" : "Dal telefono") + " · " : ""}Radar${n.free ? "" : " · " + SECTOR_NAME[n.sec]}</span><b>${esc(s.title)}</b><small>${esc(s.src)}${s.date ? " · " + fmtDate(s.date) : ""}${s.score ? " · rilevanza " + s.score : ""}</small>`; }
+    else { tip.innerHTML = `<span class="eyebrow"><span class="dot"></span>${remote ? (PHONE ? "Dallo schermo principale" : "Dal telefono") + " · " : ""}Stimolo</span><b>Qualcuno ha toccato qui</b><small>${fmtDate(n.stim.t)}${n.stim.src === "phone" ? " · dal telefono" : ""}${n.stim.mood && MOOD[n.stim.mood] ? " · umore " + MOOD[n.stim.mood].name : ""}</small>`; }
+    tip.classList.toggle("remote", !!remote); tip.hidden = false; n.flash = 1;
+    if (remote) tipTimer = setTimeout(hideTip, 9000);
   };
-  const hideTip = () => { if (tip) tip.hidden = true; tipNode = null; };
-  org.onTick = () => { if (tipNode && tip && !tip.hidden) { if (tipNode.dying) return hideTip(); tip.style.left = tipNode.x + "px"; tip.style.top = tipNode.y + "px"; } };
+  const hideTip = () => { if (tip) tip.hidden = true; tipNode = null; clearTimeout(tipTimer); };
+  org.onTick = () => {
+    if (!(tipNode && tip && !tip.hidden)) return; if (tipNode.dying) return hideTip();
+    const m = 150, x = clamp(tipNode.x, m, org.W - m), below = tipNode.y < 140; // resta dentro lo schermo; vicino al bordo alto va sotto il nodo
+    tip.style.left = x + "px"; tip.style.top = tipNode.y + "px"; tip.style.setProperty("--ax", (50 + (tipNode.x - x) / (tip.offsetWidth || 1) * 100).toFixed(1) + "%"); tip.classList.toggle("below", below);
+  };
   let lastGesto = 0;
   stage.addEventListener("pointerdown", e => { const p = pt(e); press = { x: p.x, y: p.y, moved: false, t: performance.now() }; org.pointer = { x: p.x, y: p.y, drag: false }; try { stage.setPointerCapture(e.pointerId); } catch { } e.preventDefault(); });
   stage.addEventListener("pointermove", e => {
@@ -331,12 +395,13 @@
     if (!press) return; const p = pt(e);
     if (!press.moved) {
       const n = org.nodeAt(p.x, p.y);
-      if (n) { n.flash = 1; showTip(n); }
+      if (n) { showTip(n, false); if (room) post("gesto", { kind: "nodo", id: n.id }); } // il descrittore si apre anche sull'altro schermo
       else {
         hideTip(); const u = org.unmap(p.x, p.y); const m = mood.get() || ""; org.shock(p.x, p.y, 1);
         const local = org.addStimolo({ a: u.a, r: u.r, mood: m, src: PHONE ? "phone" : "desktop", t: new Date().toISOString() });
         if (stato) { stato.totals.stimoli = (stato.totals.stimoli || 0) + 1; hud(); feedTick("f-stim"); }
         post("stimolo", { a: u.a, r: u.r, mood: m }).then(res => { if (res && res.t) org.retime(local, res.t); });
+        Say.once("stimolo-mio", "Il tuo stimolo", PHONE ? "È arrivato anche sullo schermo principale, e resta: lo vedrà chiunque lo guardi." : "Resta: lo vedrà chiunque lo guardi, da qualsiasi schermo. Clicca un nodo per sapere da quale notizia è nato.");
       }
     } else if (room) post("gesto", { kind: "up" });
     press = null; if (e.pointerType !== "mouse") org.pointer = null; else org.pointer = { x: p.x, y: p.y, drag: false };
@@ -362,21 +427,25 @@
       const d = J(e); if (!d || d.from === me) return;
       org.addStimolo(d); const p = org.map(d.a, d.r); org.shock(p.x, p.y, .8);
       if (stato) { stato.totals.stimoli = (stato.totals.stimoli || 0) + 1; hud(); feedTick("f-stim"); }
-      if (!PHONE && d.room === room && d.src === "phone") { org.tendril = 1; org.tendrilDir = -1; }
+      const mine = d.room === room && d.room;
+      if (!PHONE && mine && d.src === "phone") { org.tendril = 1; org.tendrilDir = -1; }
+      Say.push("Uno stimolo adesso", mine ? (PHONE ? "Dallo schermo principale: è arrivato anche qui, e resta." : "Dal telefono collegato: è arrivato qui lungo il filamento, e resta.") : "Qualcuno, da un altro schermo, l'ha appena toccato: il nodo resta anche per te.", { key: "stim-remote", ms: 5500 });
     });
-    es.addEventListener("umore", e => { const d = J(e); if (!d) return; org.addUmore(d.mood); hud(); feedTick("f-mood"); });
+    es.addEventListener("umore", e => { const d = J(e); if (!d || d.from === me) return; org.addUmore(d.mood); hud(); feedTick("f-mood"); if (MOOD[d.mood]) Say.push("Un umore nuovo", `Un visitatore si è dichiarato «${MOOD[d.mood].name}»: entra nella media dei colori.`, { key: "umore-remote", ms: 6000 }); });
     es.addEventListener("tilt", e => { const d = J(e); if (!d || d.from === me) return; org.setTilt(d.gx, d.gy); });
     es.addEventListener("gesto", e => {
       const d = J(e); if (!d || d.from === me) return;
-      if (d.kind === "up") org.ghost = null; else { const a = Math.atan2(d.y, d.x), r = Math.hypot(d.x, d.y); const p = org.map(a, r); org.ghost = { x: p.x, y: p.y, drag: true }; }
+      if (d.kind === "up") org.ghost = null;
+      else if (d.kind === "nodo") { const n = org.nodes.get(d.id); if (n && !n.dying) showTip(n, true); }
+      else { const a = Math.atan2(d.y, d.x), r = Math.hypot(d.x, d.y); const p = org.map(a, r); org.ghost = { x: p.x, y: p.y, drag: true }; }
     });
   }
   let phoneOn = false;
   function phoneState(on, silent) {
     const q = el("vo-qr"); if (!q) return; if (on === phoneOn) return; phoneOn = on;
     q.classList.toggle("on", on); q.querySelector(".vo-qr-on").hidden = !on; org.phoneOn = on;
-    if (on) { org.tendril = 1.6; org.tendrilDir = 1; if (!silent) org.shock(org.anchor ? org.anchor.x : org.cx, org.anchor ? org.anchor.y : org.cy, 1.2); }
-    else org.ghost = null;
+    if (on) { org.tendril = 1.6; org.tendrilDir = 1; if (!silent) { org.shock(org.anchor ? org.anchor.x : org.cx, org.anchor ? org.anchor.y : org.cy, 1.2); Say.push("Telefono collegato", "Lo stesso organismo, riconfigurato in verticale sul telefono. Inclinalo: si sposta anche qui. Toccalo: lascia uno stimolo su entrambi gli schermi. Tocca un nodo di là: la sua notizia si apre qui.", { key: "tel-on", front: true, ms: 9000 }); } }
+    else { org.ghost = null; if (!silent) Say.push("Telefono scollegato", "L'organismo resta com'è: gli stimoli lasciati dal telefono sono rimasti.", { key: "tel-off", ms: 5500 }); }
   }
 
   // ---- QR (desktop) ----
@@ -409,6 +478,10 @@
       // arrivo: l'organismo entra dall'alto e si dispone in verticale
       org.arrive = 2; for (const n of org.list) { n.x = org.cx + (Math.random() - .5) * org.W * .5; n.y = -30 - Math.random() * 160; n.age = -Math.random() * .8; n.scale = 0; }
       connect(); start();
+      Say.seq([
+        { k: "È passato qui", t: "Lo stesso organismo dello schermo principale, riconfigurato in verticale. Inclina il telefono: lo sente anche di là." },
+        { k: "Tocca e trascina", t: "Un tocco lascia uno stimolo su entrambi gli schermi. Un nodo toccato apre la sua notizia anche di là." }
+      ], 8500, 2500);
     };
     btn.addEventListener("click", arm);
   } else connect();

@@ -105,7 +105,7 @@ router.post("/api/stimolo", limiter(40, 60000), (req, res) => {
 router.post("/api/umore", limiter(10, 60000), (req, res) => {
   const mood = MOODS.includes((req.body || {}).mood) ? req.body.mood : null; if (!mood) return res.status(400).json({ error: "Umore non valido" });
   db.prepare("INSERT INTO organismo_events(kind,mood) VALUES('umore',?)").run(mood);
-  broadcast("umore", { mood, t: new Date().toISOString() });
+  broadcast("umore", { mood, t: new Date().toISOString(), from: String((req.body || {}).from || "").slice(0, 16) });
   res.json({ ok: true });
 });
 router.post("/api/tilt", limiter(900, 60000), (req, res) => { // effimero: solo alla stanza, mai salvato
@@ -117,7 +117,7 @@ router.post("/api/tilt", limiter(900, 60000), (req, res) => { // effimero: solo 
 router.post("/api/gesto", limiter(300, 60000), (req, res) => { // tocco/trascinamento effimero (senza stimolo salvato): solo alla stanza
   const b = req.body || {}; const room = ROOM.test(String(b.room || "")) ? b.room : "";
   if (!room) return res.status(400).json({ error: "Stanza mancante" });
-  broadcast("gesto", { kind: String(b.kind || "").slice(0, 12), x: num(b.x, -1.5, 1.5), y: num(b.y, -1.5, 1.5), from: String(b.from || "").slice(0, 16) }, c => c.room === room);
+  broadcast("gesto", { kind: String(b.kind || "").slice(0, 12), x: num(b.x, -1.5, 1.5), y: num(b.y, -1.5, 1.5), id: String(b.id || "").slice(0, 80), from: String(b.from || "").slice(0, 16) }, c => c.room === room);
   res.json({ ok: true });
 });
 
