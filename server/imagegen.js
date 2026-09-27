@@ -40,10 +40,10 @@ async function moderate(text, key) {
 // Il 32:9 nasce su tela 3:2 come fascia centrale con bande nere sopra e sotto (il client le toglie): così il soggetto può davvero occupare tutta la larghezza.
 // Area sicura: il soggetto intero, mai a contatto con i bordi. Ogni formato nasce sulla tela 3:2 o 2:3 come riquadro esatto con bande nere
 // (letterbox/pillarbox) che il client toglie: così il modello compone davvero nel formato finale e nulla viene ritagliato.
-const SAFE = " Il soggetto è intero e interamente visibile, dentro un'area sicura al centro della fotografia: nessuna sua parte tocca o esce dai bordi della fotografia, e intorno resta un margine libero di almeno un decimo.";
+const SAFE = " Il soggetto è intero e interamente visibile, dentro un'area sicura al centro della fotografia: nessuna sua parte tocca o esce dai bordi della fotografia, e intorno resta un margine libero di almeno un decimo. Proporzioni naturali e realistiche del soggetto, mai allungato, schiacciato o deformato per adattarlo al formato: per riempire il quadro si cambia posa, distanza o si estende il set, non le proporzioni.";
 const FRAMING = {
   landscape: " La fotografia è in formato 16:9 e occupa la tela per tutta la larghezza, con due sottili bande nere piatte e uniformi sopra e sotto (circa l'8% dell'altezza ciascuna). Composizione orizzontale: il soggetto è ricomposto per sfruttare la larghezza (disteso, coricato, di profilo, o con più elementi affiancati) e la scena si estende ai lati." + SAFE,
-  portrait: " La fotografia è in formato verticale 9:16 e occupa la tela per tutta l'altezza, con due sottili bande nere piatte e uniformi a sinistra e a destra (circa l'8% della larghezza ciascuna). Composizione verticale: il soggetto è ricomposto per sfruttare l'altezza (in piedi, eretto, ripreso da vicino) e la scena si estende sopra e sotto." + SAFE,
+  portrait: " La fotografia è in formato verticale 9:16 e occupa la tela per tutta l'altezza, con due sottili bande nere piatte e uniformi a sinistra e a destra (circa l'8% della larghezza ciascuna). Composizione verticale: il soggetto, nelle sue proporzioni naturali, è ripreso da più vicino o in una posa che si sviluppa in altezza (in piedi, eretto), e il set si estende sopra e sotto di lui." + SAFE,
   wide: " Formato ultra-panoramico 32:9 per un maxi-schermo (largo quasi quattro volte l'altezza): la fotografia occupa soltanto una fascia orizzontale al centro della tela, alta circa il 45% e larga quanto tutta la tela; sopra e sotto la fascia ci sono bande nere piatte e uniformi, come un cinemascope. Dentro la fascia il soggetto riempie quasi tutta la larghezza: un animale è sdraiato per lungo, un oggetto è coricato o ripreso di profilo da vicino, altrimenti più esemplari in fila; nulla di importante fuori dalla fascia." + SAFE
 };
 function buildPrompt(subject, mood, frame) {
@@ -55,7 +55,7 @@ const FRAMES = { "16:9": { frame: "landscape", size: "1536x1024" }, "32:9": { fr
 // Con l'immagine base come riferimento: stesso soggetto, posa nuova
 const RECOMPOSE = {
   landscape: "in orizzontale 16:9 (fotografia larga quanto la tela, con sottili bande nere sopra e sotto): lo stesso soggetto in una posa o disposizione che riempie la larghezza (disteso, coricato, di profilo), set esteso ai lati, soggetto intero e lontano dai bordi",
-  portrait: "in verticale 9:16 (fotografia alta quanto la tela, con sottili bande nere a sinistra e a destra): lo stesso soggetto in una posa che riempie l'altezza (in piedi, eretto, da vicino), set esteso sopra e sotto, soggetto intero e lontano dai bordi",
+  portrait: "in verticale 9:16 (fotografia alta quanto la tela, con sottili bande nere a sinistra e a destra): lo stesso soggetto nelle sue proporzioni naturali (mai allungato), ripreso da più vicino o in una posa che si sviluppa in altezza (in piedi, eretto), set esteso sopra e sotto, soggetto intero e lontano dai bordi",
   wide: "in ultra-panoramico 32:9: la fotografia occupa una fascia orizzontale al centro della tela, alta circa il 45% e larga quanto tutta la tela, con bande nere piatte sopra e sotto; nella fascia lo stesso soggetto in una posa che riempie quasi tutta la larghezza (un animale sdraiato per lungo, un oggetto coricato o di profilo da vicino), intero e lontano dalle bande e dai bordi"
 };
 

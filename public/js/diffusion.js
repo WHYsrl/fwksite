@@ -75,9 +75,9 @@ window.Diffusion = (() => {
       br /= bn; bg /= bn; bb /= bn;
       const w = new Float32Array(S * S); let tot = 0;
       for (let y = 1; y < S - 1; y++) for (let xq = 1; xq < S - 1; xq++) { const i = y * S + xq; const e = Math.abs(lum[i + 1] - lum[i - 1]) + Math.abs(lum[i + S] - lum[i - S]); const cd = (Math.abs(d[i * 4] - br) + Math.abs(d[i * 4 + 1] - bg) + Math.abs(d[i * 4 + 2] - bb)) / 3; const v = e * 1.2 + cd * 0.8; w[i] = v; tot += v; }
-      // riquadro che contiene il 90% dell'interesse, per righe e colonne
+      // riquadro che contiene il 96% dell'interesse, per righe e colonne (le estremità sottili, come le orecchie, pesano poco)
       const col = new Float32Array(S), row = new Float32Array(S); for (let y = 0; y < S; y++) for (let xq = 0; xq < S; xq++) { col[xq] += w[y * S + xq]; row[y] += w[y * S + xq]; }
-      const span = (arr) => { let lo = 0, hi = S - 1, acc = 0; const cut = tot * 0.05; while (lo < S - 1 && acc + arr[lo] < cut) { acc += arr[lo]; lo++; } acc = 0; while (hi > lo && acc + arr[hi] < cut) { acc += arr[hi]; hi--; } return [lo / S, (hi + 1) / S]; };
+      const span = (arr) => { let lo = 0, hi = S - 1, acc = 0; const cut = tot * 0.02; while (lo < S - 1 && acc + arr[lo] < cut) { acc += arr[lo]; lo++; } acc = 0; while (hi > lo && acc + arr[hi] < cut) { acc += arr[hi]; hi--; } return [lo / S, (hi + 1) / S]; };
       const [x0, x1] = span(col), [y0, y1] = span(row);
       const X = (v) => bx.x0 + v * (bx.x1 - bx.x0), Y = (v) => bx.y0 + v * (bx.y1 - bx.y0); // coordinate riportate all'immagine intera
       const out = { x0: X(x0), y0: Y(y0), x1: X(x1), y1: Y(y1), cx: X((x0 + x1) / 2), cy: Y((y0 + y1) / 2) }; salCache.set(img, out); return out;
@@ -106,12 +106,12 @@ window.Diffusion = (() => {
       const bx = b.x0 * iw, by = b.y0 * ih, bw = (b.x1 - b.x0) * iw, bh = (b.y1 - b.y0) * ih; // area utile
       let sw = bw, sh = bw / ratio; if (sh > bh) { sh = bh; sw = bh * ratio; }
       // riquadro del soggetto con un piccolo margine (area sicura); il ritaglio si sposta per contenerlo, se ci sta
-      const m = 0.03, kx0 = Math.max(bx, (sal.x0 - m) * iw), kx1 = Math.min(bx + bw, (sal.x1 + m) * iw), ky0 = Math.max(by, (sal.y0 - m) * ih), ky1 = Math.min(by + bh, (sal.y1 + m) * ih);
+      const m = 0.04, kx0 = Math.max(bx, (sal.x0 - m) * iw), kx1 = Math.min(bx + bw, (sal.x1 + m) * iw), ky0 = Math.max(by, (sal.y0 - m) * ih), ky1 = Math.min(by + bh, (sal.y1 + m) * ih);
       let sx = sal.cx * iw - sw / 2, sy = sal.cy * ih - sh / 2;
       if (kx1 - kx0 <= sw) sx = Math.min(Math.max(sx, kx1 - sw), kx0);
       else if (sal.x0 < b.x0 + .06 && sal.x1 < b.x1 - .06) sx = bx; else if (sal.x1 > b.x1 - .06 && sal.x0 > b.x0 + .06) sx = bx + bw - sw; // non ci sta: si tiene il lato dove il soggetto tocca già il bordo
       if (ky1 - ky0 <= sh) sy = Math.min(Math.max(sy, ky1 - sh), ky0);
-      else if (sal.y0 < b.y0 + .06 && sal.y1 < b.y1 - .06) sy = by; else if (sal.y1 > b.y1 - .06 && sal.y0 > b.y0 + .06) sy = by + bh - sh;
+      else sy = (sal.y1 > b.y1 - .06 && sal.y0 > b.y0 + .06) ? by + bh - sh : ky0; // non ci sta in altezza: si tiene la parte alta (teste, orecchie), si sacrificano pavimento e riflessi; se il soggetto tocca solo il fondo, il fondo
       sx = Math.min(Math.max(bx, sx), bx + bw - sw); sy = Math.min(Math.max(by, sy), by + bh - sh);
       return { sx, sy, sw, sh };
     }
