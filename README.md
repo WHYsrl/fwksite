@@ -47,7 +47,7 @@ Il backoffice è organizzato come un CMS: a sinistra i gruppi (Sito, Collezioni,
 1. Crea una chiave API su https://console.anthropic.com (Anthropic) oppure https://platform.openai.com (OpenAI).
 2. Mettila in `.env` come `ANTHROPIC_API_KEY=...` (o `OPENAI_API_KEY=...`) **oppure** incollala in `/admin/ai`.
 3. In `/admin/ai` scegli il provider attivo e premi "Salva e prova la connessione".
-4. Da quel momento sul sito compaiono la barra "Chiedi alla Console" (desktop e mobile) e il pannello "Adatta al tuo contesto" nei lavori e nelle aree; il Radar inizia a classificare le notizie.
+4. Da quel momento sul sito compaiono la barra "Chiedi alla Console" (desktop e mobile) e il Radar inizia a classificare le notizie. Il pannello "Adatta al tuo contesto" (tre idee) nelle schede dei lavori e delle aree è spento di serie: si accende in Contenuti → Lavori («Scheda del lavoro») e Contenuti → Servizi («Scheda dell'area»), oltre che qui.
 
 Costi sotto controllo: le risposte uguali sono in cache (Console 24 ore, Adatta 7 giorni), limite di 20 richieste al minuto per visitatore e limite giornaliero impostabile.
 

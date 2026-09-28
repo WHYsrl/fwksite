@@ -15,7 +15,7 @@
   <section class="card">
     <h2>Funzioni</h2>
     <label class="check"><input type="checkbox" name="console_enabled" <%= ai.console_enabled ? 'checked' : '' %>> Console prompt (navigazione in linguaggio naturale)</label>
-    <label class="check"><input type="checkbox" name="adapt_enabled" <%= ai.adapt_enabled ? 'checked' : '' %>> "Adatta al tuo contesto" (riscrittura di lavori e aree)</label>
+    <label class="check"><input type="checkbox" name="adapt_enabled" <%= ai.adapt_enabled ? 'checked' : '' %>> "Adatta al tuo contesto" (tre idee per il visitatore nelle schede di lavori e aree) <small class="muted">— il form compare solo se è acceso anche in Contenuti → <a href="/admin/contenuti/lavori">Lavori</a> / <a href="/admin/contenuti/servizi">Servizi</a></small></label>
     <label class="check"><input type="checkbox" name="radar_enabled" <%= ai.radar_enabled ? 'checked' : '' %>> Radar: classificazione e bozza della lettura</label>
     <label>Limite chiamate al giorno <input name="daily_call_limit" type="number" value="<%= ai.daily_call_limit %>"></label>
     <h2 style="margin-top:18px">Denoise · immagini</h2>

@@ -90,6 +90,8 @@ const SECTIONS = [
       { key: "areas_home_title", label: "Titolo del carosello in Home", def: "I nostri servizi" },
       { key: "m_all_areas", label: "Rimando accanto al titolo (porta all'elenco)", def: "Tutte" },
       { key: "areas_list_title", label: "Titolo dell'elenco in Sistema", def: "Le aree" },
+      { group: "Scheda dell'area", hint: "Cosa compare quando si apre un'area (pannello laterale su desktop, scheda su mobile)." },
+      { key: "adapt_caps", label: "Form «Adatta al tuo contesto» (tre idee dalla Console)", hint: "Il visitatore scrive settore, canale e obiettivo e la Console risponde con tre idee. Compare in fondo alla scheda, dopo casi d'uso e tecnologie. Serve l'AI accesa in Console e AI → «Adatta al tuo contesto».", type: "check", on: "Mostra il form nella scheda dell'area", def: false },
       { group: "Versione breve" },
       { key: "areas_brief_intro", optional: true, label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: per ciascuna il nome, la sintesi, tre esempi concreti (i primi casi d'uso della scheda) e le tecnologie, senza rimandi alle schede. Questo testo sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo.", def: "Quattro sistemi, un solo organismo: contenuti che si declinano in ogni formato, attivazioni che reagiscono a chi passa, esperienze che escono dallo schermo, media che si adattano con l'AI. In breve, cosa facciamo in ciascuna area." }
     ]
@@ -111,7 +113,7 @@ const SECTIONS = [
     fields: [
       { group: "Solo desktop" },
       { key: "works_label", label: "Etichetta", def: "Lavori" },
-      { key: "works_text", optional: true, label: "Sottotitolo", em: true, def: "Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova." },
+      { key: "works_text", optional: true, label: "Sottotitolo", em: true, def: "Una selezione. Apri un lavoro per vedere <em>come è fatto</em>." },
       { group: "Desktop e mobile" },
       { key: "works_title", label: "Titolo", em: true, hint: "Su mobile è il titolo della schermata Lavori.", def: "Organismi in <em>azione.</em>" },
       { key: "works_all", label: "Filtro «tutti»", def: "Tutti" },
@@ -119,7 +121,9 @@ const SECTIONS = [
       { group: "Solo mobile", hint: "La fila dei lavori in Home e la nota in fondo alla schermata Lavori." },
       { key: "m_works_title", label: "Titolo della fila in Home", from: "works_label", hint: "Vuoto = come l'etichetta desktop.", def: "Lavori" },
       { key: "m_see_all", label: "Rimando accanto al titolo (porta alla schermata Lavori)", def: "Vedi tutti" },
-      { key: "m_works_hint", optional: true, label: "Nota in fondo alla schermata Lavori", def: "Tocca un lavoro per aprirlo e adattarlo al tuo contesto" }
+      { key: "m_works_hint", optional: true, label: "Nota in fondo alla schermata Lavori", def: "Tocca un lavoro per aprirlo" },
+      { group: "Scheda del lavoro", hint: "Cosa compare quando si apre un lavoro (pannello laterale su desktop, scheda su mobile)." },
+      { key: "adapt_works", label: "Form «Adatta al tuo contesto» (tre idee dalla Console)", hint: "Il visitatore scrive settore, canale e obiettivo e la Console risponde con tre idee. Compare sotto il testo del lavoro. Serve l'AI accesa in Console e AI → «Adatta al tuo contesto».", type: "check", on: "Mostra il form nella scheda del lavoro", def: false }
     ]
   },
   {
