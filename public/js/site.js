@@ -123,15 +123,17 @@ function weatherPhrase(w) { const e = w && w.code != null && WMO[w.code]; return
 function connLabel(c) { const s = { "slow-2g": "lenta", "2g": "lenta", "3g": "media", "4g": "veloce" }[c] || ""; return s ? t(s) : ""; }
 (function modesUI() {
   const btn = $("#modes-btn"), panel = $("#modes"); if (!btn || !panel) return;
-  if (DATA.site.modes_enabled === false) { btn.hidden = true; return; }
+  if (DATA.site.modes_enabled === false) { btn.hidden = true; const cm0 = $("#cwin-modes"); if (cm0) cm0.hidden = true; return; }
   const open = (o) => { panel.hidden = !o; btn.setAttribute("aria-expanded", String(o)); };
   btn.addEventListener("click", () => { if (Modes.density === "2") { Modes.set("density", "10"); open(false); return; } open(panel.hidden); });
   $("#modes-close").addEventListener("click", () => open(false));
   document.addEventListener("click", e => { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) open(false); });
-  panel.addEventListener("click", e => {
+  const onSeg = (e) => {
     const d = e.target.closest(".seg [data-density]"); if (d) { Modes.set("density", d.dataset.density); Prefs.set({ ...(Prefs.get() || {}), time: d.dataset.density }); }
     const m = e.target.closest(".seg [data-mood]"); if (m) { Modes.set("mood", m.dataset.mood); Prefs.set({ ...(Prefs.get() || {}), mood: ["calm", "vivid", "nervous", "light"].includes(m.dataset.mood) ? m.dataset.mood : null }); }
-  });
+  };
+  panel.addEventListener("click", onSeg);
+  const cm = $("#cwin-modes"); if (cm) cm.addEventListener("click", onSeg); // su mobile gli stessi pulsanti stanno nella Console
 })();
 
 function renderContext() {

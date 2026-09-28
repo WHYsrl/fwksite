@@ -196,9 +196,9 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 
 
 /* ---------- intro ---------- */
-.intro{position:fixed;inset:0;z-index:90;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(18px + env(safe-area-inset-top,0px)) var(--gutter) calc(24px + env(safe-area-inset-bottom,0px));transition:opacity .6s,visibility .6s}
+.intro{position:fixed;inset:0;z-index:90;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:calc(18px + env(safe-area-inset-top,0px)) var(--gutter) calc(24px + env(safe-area-inset-bottom,0px));transition:opacity .6s,visibility .6s}
 .intro.out{opacity:0;visibility:hidden}
-.intro-bg{position:absolute;inset:0;pointer-events:none}
+.intro-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden} /* lo zoom dell'immagine non deve creare scorrimento orizzontale */
 .intro-bg img{width:100%;height:100%;object-fit:cover;opacity:.32;mask-image:linear-gradient(90deg,transparent 30%,#000 75%);-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);animation:intro-zoom 18s ease-out forwards}
 @keyframes intro-zoom{from{transform:scale(1.1)}to{transform:scale(1)}}
 .intro-top{position:relative;display:flex;justify-content:space-between;align-items:center;z-index:1}
@@ -287,7 +287,7 @@ html[data-mood="nervous"] .grain{display:none}
 body.cwin-open{overflow:hidden}
 
 @media (max-width:820px){
-  .focusbar{top:calc(60px + env(safe-area-inset-top,0px));font-size:12px;gap:8px;padding:6px 6px 6px 12px}
+  .focusbar{top:calc(10px + env(safe-area-inset-top,0px));font-size:12px;gap:8px;padding:6px 6px 6px 12px}
   .focusbar .eyebrow{display:none}
   .msg p{font-size:17px}
 }
@@ -608,16 +608,11 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   html{scroll-behavior:auto}
   body{background:var(--bg)}
   .glow,.grain{display:none}
-  .topbar{padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px;background:linear-gradient(180deg,var(--bg) 70%,transparent);pointer-events:auto;transition:background .3s}
-  body.on-paper .topbar{background:linear-gradient(180deg,var(--paper) 70%,transparent)}
-  .topnav a:not(.cta){display:none}
-  .topnav{gap:5px}
-  .topnav a,.topnav button{font-size:10px;letter-spacing:.08em}
-  .topnav .cta{padding:9px 11px}
-  .topnav .modes-btn{padding:8px 9px;gap:6px}
-  .logo svg{height:19px}
-  .modes{right:16px;left:16px;width:auto}
-  .app{padding:calc(64px + env(safe-area-inset-top,0px)) 0 calc(92px + env(safe-area-inset-bottom,0px))}
+  .topbar,.modes{display:none} /* niente barra fissa in alto: mood, tempo e lingua stanno nella Console */
+  .m-logo{display:flex;justify-content:center;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;color:var(--accent-ink)} /* logo centrato in cima, nel flusso della pagina: scorre via */
+  .m-logo svg{width:150px;height:21px;fill:currentColor}
+  body.on-paper .m-logo{color:var(--paper-ink)}
+  .app{padding:0 0 calc(70px + env(safe-area-inset-bottom,0px))}
   .screen{display:none;padding:0 16px;animation:screen-in .35s cubic-bezier(.2,.8,.2,1)}
   .screen.on{display:block}
   @keyframes screen-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -706,7 +701,7 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .triad-m small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);margin:2px 0 6px}
   .triad-m p{color:var(--ink-2);font-size:14px}
   /* radar (carta) */
-  .screen.paper-screen{background:var(--paper);color:var(--paper-ink);margin:-8px -16px 0;padding:12px 16px 20px;border-radius:24px 24px 0 0;min-height:70vh}
+  .screen.paper-screen{background:var(--paper);color:var(--paper-ink);margin:-8px 0 0;padding:12px 16px 20px;border-radius:24px 24px 0 0;min-height:70vh} /* niente margini negativi: la schermata è già larga quanto lo schermo */
   .paper-screen h2{color:var(--paper-ink)}
   .paper-screen .eyebrow{color:var(--paper-ink-2)}.paper-screen .eyebrow .dot{background:var(--paper-ink)}
   .paper-screen .row-head a{color:var(--accent)}
@@ -767,7 +762,7 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .contact-m .addr{color:var(--ink-3);font-size:13.5px;line-height:1.6;margin-top:14px}
   .app-foot{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);text-align:center;padding:8px 0 0}
   /* tab bar */
-  .tabbar{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:50;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:rgba(var(--bg2-rgb),.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:22px;padding:8px 6px 8px}
+  .tabbar{position:fixed;left:12px;right:12px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:50;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;background:rgba(var(--bg2-rgb),.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;padding:5px 6px}
   .tabbar.four{grid-template-columns:repeat(4,1fr)}
   /* ---- PERCORSO A TAPPE (mobile): una schermata per elemento, scorrimento orizzontale come le storie ---- */
   body.story-on{overflow:hidden}
@@ -824,13 +819,14 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .tabbar.three{grid-template-columns:repeat(3,1fr)}
   .tabbar.two{grid-template-columns:repeat(2,1fr)}
 
-  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px;color:var(--ink-3);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;border-radius:14px}
-  .tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px 3px;color:var(--ink-3);font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;border-radius:12px}
+  .tabbar button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   .tabbar button.on{color:var(--ink)}
   .tabbar button.on svg{stroke:var(--accent-ink)}
-  .tabbar .fab{transform:translateY(-14px)}
-  .tabbar .fab i{width:54px;height:54px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:var(--on-accent);box-shadow:0 10px 30px rgba(var(--accent-rgb),.45)}
-  .tabbar .fab i svg{stroke:#fff}
+  /* la Console è un tasto come gli altri (solo il colore la distingue): la barra resta sottile */
+  .tabbar .fab{transform:none;color:var(--accent-ink)}
+  .tabbar .fab i{display:contents}
+  .tabbar .fab i svg{stroke:currentColor}
   .tabbar .fab span{color:var(--accent-ink)}
   /* sheet */
   .sheet{position:fixed;left:0;right:0;bottom:0;z-index:70;max-height:90svh;background:var(--bg-2);border-top:1px solid var(--line);border-radius:22px 22px 0 0;transform:translateY(104%);transition:transform .45s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;overflow:hidden}
@@ -915,3 +911,11 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .caps-list-m li b .serif{font-weight:400}
   .caps-list-m li p{font-size:14.5px;line-height:1.45;color:var(--ink-2);margin:0}
 }
+
+/* Console su mobile: mood, tempo e lingua dentro la finestra (al posto della barra in alto) */
+.cwin-modes{position:relative;z-index:1;padding:0 var(--gutter) 8px;max-width:820px;width:100%;margin:0 auto;border-bottom:1px solid var(--line-2)}
+.cwin-modes .modes-row{grid-template-columns:auto 1fr;align-items:center;gap:10px;margin:6px 0}
+.cwin-modes .modes-row .k{font-size:12px;color:var(--ink-3);white-space:nowrap;min-width:0}
+.cwin-modes .seg{padding:2px}
+.cwin-modes .seg button,.cwin-modes .seg a{font-size:9.5px;letter-spacing:.06em;padding:7px 4px}
+@media (max-width:820px){.cwin-modes{padding-bottom:10px}.cwin-modes .modes-row{grid-template-columns:1fr;gap:4px;margin:8px 0}.cwin-modes .modes-row .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}}

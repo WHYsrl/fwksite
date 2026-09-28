@@ -57,6 +57,12 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <div class="cwin" id="cwin" hidden role="dialog" aria-modal="true" aria-label="Console">
   <div class="cwin-bg" aria-hidden="true"><img src="/media/particles.jpg" alt=""></div>
   <div class="cwin-top"><span class="eyebrow"><span class="dot"></span>Console · <%= site.brand %></span><button type="button" class="x" id="cwin-close" aria-label="<%= T("Chiudi la Console") %>">✕</button></div>
+  <%# mobile: la Console è anche il pannello delle modalità (sfondo, tempo, lingua), al posto della barra in alto; i pulsanti sono gli stessi del pannello Modalità e ne seguono lo stato %>
+  <div class="cwin-modes mobile-only" id="cwin-modes" <%= site.modes_enabled === false ? 'hidden' : '' %>>
+    <div class="modes-row"><span class="k"><%= site.intro_mood_title %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= (site.intro_mood[0] || {}).k || T("Chiaro") %></button><button type="button" data-mood="vivid"><%= (site.intro_mood[1] || {}).k || T("Acceso") %></button><button type="button" data-mood="calm"><%= (site.intro_mood[2] || {}).k || T("Notturno") %></button><button type="button" data-mood="nervous"><%= (site.intro_mood[3] || {}).k || T("Quieto") %></button></div></div>
+    <div class="modes-row"><span class="k"><%= site.intro_time_title %></span><div class="seg" role="group" aria-label="<%= T("Tempo") %>"><button type="button" data-density="2"><%= T("2 minuti") %></button><button type="button" data-density="10"><%= T("10 minuti") %></button><button type="button" data-density="all"><%= T("Tutto il tempo") %></button></div></div>
+    <% if (SHOW_LANG) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
+  </div>
   <div class="cwin-thread" id="cwin-thread"></div>
   <form class="cwin-form" id="cwin-form" autocomplete="off">
     <div class="prompt-row"><input id="cwin-q" name="q" type="text" maxlength="200" placeholder="<%= T("Una domanda su Frameworks, o sul nostro mestiere") %>" enterkeyhint="send"><button type="submit" aria-label="<%= T("Invia") %>">→</button></div>
@@ -323,6 +329,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 
 <!-- ============================ MOBILE (app) ============================ -->
 <div class="app-shell mobile-only">
+  <a class="m-logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="150" height="21" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <div class="app" id="app"></div>
   <nav class="tabbar" id="tabbar" aria-label="<%= T("Sezioni") %>"></nav>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="<%= T("Dettaglio") %>"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="<%= T("Chiudi") %>">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
