@@ -11,6 +11,8 @@ const weather = require("./weather");
 const admin = require("./admin");
 const i18n = require("./i18n"); // versione inglese: contenuti tradotti nel DB, interfaccia da public/js/i18n.js
 const siteFields = require("./site-fields"); // i testi delle sezioni (schema del backoffice Contenuti, testi standard)
+const layout = require("./layout"); // fruizione: ordine e visibilità delle sezioni per tempo scelto (backoffice Fruizione)
+const priority = require("./priority"); // priorità 1-2-3 di lavori e reel
 
 store.seedIfEmpty();
 store.seedTeamIfEmpty();
@@ -50,8 +52,9 @@ app.use("/media", express.static(store.UPLOAD_DIR, { maxAge: "30d" }));
 function renderSite(req, res, lang) {
   feeds.maybeRefresh(); // se il Radar è vecchio, si aggiorna in background
   const t = i18n.ui.make(lang);
-  const content = i18n.apply(withImage(concrete.decorate(store.getContent())), lang);
+  const content = priority.decorate(i18n.apply(withImage(concrete.decorate(store.getContent())), lang));
   content.site = siteFields.view(content.site, t); // i testi delle sezioni: quelli del backoffice, o quelli standard
+  content.layout = layout.forSite(); // fruizione: ordine e stato (nascosta / breve / completa) per 2 · 10 · tutto
   res.set("Cache-Control", "no-cache"); res.set("Vary", "Cookie, Accept-Language");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured(), lang, t, enPublic: i18n.isPublic() });
 }
@@ -59,7 +62,7 @@ app.get("/", (req, res) => renderSite(req, res, i18n.resolve(req)));
 app.get("/en", (req, res) => { i18n.setCookie(res, "en"); renderSite(req, res, "en"); });
 app.get("/it", (req, res) => { i18n.setCookie(res, "it"); renderSite(req, res, "it"); });
 const reqLang = (req) => { const l = String((req.query && req.query.lang) || (req.body && req.body.lang) || "").toLowerCase(); return i18n.LANGS.includes(l) ? l : "it"; };
-app.get("/api/content", (req, res) => { feeds.maybeRefresh(); const lang = reqLang(req); const c = i18n.apply(withImage(concrete.decorate(store.getContent())), lang); c.site = siteFields.view(c.site, i18n.ui.make(lang)); res.json(c); });
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); const lang = reqLang(req); const c = priority.decorate(i18n.apply(withImage(concrete.decorate(store.getContent())), lang)); c.site = siteFields.view(c.site, i18n.ui.make(lang)); c.layout = layout.forSite(); res.json(c); });
 // il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
 function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; content.figures = figures.list(); content.reels = reels.list(); return content; }
 const reels = require("./reels"); reels.seedIfMissing(); // i video tematici del carosello (gestiti da /admin/reel)

@@ -12,6 +12,8 @@ const imagegen = require("./imagegen");
 const figures = require("./figures");
 const i18n = require("./i18n");
 const siteFields = require("./site-fields");
+const layout = require("./layout");
+const priority = require("./priority");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -98,6 +100,18 @@ router.post("/contenuti/:id", (req, res) => {
   flash(req, `${sec.title}: testi salvati`); res.redirect("/admin/contenuti/" + sec.id);
 });
 
+// ---------- fruizione: ordine e visibilità di sezioni e blocchi per tempo scelto (server/layout.js) ----------
+router.get("/fruizione", (req, res) => res.render("admin/fruizione", { layout: layout.get(), groups: layout.GROUPS, isDefault: layout.isDefault(), levels: priority.LEVELS, works: store.listWorks(true).map(w => ({ ...w, priority: priority.forWork(w.id) })), reels: require("./reels").list().map(r => ({ ...r, priority: priority.norm(r.priority) })) }));
+router.post("/fruizione", (req, res) => { layout.save(req.body); flash(req, "Fruizione salvata"); res.redirect("/admin/fruizione"); });
+router.post("/fruizione/reset", (req, res) => { layout.reset(); flash(req, "Fruizione riportata allo standard"); res.redirect("/admin/fruizione"); });
+router.post("/fruizione/priorita", (req, res) => {
+  const b = req.body || {}; const w = (b.works && typeof b.works === "object") ? b.works : {}; const r = (b.reels && typeof b.reels === "object") ? b.reels : {};
+  Object.keys(w).forEach(id => priority.setWork(id, w[id]));
+  const list = store.getSetting("reels", []) || []; let changed = false;
+  list.forEach(x => { if (r[x.id] != null) { const n = priority.norm(r[x.id]); if (n !== priority.norm(x.priority)) { x.priority = n; changed = true; } } }); if (changed) store.setSetting("reels", list);
+  flash(req, "Priorità salvate"); res.redirect("/admin/fruizione#priorita");
+});
+
 // ---------- contesto della Console (pagina nascosta: non è pubblicata, la legge solo l'AI) ----------
 router.get("/contesto", (req, res) => res.render("admin/context", { text: store.getSetting("console_context", ""), test: null }));
 router.post("/contesto", async (req, res) => {
@@ -131,15 +145,16 @@ router.post("/capacita/:id", upload.single("image_file"), (req, res) => {
 router.post("/capacita/:id/delete", (req, res) => { store.deleteCap(req.params.id); concrete.removeCap(req.params.id); flash(req, "Capacità eliminata"); res.redirect("/admin/capacita"); });
 
 // ---------- lavori ----------
-router.get("/lavori", (req, res) => res.render("admin/works", { works: store.listWorks(true), caps: store.listCaps(true) }));
-router.get("/lavori/new", (req, res) => res.render("admin/work-form", { work: { id: "", sort: store.listWorks(true).length + 1, client: "", label: "", title: "", year: String(new Date().getFullYear()), caps: [], short: "", body: "", image: "", video_url: "", status: "placeholder", published: true }, caps: store.listCaps(true), media: store.listMedia(), isNew: true }));
-router.get("/lavori/:id", (req, res) => { const work = store.getWork(req.params.id); if (!work) return res.redirect("/admin/lavori"); res.render("admin/work-form", { work, caps: store.listCaps(true), media: store.listMedia(), isNew: false }); });
+router.get("/lavori", (req, res) => res.render("admin/works", { works: store.listWorks(true).map(w => ({ ...w, priority: priority.forWork(w.id) })), caps: store.listCaps(true) }));
+router.get("/lavori/new", (req, res) => res.render("admin/work-form", { work: { id: "", sort: store.listWorks(true).length + 1, client: "", label: "", title: "", year: String(new Date().getFullYear()), caps: [], short: "", body: "", image: "", video_url: "", status: "placeholder", published: true }, caps: store.listCaps(true), media: store.listMedia(), isNew: true, levels: priority.LEVELS }));
+router.get("/lavori/:id", (req, res) => { const work = store.getWork(req.params.id); if (!work) return res.redirect("/admin/lavori"); res.render("admin/work-form", { work: { ...work, priority: priority.forWork(work.id) }, caps: store.listCaps(true), media: store.listMedia(), isNew: false, levels: priority.LEVELS }); });
 router.post("/lavori/:id", upload.single("image_file"), (req, res) => {
   const b = req.body; const image = req.file ? registerUpload(req.file) : b.image;
   const id = store.upsertWork({ id: req.params.id === "new" ? (b.id || undefined) : req.params.id, sort: b.sort, client: b.client, label: b.label, title: b.title, year: b.year, caps: [].concat(b.caps || []), short: b.short, body: b.body, image, video_url: b.video_url, status: b.status, published: !!b.published });
+  priority.setWork(id, b.priority);
   flash(req, "Lavoro salvato"); res.redirect("/admin/lavori/" + id);
 });
-router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
+router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); priority.removeWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
 
 // ---------- team ----------
 const UNITS = ["Direzione e supervisione", "Produzione", "Design, 3D & Motion", "AI & Interactive"];

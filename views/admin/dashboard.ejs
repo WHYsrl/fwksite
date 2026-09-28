@@ -1,7 +1,7 @@
 <%- include('../partials/admin-head', { title: 'Panoramica' }) %>
 <h1>Panoramica</h1>
 <section class="card">
-  <div class="head"><h2>Contenuti del sito</h2><a class="btn sm" href="/admin/contenuti">Apri i contenuti →</a></div>
+  <div class="head"><h2>Contenuti del sito</h2><div class="row"><a class="btn sm" href="/admin/fruizione">Fruizione: ordine e visibilità per tempo →</a><a class="btn sm" href="/admin/contenuti">Apri i contenuti →</a></div></div>
   <p class="muted" style="margin-top:0">Le scritte di ogni sezione, nell'ordine in cui compaiono sul sito. Aree, lavori, reel e persone si gestiscono nelle Collezioni.</p>
   <div class="sec-grid"><% sections.forEach((sc, i) => { %><a href="/admin/contenuti/<%= sc.id %>"><i><%= String(i + 1).padStart(2, '0') %></i><%= sc.nav %></a><% }) %></div>
 </section>

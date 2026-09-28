@@ -5,6 +5,7 @@ const seed = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "s
 const content = require("../server/concrete").applyDefaults({ site: seed.site, caps: seed.caps.filter(c => c.published), works: seed.works.filter(w => w.published), signals: seed.signals, team: (seed.team || []).filter(m => m.published), features: { console: true, adapt: true } });
 content.figures = require("../server/figures").DEFAULT; // i numeri del contesto
 content.site = require("../server/site-fields").view(content.site); // i testi delle sezioni: quelli del seed, o quelli standard
+content.layout = require("../server/layout").forSite(true); // fruizione: ordine e visibilità standard
 // versioni chiare delle immagini d'ambiente (mood "Chiaro")
 content.lightMedia = (() => { try { const out = {}; fs.readdirSync(path.join(__dirname, "..", "public", "media", "light")).filter(f => /\.(jpe?g|png|webp)$/i.test(f) && !/-sm\./.test(f)).forEach(f => { out["/media/" + f] = "/media/light/" + f; }); return out; } catch { return {}; } })();
 ejs.renderFile(path.join(__dirname, "..", "views", "index.ejs"), { content, preview: true, aiOn: false }, {}, (err, out) => {

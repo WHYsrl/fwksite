@@ -14,7 +14,7 @@
 // a destra la pagina. Sotto "Contenuti" compaiono le sezioni del sito, nell'ordine in cui si vedono sul sito.
 const on = (p) => (p === "/" ? path === "/" : path.startsWith(p));
 const GROUPS = [
-  { name: "Sito", items: [{ href: "/admin", p: "/", label: "Panoramica" }, { href: "/admin/contenuti", p: "/contenuti", label: "Contenuti", sub: true }] },
+  { name: "Sito", items: [{ href: "/admin", p: "/", label: "Panoramica" }, { href: "/admin/contenuti", p: "/contenuti", label: "Contenuti", sub: true }, { href: "/admin/fruizione", p: "/fruizione", label: "Fruizione" }] },
   { name: "Collezioni", items: [{ href: "/admin/capacita", p: "/capacita", label: "Aree (servizi)" }, { href: "/admin/lavori", p: "/lavori", label: "Lavori" }, { href: "/admin/reel", p: "/reel", label: "Reel" }, { href: "/admin/team", p: "/team", label: "Team" }] },
   { name: "Radar", items: [{ href: "/admin/radar", p: "/radar", label: "Segnali" }, { href: "/admin/fonti", p: "/fonti", label: "Fonti e filtri" }] },
   { name: "Console e AI", items: [{ href: "/admin/contesto", p: "/contesto", label: "Contesto della Console" }, { href: "/admin/dati", p: "/dati", label: "Dati del contesto" }, { href: "/admin/ai", p: "/ai", label: "AI", warn: !aiOn }] },

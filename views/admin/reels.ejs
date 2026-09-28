@@ -8,7 +8,7 @@
   <table><tr><th>#</th><th>Reel</th><th>Video</th><th></th></tr>
   <% reels.forEach((r, i) => { %><tr>
     <td><%= r.sort %></td>
-    <td><b><%= r.title %></b><br><small class="mono"><%= r.theme %><%= r.placeholder ? ' · SEGNAPOSTO' : '' %></small></td>
+    <td><b><%= r.title %></b><br><small class="mono"><%= r.theme %><%= r.placeholder ? ' · SEGNAPOSTO' : '' %> · P<%= r.priority || 1 %></small></td>
     <td><small class="mono"><%= r.vimeo ? 'vimeo ' + r.vimeo.id : (r.url ? r.url : '— nessun video') %></small></td>
     <td class="row">
       <form method="post" action="/admin/reel/<%= r.id %>/move"><input type="hidden" name="dir" value="-1"><button class="btn" type="submit" title="Su" <%= i === 0 ? 'disabled' : '' %>>↑</button></form>
@@ -28,6 +28,7 @@
     <label>Link Vimeo <input name="url" value="<%= edit ? edit.url : '' %>" placeholder="https://vimeo.com/123456789/abcdef1234"></label>
     <label>Copertina (URL immagine, opzionale: si vede prima che il video parta) <input name="cover" value="<%= edit ? edit.cover : '' %>" placeholder="/media/…jpg"></label>
     <label>Ordine <input name="sort" type="number" value="<%= edit ? edit.sort : reels.length + 1 %>" min="1"></label>
+    <label>Priorità (quando si vede, in base al tempo scelto dal visitatore) <select name="priority"><% [[1, '1 · sempre'], [2, '2 · da 10 minuti'], [3, '3 · solo con tutto il tempo']].forEach(([n, l]) => { %><option value="<%= n %>" <%= ((edit && edit.priority) || 1) === n ? 'selected' : '' %>><%= l %></option><% }) %></select></label>
     <button class="btn primary" type="submit">Salva</button>
     <% if (edit) { %> <a class="btn" href="/admin/reel">Annulla</a><% } %>
   </form>

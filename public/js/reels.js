@@ -35,7 +35,7 @@
     });
     // frecce (nel contenitore .reels-wrap, se c'è)
     const wrap = track.closest(".reels-wrap") || track.parentElement;
-    const step = (dir) => { const w = reels[0] ? reels[0].getBoundingClientRect().width + 20 : track.clientWidth * .6; track.scrollBy({ left: dir * w, behavior: "smooth" }); };
+    const step = (dir) => { const first = reels.find(r => r.offsetParent) || reels[0]; const w = first && first.getBoundingClientRect().width ? first.getBoundingClientRect().width + 20 : track.clientWidth * .6; /* il primo reel visibile (le priorità possono nascondere i primi) */ track.scrollBy({ left: dir * w, behavior: "smooth" }); };
     const prev = wrap && wrap.querySelector('[data-reels-nav="-1"]'), next = wrap && wrap.querySelector('[data-reels-nav="1"]');
     if (prev) prev.addEventListener("click", () => step(-1)); if (next) next.addEventListener("click", () => step(1));
     const arrows = () => { if (!prev || !next) return; prev.disabled = track.scrollLeft < 10; next.disabled = track.scrollLeft > track.scrollWidth - track.clientWidth - 10; };

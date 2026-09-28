@@ -74,7 +74,9 @@ const SECTIONS = [
       { key: "areas_home_title", label: "Titolo del carosello in Home (mobile)", def: "I nostri servizi" },
       { key: "areas_list_title", label: "Titolo dell'elenco in Sistema (mobile)", def: "Le aree" },
       { key: "area_kicker", label: "Etichetta su ogni card", hint: "Seguita dal numero: «Area 01», «Area 02»…", def: "Area" },
-      { key: "area_more", label: "Rimando in fondo a ogni card", def: "Casi d'uso e tecnologie" }
+      { key: "area_more", label: "Rimando in fondo a ogni card", def: "Casi d'uso e tecnologie" },
+      { group: "Versione breve" },
+      { key: "areas_brief_intro", label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: nome e sintesi di ciascuna, senza rimandi alle schede. Questo testo, se c'è, sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
@@ -83,7 +85,9 @@ const SECTIONS = [
     fields: [
       { key: "context_label", label: "Etichetta", def: "Il contesto" },
       { key: "context_text", label: "Testo", type: "textarea", rows: 4, def: "" },
-      { key: "context_quote", label: "Frase in corsivo sotto il testo", hint: "Una frase breve, da statement.", def: "Non importa quale sia il trend del momento. È già passato." }
+      { key: "context_quote", label: "Frase in corsivo sotto il testo", hint: "Una frase breve, da statement.", def: "Non importa quale sia il trend del momento. È già passato." },
+      { group: "Versione breve" },
+      { key: "context_brief", label: "Testo breve (senza il campo dati)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
@@ -106,7 +110,9 @@ const SECTIONS = [
       { group: "Mobile" },
       { key: "m_system_quote", label: "Frase di apertura della schermata Sistema", def: "Ogni progetto è concepito come un organismo vivente." },
       { key: "m_org_title", label: "Didascalia sotto l'organismo · titolo", def: "È vivo." },
-      { key: "m_org_text", label: "Didascalia sotto l'organismo · testo", type: "textarea", rows: 3, def: "Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato." }
+      { key: "m_org_text", label: "Didascalia sotto l'organismo · testo", type: "textarea", rows: 3, def: "Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato." },
+      { group: "Versione breve" },
+      { key: "organism_brief", label: "Testo breve (senza l'organismo interattivo)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
@@ -115,7 +121,9 @@ const SECTIONS = [
       { key: "method_label", label: "Etichetta", def: "Metodo" },
       { key: "method_title", label: "Titolo", em: true, def: "Cinque fasi, un <em>ciclo.</em>" },
       { key: "method_intro", label: "Introduzione", type: "textarea", rows: 3, def: "" },
-      { key: "method", label: "Le fasi", hint: "Cinque fasi, nell'ordine. I nomi compaiono anche nel diagramma.", type: "pairs", cols: [{ k: "k", label: "Fase", i18n: false }, { k: "text", label: "Testo" }], count: 5, def: [] }
+      { key: "method", label: "Le fasi", hint: "Cinque fasi, nell'ordine. I nomi compaiono anche nel diagramma.", type: "pairs", cols: [{ k: "k", label: "Fase", i18n: false }, { k: "text", label: "Testo" }], count: 5, def: [] },
+      { group: "Versione breve" },
+      { key: "method_brief", label: "Testo breve (senza le fasi e il diagramma)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
@@ -125,14 +133,18 @@ const SECTIONS = [
       { key: "team_label", label: "Etichetta", hint: "{n} diventa il numero delle persone.", vars: ["n"], def: "Team · {n} persone" },
       { key: "team_title", label: "Titolo", em: true, def: "Un sistema è fatto di <em>persone.</em>" },
       { key: "team_text", label: "Testo", type: "textarea", rows: 3, def: "" },
-      { key: "team_with", label: "«con» (prima dei nomi dei responsabili di unit)", def: "con" }
+      { key: "team_with", label: "«con» (prima dei nomi dei responsabili di unit)", def: "con" },
+      { group: "Versione breve" },
+      { key: "team_brief", label: "Testo breve (senza le persone)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
     id: "tecnologie", nav: "Tecnologie", title: "Tecnologie in logica selettiva", where: "Desktop: la sezione con le quattro tecnologie (solo con «tutto il tempo»). Mobile: nella schermata Sistema.",
     fields: [
       { key: "tech_title", label: "Titolo", em: true, def: "" },
-      { key: "tech", label: "Le tecnologie", type: "pairs", cols: [{ k: "k", label: "Nome" }, { k: "text", label: "Testo" }], count: 4, def: [] }
+      { key: "tech", label: "Le tecnologie", type: "pairs", cols: [{ k: "k", label: "Nome" }, { k: "text", label: "Testo" }], count: 4, def: [] },
+      { group: "Versione breve" },
+      { key: "tech_brief", label: "Testo breve (senza l'elenco)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {
@@ -150,7 +162,9 @@ const SECTIONS = [
         def: [{ k: "DOOH", text: "DOOH" }, { k: "Retail media", text: "retail media" }, { k: "AI generativa", text: "AI generativa pubblicità" }, { k: "Virtual production", text: "virtual production" }, { k: "Musei immersivi", text: "musei esperienze immersive" }] },
       { group: "Note" },
       { key: "radar_note", label: "Nota in fondo (paternità dei titoli)", type: "textarea", rows: 2, def: "I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità." },
-      { key: "m_radar_title", label: "Titolo della fila in Home (mobile)", def: "Radar oggi" }
+      { key: "m_radar_title", label: "Titolo della fila in Home (mobile)", def: "Radar oggi" },
+      { group: "Versione breve" },
+      { key: "radar_brief", label: "Testo breve (senza ricerca e segnali)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
   },
   {

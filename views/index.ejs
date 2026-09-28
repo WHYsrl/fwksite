@@ -103,7 +103,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <main id="top">
 <!-- ============================ CONSOLE (desktop) ============================ -->
-<section class="console desktop-only path-keep" id="console" data-tier="2" aria-label="Console">
+<section class="console desktop-only path-keep" id="console" <%- (() => { const r = ((content.layout && content.layout.desktop) || []).find(x => x.id === "console"); const v = r ? r.v : {}; return `data-v2="${v["2"] || "full"}" data-v10="${v["10"] || "full"}" data-vall="${v.all || "full"}"`; })() %> aria-label="Console">
   <div class="console-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt="" data-parallax="0.15" fetchpriority="high"></div>
   <div class="console-grid" aria-hidden="true"></div>
   <canvas id="graph" aria-label="<%= T("Mappa interattiva: aree, lavori e radar") %>"></canvas>
@@ -123,18 +123,29 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 </section>
 
 <!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
-<section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="<%= T("Percorso") %>"></section>
+<section class="section percorso desktop-only path-keep" id="percorso" data-v2="full" data-v10="full" data-vall="full" hidden aria-label="<%= T("Percorso") %>"></section>
 
-<!-- ============================ REEL (subito dopo la hero) ============================ -->
-<%# Reel: i video tematici (Vimeo) in un carosello, al posto dello statement scorrevole; si gestiscono da /admin/reel %>
-<% const reels = (content.reels || []).filter(r => r.vimeo || r.cover); if (reels.length) { %>
-<section class="section reels desktop-only" data-tier="10" id="reel" aria-label="Reel">
+<%
+// ---- Fruizione (server/layout.js, backoffice → Fruizione): le sezioni si stampano nell'ordine deciso dal backoffice, e ognuna
+// porta lo stato per ogni tempo (data-v2 / data-v10 / data-vall = off · brief · full); il CSS (html[data-density]) nasconde
+// la sezione o mostra solo la parte .v-brief / .v-full. "brief" vale solo se la versione breve ha un contenuto: altrimenti conta come full.
+const LAYOUT = (content.layout && content.layout.desktop) || [];
+const briefOk = { aree: true, sistema: !!site.context_brief, organismo: !!site.organism_brief, metodo: !!site.method_brief, team: !!site.team_brief, tech: !!site.tech_brief, radar: !!site.radar_brief };
+const vis = (id) => { const r = LAYOUT.find(x => x.id === id); const v = r ? r.v : { "2": "full", "10": "full", all: "full" }; const fx = (st) => (st === "brief" && !briefOk[id]) ? "full" : (st || "full"); return `data-v2="${fx(v["2"])}" data-v10="${fx(v["10"])}" data-vall="${fx(v.all)}"`; };
+const ORDER = (LAYOUT.length ? LAYOUT.map(x => x.id) : ["reel", "aree", "sistema", "lavori", "organismo", "metodo", "team", "tech", "radar", "narrow", "triad", "closing", "contatti"]).filter(id => id !== "console");
+const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
+%>
+<% ORDER.forEach(SEC => { %>
+<% if (SEC === "reel") { if (reels.length) { %>
+<!-- ============================ REEL ============================ -->
+<%# Reel: i video tematici (Vimeo) in un carosello; si gestiscono da /admin/reel. data-prio: priorità 1-2-3 (nascosti via CSS in base al tempo) %>
+<section class="section reels desktop-only" <%- vis("reel") %> id="reel" aria-label="Reel">
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.reel_label %></div><div><h2 class="rv"><%- em(site.reel_title) %></h2><p class="rv"><%= site.reel_text %></p></div></div>
   <div class="reels-wrap rv">
     <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="<%= T("Reel precedente") %>">←</button>
     <div class="reels-track" id="reels-track">
       <% reels.forEach((r, i) => { %>
-      <article class="reel" data-reel data-vimeo="<%= r.vimeo ? r.vimeo.id : '' %>" data-h="<%= r.vimeo ? r.vimeo.h : '' %>" style="--i:<%= i %>">
+      <article class="reel" data-reel data-prio="<%= r.priority || 1 %>" data-vimeo="<%= r.vimeo ? r.vimeo.id : '' %>" data-h="<%= r.vimeo ? r.vimeo.h : '' %>" style="--i:<%= i %>">
         <div class="reel-media"><% if (r.cover) { %><img src="<%= r.cover %>" alt="" loading="lazy"><% } %></div>
         <div class="reel-meta">
           <div><div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · <%= T("anteprima") %><% } %></div><h3><%= r.title %></h3></div>
@@ -146,12 +157,11 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     <button type="button" class="reels-arrow next" data-reels-nav="1" aria-label="<%= T("Reel successivo") %>">→</button>
   </div>
 </section>
-<% } %>
-
+<% } } else if (SEC === "aree") { %>
 <!-- ============================ AREE ============================ -->
-<section class="section desktop-only" id="aree" data-tier="2">
+<section class="section desktop-only" id="aree" <%- vis("aree") %>>
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label %></div><h2 class="rv"><%- em(site.areas_title) %></h2></div>
-  <div class="caps">
+  <div class="caps v-full">
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
@@ -160,11 +170,18 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     </button>
     <% }) %>
   </div>
+  <%# versione breve: un blocco unico con le 4 aree (nome e sintesi), senza rimandi alle schede %>
+  <div class="caps-brief v-brief">
+    <% if (site.areas_brief_intro) { %><p class="lead rv"><%= site.areas_brief_intro %></p><% } %>
+    <ol class="caps-list">
+      <% content.caps.forEach((c, i) => { %><li class="rv" style="--i:<%= i %>"><span class="eyebrow"><%= site.area_kicker %> <%= String(i + 1).padStart(2, '0') %></span><b><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></b><p><%= c.short %></p></li><% }) %>
+    </ol>
+  </div>
 </section>
-
+<% } else if (SEC === "sistema") { %>
 <!-- ============================ CONTESTO ============================ -->
-<section class="section desktop-only" id="sistema" data-tier="10">
-  <div class="split2">
+<section class="section desktop-only" id="sistema" <%- vis("sistema") %>>
+  <div class="split2 v-full">
     <div class="ph df rv" data-datafield><img src="/media/particles.jpg" alt="" loading="lazy"></div>
     <div>
       <div class="eyebrow rv"><span class="dot"></span><%= site.context_label %></div>
@@ -172,36 +189,37 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       <p class="serif statement-inline rv"><%= site.context_quote %></p>
     </div>
   </div>
+  <div class="brief-text v-brief"><div class="eyebrow rv"><span class="dot"></span><%= site.context_label %></div><p class="big rv"><%= site.context_brief %></p></div>
 </section>
-
+<% } else if (SEC === "lavori") { %>
 <!-- ============================ LAVORI ============================ -->
-<section class="section desktop-only" id="lavori" data-tier="2">
+<section class="section desktop-only" id="lavori" <%- vis("lavori") %>>
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.works_label %></div><div><h2 class="rv"><%- em(site.works_title) %></h2><p class="rv"><%- site.works_text %></p></div></div>
-  <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro %>
+  <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro. data-prio: priorità 1-2-3, i lavori oltre il livello del tempo scelto sono nascosti via CSS %>
   <div class="works-chips rv" role="group" aria-label="<%= T("Filtra i lavori") %>"><button type="button" class="on" data-wfilter="all"><%= site.works_all %> <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
   <div class="works">
     <% content.works.forEach((w, i) => { %>
-    <button class="work rv" type="button" data-open="<%= w.id %>" data-caps="<%= w.caps.join(' ') %>" data-tilt style="--i:<%= i %>">
+    <button class="work rv" type="button" data-open="<%= w.id %>" data-caps="<%= w.caps.join(' ') %>" data-prio="<%= w.priority || 1 %>" data-tilt style="--i:<%= i %>">
       <div class="art"><img src="<%= w.image || '/media/monolith.jpg' %>" alt="" loading="lazy"></div>
       <div class="meta"><div class="eyebrow"><span><%= w.client %></span><span class="chip ghost"><%= w.status %></span></div><h3><%= w.title %></h3><p><%= w.short %></p><div class="tags"><% w.caps.forEach(id => { %><span class="tag"><%= capName(id) %></span><% }) %></div></div>
     </button>
     <% }) %>
   </div>
 </section>
-
+<% } else if (SEC === "organismo") { %>
 <!-- ============================ ORGANISMO ============================ -->
-<section class="section organism desktop-only" data-tier="10" id="organismo">
+<section class="section organism desktop-only" <%- vis("organismo") %> id="organismo">
   <div class="section-head">
     <div><div class="eyebrow rv"><span class="dot"></span><%= site.organism_label %></div></div>
-    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv"><%= site.organism_text %></p></div>
+    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv v-full"><%= site.organism_text %></p><p class="rv v-brief"><%= site.organism_brief %></p></div>
   </div>
   <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
-  <div class="rv"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
+  <div class="rv v-full"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
 </section>
-
+<% } else if (SEC === "metodo") { %>
 <!-- ============================ METODO ============================ -->
-<section class="section desktop-only" id="metodo" data-tier="10">
-  <div class="split2">
+<section class="section desktop-only" id="metodo" <%- vis("metodo") %>>
+  <div class="split2 v-full">
     <div>
       <div class="eyebrow rv"><span class="dot"></span><%= site.method_label %></div>
       <h2 class="rv"><%- em(site.method_title) %></h2>
@@ -221,12 +239,13 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       </svg>
     </div>
   </div>
+  <div class="brief-text v-brief"><div class="eyebrow rv"><span class="dot"></span><%= site.method_label %></div><h2 class="rv"><%- em(site.method_title) %></h2><p class="big rv"><%= site.method_brief %></p></div>
 </section>
-
+<% } else if (SEC === "team") { %>
 <!-- ============================ TEAM ============================ -->
-<section class="section team desktop-only" id="team" data-tier="10" <%= team.length ? '' : 'hidden' %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.team_label.split("{n}").join(team.length) %></div><div><h2 class="rv"><%- em(site.team_title) %></h2><p class="rv"><%= site.team_text %></p></div></div>
-  <div class="people">
+<section class="section team desktop-only" id="team" <%- vis("team") %> <%= team.length ? '' : 'hidden' %>>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.team_label.split("{n}").join(team.length) %></div><div><h2 class="rv"><%- em(site.team_title) %></h2><p class="rv v-full"><%= site.team_text %></p><p class="rv v-brief"><%= site.team_brief %></p></div></div>
+  <div class="people v-full">
     <% keyPeople.forEach((m, i) => { %>
     <div class="person rv" style="--i:<%= i %>">
       <% if (m.photo) { %><img class="face" src="<%= m.photo %>" alt="" loading="lazy"><% } else { %><span class="face gram" aria-hidden="true"><%= initials(m.name) %></span><% } %>
@@ -234,33 +253,34 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     </div>
     <% }) %>
   </div>
-  <div class="roster rv">
+  <div class="roster rv v-full">
     <% units.forEach(u => { const list = team.filter(m => m.unit === u && !m.is_key); if (!list.length) return; const leads = keyPeople.filter(m => m.unit === u); %>
     <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line"><%= site.team_with %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
     <% }) %>
   </div>
 </section>
-
+<% } else if (SEC === "tech") { %>
 <!-- ============================ TECNOLOGIE ============================ -->
-<section class="section tech desktop-only" data-tier="all">
+<section class="section tech desktop-only" id="tecnologie" <%- vis("tech") %>>
   <div class="split2">
     <h2 class="rv"><%- em(site.tech_title) %></h2>
-    <div class="tech-list">
+    <div class="tech-list v-full">
       <% (site.tech || []).forEach((t, i) => { %><div class="tech-item rv" style="--i:<%= i %>"><b class="accent"><%= t.k %></b><p><%= t.text %></p></div><% }) %>
     </div>
+    <div class="brief-text v-brief"><p class="big rv"><%= site.tech_brief %></p></div>
   </div>
 </section>
-
+<% } else if (SEC === "radar") { %>
 <!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
-<section class="section radar paper desktop-only" id="radar" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.radar_label %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
-  <div class="radar-live rv">
+<section class="section radar paper desktop-only" id="radar" <%- vis("radar") %>>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.radar_label %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv v-full"><%= site.radar_text %></p><p class="rv v-brief"><%= site.radar_brief %></p></div></div>
+  <div class="radar-live rv v-full">
     <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= site.radar_search_title %></div><p><%= site.radar_search_text %></p></div>
     <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="<%= site.radar_search_placeholder %>" maxlength="80" aria-label="<%= T("Cerca nel radar") %>"><button type="submit"><%= T("Cerca") %></button></form>
     <div class="radar-chips"><% site.radar_queries.forEach(q => { %><button type="button" data-live-q="<%= q.text || q.k %>"><%= q.k %></button><% }) %></div>
     <div class="radar-results" data-radar-results hidden></div>
   </div>
-  <div class="signals">
+  <div class="signals v-full">
     <% content.signals.forEach((s, i) => { %>
     <article class="signal<%= i < 5 ? ' rv' : ' more' %>" data-id="<%= s.id %>" style="--i:<%= i % 5 %>"<%= i >= 5 ? ' hidden' : '' %>>
       <div class="src"><span class="chip ext"><%= T("Fonte esterna") %></span><b><%= s.src %></b><span><%= fmtDateL(s.date) %> · <%= domain(s.url) %></span></div>
@@ -269,32 +289,36 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     </article>
     <% }) %>
   </div>
-  <% if (content.signals.length > 5) { %><div class="radar-more-row"><button type="button" class="btn radar-more" data-radar-more><%= T("Leggi ancora") %> <span>+<%= Math.min(5, content.signals.length - 5) %> <%= T("di") %> <%= content.signals.length - 5 %></span></button></div><% } %>
-  <p class="note"><%= site.radar_note %></p>
+  <% if (content.signals.length > 5) { %><div class="radar-more-row v-full"><button type="button" class="btn radar-more" data-radar-more><%= T("Leggi ancora") %> <span>+<%= Math.min(5, content.signals.length - 5) %> <%= T("di") %> <%= content.signals.length - 5 %></span></button></div><% } %>
+  <p class="note v-full"><%= site.radar_note %></p>
 </section>
-
-<!-- ============================ CONTESTO PERSONALE ============================ -->
-<section class="section desktop-only" id="contesto" data-tier="10">
+<% } else if (SEC === "narrow") { %>
+<!-- ============================ CONTESTO PERSONALE (narrowcasting) ============================ -->
+<section class="section desktop-only" id="contesto" <%- vis("narrow") %>>
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.narrow_label %></div><h2 class="rv"><%- em(site.narrow_title) %></h2></div>
   <div class="context"><p class="big" id="context-text"></p><div class="kv" id="context-kv"></div></div>
 </section>
-
-<!-- ============================ TRIADE (in fondo, prima della chiusura) ============================ -->
-<section class="section triad desktop-only" data-tier="all">
+<% } else if (SEC === "triad") { %>
+<!-- ============================ TRIADE ============================ -->
+<section class="section triad desktop-only" id="triade" <%- vis("triad") %>>
   <div class="eyebrow rv"><span class="dot"></span><%= site.triad_label %></div>
   <div class="triad-grid">
     <% (site.triad || []).forEach((t, i) => { %><div class="triad-item rv" style="--i:<%= i %>"><h3 class="serif"><%= t.la %></h3><p class="k"><%= t.it %></p><p><%= t.text %></p></div><% }) %>
   </div>
 </section>
-
-<!-- ============================ CHIUSURA + CONTATTI ============================ -->
-<section class="closing desktop-only" data-tier="10" aria-label="<%= T("Chiusura") %>"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
-<section class="section contact desktop-only path-keep" id="contatti" data-tier="2">
+<% } else if (SEC === "closing") { %>
+<!-- ============================ CHIUSURA ============================ -->
+<section class="closing desktop-only" <%- vis("closing") %> aria-label="<%= T("Chiusura") %>"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
+<% } else if (SEC === "contatti") { %>
+<!-- ============================ CONTATTI ============================ -->
+<section class="section contact desktop-only path-keep" id="contatti" <%- vis("contatti") %>>
   <div class="split2">
     <div><div class="eyebrow rv"><span class="dot"></span><%= site.contact_label %></div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>"><%= site.contact_copy %></button></div></div>
     <figure class="ph rv" data-tilt><img src="/media/roma.jpg" alt="" loading="lazy" data-parallax="0.08"><figcaption class="address"><%- cx(site.contact_address).replace(/\n/g, "<br>") %></figcaption></figure>
   </div>
 </section>
+<% } %>
+<% }) %>
 <footer class="desktop-only path-keep"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
 
 <!-- ============================ MOBILE (app) ============================ -->

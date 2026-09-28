@@ -1,0 +1,74 @@
+<%- include('../partials/admin-head', { title: 'Fruizione' }) %>
+<%
+// Fruizione: per ogni sezione (desktop) e blocco (mobile) l'ordine e lo stato per 2 · 10 · tutto il tempo (server/layout.js).
+const STATE_LABEL = { off: "Nascosta", brief: "Breve", full: "Completa" };
+const DENS_LABEL = ["2 minuti", "10 minuti", "Tutto il tempo"];
+%>
+<div class="head sec-head">
+  <div>
+    <h1>Fruizione</h1>
+    <p class="muted where">Cosa si vede, in che ordine e in che forma, in base al tempo scelto dal visitatore. Le frecce cambiano l'ordine di apparizione; per ogni tempo scegli se la sezione è <b>nascosta</b>, <b>breve</b> (dove esiste una versione breve, scritta in Contenuti) o <b>completa</b>.</p>
+  </div>
+  <div class="row">
+    <% if (isDefault) { %><span class="pill">standard</span><% } else { %><form method="post" action="/admin/fruizione/reset" data-confirm="Riportare ordine e visibilità allo standard?"><button class="btn sm" type="submit">Ripristina lo standard</button></form><% } %>
+    <a class="btn sm" href="#priorita">Priorità dei contenuti ↓</a>
+  </div>
+</div>
+
+<form method="post" action="/admin/fruizione" class="form cms" id="fruizione-form">
+  <% groups.forEach(g => { const rows = layout[g.key]; %>
+  <section class="card fru">
+    <div class="head"><div><h2><%= g.title %></h2><p class="muted" style="margin:0"><%= g.note %></p></div></div>
+    <input type="hidden" name="<%= g.key %>_order" value="<%= rows.map(r => r.id).join(',') %>">
+    <table class="fru-table">
+      <thead><tr><th class="fru-move"></th><th>Sezione</th><% DENS_LABEL.forEach(d => { %><th class="fru-d"><%= d %></th><% }) %></tr></thead>
+      <tbody data-order="<%= g.key %>_order">
+      <% rows.forEach((r, i) => { %>
+        <tr data-id="<%= r.id %>" <%= r.fixed ? 'data-fixed="' + r.fixed + '"' : '' %> class="<%= r.custom ? 'is-custom' : '' %>">
+          <td class="fru-move"><% if (!r.fixed) { %><button type="button" class="mv" data-move="-1" title="Sposta su" aria-label="Sposta su">▲</button><button type="button" class="mv" data-move="1" title="Sposta giù" aria-label="Sposta giù">▼</button><% } else { %><span class="muted" title="Posizione fissa"><%= r.fixed === 'first' ? '⌃' : '⌄' %></span><% } %></td>
+          <td><b><%= r.label %></b><% if (r.what) { %><br><small class="muted"><%= r.what %></small><% } %></td>
+          <% r.v.forEach((st, k) => { %>
+          <td class="fru-d">
+            <select name="<%= g.key %>[<%= r.id %>][<%= k %>]" class="st st-<%= st %>" data-def="<%= r.def[k] %>" onchange="this.className='st st-'+this.value">
+              <option value="off" <%= st === 'off' ? 'selected' : '' %>><%= STATE_LABEL.off %></option>
+              <% if (r.brief) { %><option value="brief" <%= st === 'brief' ? 'selected' : '' %>><%= STATE_LABEL.brief %></option><% } %>
+              <option value="full" <%= st === 'full' ? 'selected' : '' %>><%= STATE_LABEL.full %></option>
+            </select>
+            <% if (st !== r.def[k]) { %><small class="fru-def" title="Standard: <%= STATE_LABEL[r.def[k]] %>">std: <%= STATE_LABEL[r.def[k]].toLowerCase() %></small><% } %>
+          </td>
+          <% }) %>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+  <% }) %>
+  <div class="savebar">
+    <span class="muted">Le modifiche valgono da subito sul sito. «Breve» senza un testo breve in Contenuti vale come «Completa».</span>
+    <button class="btn primary" type="submit">Salva la fruizione</button>
+  </div>
+</form>
+
+<section class="card" id="priorita">
+  <div class="head"><div><h2>Priorità dei contenuti</h2><p class="muted" style="margin:0">1 = sempre · 2 = da 10 minuti in su · 3 = solo con tutto il tempo. Vale per la griglia dei lavori, le file in Home e il carosello dei reel; la mappa della Console e le schede aperte dalla Console non cambiano.</p></div></div>
+  <form method="post" action="/admin/fruizione/priorita" class="form">
+    <div class="grid2">
+      <div>
+        <h3>Lavori</h3>
+        <table class="prio-table">
+          <% works.forEach(w => { %><tr class="<%= w.published ? '' : 'off' %>"><td><b><%= w.client %></b><br><small class="muted"><%= w.title %><%= w.published ? '' : ' · nascosto' %></small></td><td class="prio-sel"><select name="works[<%= w.id %>]"><% levels.forEach(l => { %><option value="<%= l.n %>" <%= w.priority === l.n ? 'selected' : '' %>><%= l.label %></option><% }) %></select></td></tr><% }) %>
+          <% if (!works.length) { %><tr><td class="muted">Nessun lavoro</td></tr><% } %>
+        </table>
+      </div>
+      <div>
+        <h3>Reel</h3>
+        <table class="prio-table">
+          <% reels.forEach(r => { %><tr><td><b><%= r.title %></b><br><small class="muted"><%= r.theme %></small></td><td class="prio-sel"><select name="reels[<%= r.id %>]"><% levels.forEach(l => { %><option value="<%= l.n %>" <%= r.priority === l.n ? 'selected' : '' %>><%= l.label %></option><% }) %></select></td></tr><% }) %>
+          <% if (!reels.length) { %><tr><td class="muted">Nessun reel</td></tr><% } %>
+        </table>
+      </div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Salva le priorità</button></div>
+  </form>
+</section>
+<%- include('../partials/admin-foot') %>

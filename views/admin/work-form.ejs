@@ -8,6 +8,7 @@
       <label>Anno <input name="year" value="<%= work.year %>"></label>
       <label>Stato <select name="status"><% ['placeholder','proposta','in corso','consegnato'].forEach(s => { %><option value="<%= s %>" <%= work.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select></label>
     </div>
+    <label>Priorità (quando si vede, in base al tempo scelto dal visitatore) <select name="priority"><% levels.forEach(l => { %><option value="<%= l.n %>" <%= (work.priority || 1) === l.n ? 'selected' : '' %>><%= l.label %></option><% }) %></select></label>
     <div class="grid2">
       <label>Cliente <input name="client" value="<%= work.client %>" required></label>
       <label>Etichetta breve (per la Console) <input name="label" value="<%= work.label %>" placeholder="es. Colosseo · Troia e Roma"></label>

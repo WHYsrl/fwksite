@@ -33,7 +33,7 @@ function seedIfMissing() {
 function list() { return (store.getSetting("reels", []) || []).slice().sort((a, b) => (a.sort || 0) - (b.sort || 0)).map(r => ({ ...r, vimeo: vimeo(r.url) })); }
 function upsert(b) {
   const reels = store.getSetting("reels", []) || []; const id = slug(b.id || b.title);
-  const r = { id, title: String(b.title || "").trim().slice(0, 80), theme: String(b.theme || "").trim().slice(0, 40), url: String(b.url || "").trim().slice(0, 200), cover: String(b.cover || "").trim().slice(0, 300), sort: +b.sort || reels.length + 1, placeholder: false };
+  const r = { id, title: String(b.title || "").trim().slice(0, 80), theme: String(b.theme || "").trim().slice(0, 40), url: String(b.url || "").trim().slice(0, 200), cover: String(b.cover || "").trim().slice(0, 300), sort: +b.sort || reels.length + 1, priority: Math.min(3, Math.max(1, parseInt(b.priority, 10) || 1)), placeholder: false };
   const i = reels.findIndex(x => x.id === id); if (i >= 0) reels[i] = { ...reels[i], ...r }; else reels.push(r);
   store.setSetting("reels", reels); return r;
 }

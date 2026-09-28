@@ -112,3 +112,21 @@ body.login{display:grid;place-items:center;min-height:100vh}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
 .savebar .btn{white-space:nowrap;flex:none}
 @media (max-width:900px){.savebar{padding:10px 12px}.savebar .muted{font-size:12px}}
+
+/* ---- Fruizione: ordine e visibilità per tempo ---- */
+.fru{padding:14px 18px 8px}
+.fru-table td,.fru-table th{padding:8px 6px}
+.fru-table th.fru-d,.fru-table td.fru-d{width:150px;text-align:left}
+.fru-move{width:58px;white-space:nowrap}
+.mv{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:6px;width:24px;height:24px;font-size:10px;cursor:pointer;margin-right:3px}
+.mv:hover{color:#fff;border-color:#fff}
+tr.moved td{background:rgba(191,0,255,.08)}
+.fru-table select.st{margin:0;padding:6px 8px;font-size:13px;border-radius:6px}
+.fru-table select.st-off{color:var(--ink3);border-style:dashed}
+.fru-table select.st-brief{color:var(--accent2);border-color:rgba(217,107,255,.5)}
+.fru-table select.st-full{color:#fff}
+.fru-def{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-top:3px}
+.prio-table td{padding:8px 6px;vertical-align:middle}
+.prio-table .prio-sel{width:220px}.prio-table select{margin:0;padding:6px 8px;font-size:13px}
+.pill.prio-1{color:var(--ink2)}.pill.prio-2{color:var(--accent2);border-color:rgba(217,107,255,.5)}.pill.prio-3{color:#ffb86b;border-color:rgba(255,184,107,.5)}
+@media (max-width:900px){.fru-table th.fru-d,.fru-table td.fru-d{width:auto}.fru-table{font-size:13px}}
