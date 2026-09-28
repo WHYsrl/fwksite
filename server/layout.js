@@ -26,7 +26,7 @@ const DESKTOP = [
   { id: "contatti", label: "Contatti + footer", what: "", fixed: "last", def: F("full", "full", "full") }
 ];
 const HOME = [
-  { id: "cover", label: "Card in cima (hero)", what: "saluto, titolo, manifesto, campo dati", fixed: "first", def: F("full", "full", "full") },
+  { id: "cover", label: "Card in cima (hero)", what: "saluto, titolo, manifesto, stato On Air", fixed: "first", def: F("full", "full", "full") },
   { id: "reels", label: "Fila dei Reel", what: "", def: F("full", "full", "full") },
   { id: "ask", label: "Bottone Console + esempi", what: "solo se l'AI è configurata", def: F("full", "full", "full") },
   { id: "aree", label: "Carosello Servizi", what: "breve: elenco compatto delle 4 aree (sintesi, esempi, tecnologie), senza schede", brief: true, def: F("brief", "full", "full") },
