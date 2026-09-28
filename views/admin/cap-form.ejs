@@ -11,10 +11,31 @@
     <label>Sintesi (una riga, mostrata nelle card e usata dall'AI) <input name="short" value="<%= cap.short %>"></label>
     <label>Descrizione <textarea name="body" rows="6"><%= cap.body %></textarea></label>
     <label>Tag (separati da virgola) <input name="tags" value="<%= cap.tags.join(', ') %>"></label>
-    <div class="grid2">
-      <label>Casi d'uso (uno per riga: cosa facciamo concretamente, per chi, dove) <textarea name="uses" rows="7" placeholder="es. Campagne DOOH su circuiti urbani: LED wall, totem, pensiline"><%= (cap.uses || []).join('\n') %></textarea></label>
-      <label>Tecnologie, dispositivi e formati (uno per riga: diventano le etichette della card e le conosce la Console) <textarea name="tech" rows="7" placeholder="es. Apple Vision Pro&#10;Meta Quest 3 · Quest Pro&#10;LED wall · LED floor"><%= (cap.tech || []).join('\n') %></textarea></label>
+    <%
+    // casi d'uso: una riga ciascuno, con un'immagine facoltativa. Con le immagini diventano card a carosello (visual + didascalia)
+    // nella scheda dell'area e nella versione breve; senza immagini restano un elenco puntato.
+    const uses = cap.uses || [], uimg = cap.use_images || []; const nRows = Math.min(12, Math.max(6, uses.length + 2));
+    const thumb = (p) => p ? p.replace(/^\/media\/usi\/([^/]+)$/, "/media/usi/sm/$1") : "";
+    %>
+    <h3 class="fgroup">Casi d'uso</h3>
+    <p class="fh fgroup-hint">Cosa facciamo concretamente, per chi, dove: un caso per riga. Con un'immagine i casi d'uso diventano <b>card a carosello</b> (visual + didascalia) nella scheda dell'area e nella versione breve; senza immagini restano un elenco puntato. Le righe vuote non contano; per togliere un caso, svuota il testo.</p>
+    <div class="uses-rows">
+      <% for (let i = 0; i < nRows; i++) { const u = uses[i] || "", im = uimg[i] || ""; %>
+      <div class="use-row">
+        <span class="pairs-n"><%= String(i + 1).padStart(2, '0') %></span>
+        <input name="uses[<%= i %>]" value="<%= u %>" placeholder="<%= i === 0 ? 'es. Campagne DOOH su circuiti urbani: LED wall, totem, pensiline' : '' %>" aria-label="Caso d'uso <%= i + 1 %>">
+        <input name="use_images[<%= i %>]" id="ui-<%= i %>" value="<%= im %>" placeholder="/media/… (facoltativo)" aria-label="Immagine del caso d'uso <%= i + 1 %>">
+        <select data-pick="#ui-<%= i %>" data-preview="#up-<%= i %>" aria-label="Scegli l'immagine">
+          <option value="">…scegli</option>
+          <option value="" data-clear>— nessuna immagine</option>
+          <% if (usi.length) { %><optgroup label="Visual dei casi d'uso"><% usi.forEach(pth => { %><option value="<%= pth %>" <%= pth === im ? 'selected' : '' %>><%= pth.replace('/media/usi/', '') %></option><% }) %></optgroup><% } %>
+          <% if (media.length) { %><optgroup label="Media caricati"><% media.forEach(m => { %><option value="<%= m.path %>" <%= m.path === im ? 'selected' : '' %>><%= m.filename %></option><% }) %></optgroup><% } %>
+        </select>
+        <img id="up-<%= i %>" class="use-thumb" src="<%= thumb(im) %>" alt="" <%= im ? '' : 'hidden' %>>
+      </div>
+      <% } %>
     </div>
+    <label>Tecnologie, dispositivi e formati (uno per riga: diventano le etichette della card e le conosce la Console) <textarea name="tech" rows="7" placeholder="es. Apple Vision Pro&#10;Meta Quest 3 · Quest Pro&#10;LED wall · LED floor"><%= (cap.tech || []).join('\n') %></textarea></label>
     <div class="grid2">
       <label>Immagine (URL) <input name="image" id="cap-image" value="<%= cap.image %>"></label>
       <label>…oppure scegli dai media <select data-pick="#cap-image" data-preview="#cap-prev"><option value="">—</option><% media.forEach(m => { %><option value="<%= m.path %>"><%= m.filename %></option><% }) %></select></label>

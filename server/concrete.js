@@ -16,6 +16,7 @@ const CAPS = {
       "Librerie di asset 3D riutilizzabili: prodotti, ambienti, packaging, personaggi",
       "Giochi e contenuti interattivi per lanci, engagement e formazione"
     ],
+    use_images: ["/media/usi/content-system-1.jpg", "/media/usi/content-system-2.jpg", "/media/usi/content-system-3.jpg", "/media/usi/content-system-4.jpg", "/media/usi/content-system-5.jpg"],
     tech: ["CGI / 3D fotorealistico", "Motion design", "Reels · TikTok · Shorts 9:16", "Feed 1:1 · 4:5", "YouTube · CTV 16:9", "Display · banner HTML5", "Asset modulari", "Giochi"]
   },
   "activation-system": {
@@ -30,6 +31,7 @@ const CAPS = {
       "Retail: vetrine digitali, totem, videowall in store, shelf screen e retail media",
       "Eventi, fiere e dealer: LED wall di palco e stand, attivazioni dal vivo e contenuti aggiornati nel tempo"
     ],
+    use_images: ["/media/usi/activation-system-1.jpg", "/media/usi/activation-system-2.jpg", "/media/usi/activation-system-3.jpg", "/media/usi/activation-system-4.jpg", "/media/usi/activation-system-5.jpg", "/media/usi/activation-system-6.jpg"],
     tech: ["DOOH · LED urbani", "Totem 9:16 · pensiline", "Maxi-schermi 32:9 · 16:9", "Programmatic DOOH · DCO", "Interattività · sensori e camere", "FOOH", "Vetrine e videowall retail", "LED wall eventi e palchi"]
   },
   "spatial-experiences": {
@@ -44,6 +46,7 @@ const CAPS = {
       "Digital twin di spazi, prodotti e impianti per showroom virtuali, configuratori e formazione",
       "Musei e mostre: percorsi phygital con realtà aumentata su smartphone e tablet"
     ],
+    use_images: ["/media/usi/spatial-experiences-1.jpg", "/media/usi/spatial-experiences-2.jpg", "/media/usi/spatial-experiences-3.jpg", "/media/usi/spatial-experiences-4.jpg", "/media/usi/spatial-experiences-5.jpg", "/media/usi/spatial-experiences-6.jpg"],
     tech: ["Apple Vision Pro", "Meta Quest 3 · Quest Pro", "Varjo XR-4", "Proiettori laser · projection mapping", "Pavimenti interattivi e a specchio", "LED wall · LED floor", "AR su smartphone e tablet", "Digital twin", "Unreal Engine · Unity · TouchDesigner"]
   },
   "adaptive-media": {
@@ -58,6 +61,7 @@ const CAPS = {
       "Creatività dinamica (DCO) per programmatic e social, con asset generati al volo",
       "Special projects: assistenti vocali, esperienze conversazionali, generazione in tempo reale"
     ],
+    use_images: ["/media/usi/adaptive-media-1.jpg", "/media/usi/adaptive-media-2.jpg", "/media/usi/adaptive-media-3.jpg", "/media/usi/adaptive-media-4.jpg", "/media/usi/adaptive-media-5.jpg", "/media/usi/adaptive-media-6.jpg"],
     tech: ["Video e immagini generative", "Avatar digitali", "Voci sintetiche · lip-sync", "Localizzazione multilingua", "Variation systems", "DCO · creatività dinamica", "LLM e agenti", "Previsual con AI"]
   }
 };
@@ -76,21 +80,35 @@ const SITE = {
 const list = (v) => (Array.isArray(v) ? v : String(v || "").split(/\r?\n/)).map(s => String(s).trim()).filter(Boolean).slice(0, 12);
 
 const all = () => db().getSetting("caps_concrete", {});
-function forCap(id) { const c = all()[id] || {}; return { uses: Array.isArray(c.uses) ? c.uses : [], tech: Array.isArray(c.tech) ? c.tech : [] }; }
-function setCap(id, { uses, tech }) { const a = all(); a[id] = { uses: list(uses), tech: list(tech) }; db().setSetting("caps_concrete", a); }
+// i casi d'uso hanno, facoltativamente, un'immagine ciascuno (use_images, allineato per indice a uses): con le immagini
+// la scheda dell'area e la versione breve li mostrano come card a carosello (visual + didascalia), senza restano un elenco puntato
+const images = (imgs, n) => { const a = Array.isArray(imgs) ? imgs : (imgs && typeof imgs === "object") ? Object.keys(imgs).sort((x, y) => +x - +y).map(k => imgs[k]) : []; return Array.from({ length: n }, (_, i) => String(a[i] || "").trim()); };
+// dal backoffice: uses può arrivare come elenco di righe (uses[0], uses[1]…) con use_images allineato, oppure come testo (una voce per riga)
+const rows = (uses, imgs) => {
+  const u = (uses && typeof uses === "object" && !Array.isArray(uses)) ? Object.keys(uses).sort((x, y) => +x - +y).map(k => uses[k]) : uses;
+  const texts = Array.isArray(u) ? u.map(x => String(x || "").trim()) : list(u);
+  const im = images(imgs, texts.length);
+  const out = { uses: [], use_images: [] };
+  texts.forEach((t, i) => { if (t) { out.uses.push(t); out.use_images.push(im[i] || ""); } });
+  out.uses = out.uses.slice(0, 12); out.use_images = out.use_images.slice(0, 12);
+  if (!out.use_images.some(Boolean)) out.use_images = [];
+  return out;
+};
+function forCap(id) { const c = all()[id] || {}; const uses = Array.isArray(c.uses) ? c.uses : []; return { uses, tech: Array.isArray(c.tech) ? c.tech : [], use_images: Array.isArray(c.use_images) && c.use_images.some(Boolean) ? images(c.use_images, uses.length) : [] }; }
+function setCap(id, { uses, tech, use_images }) { const a = all(); const r = rows(uses, use_images); a[id] = { uses: r.uses, tech: list(tech), use_images: r.use_images }; db().setSetting("caps_concrete", a); }
 function removeCap(id) { const a = all(); if (a[id]) { delete a[id]; db().setSetting("caps_concrete", a); } }
 
 // Aggiunge uses/tech alle aree di un oggetto contenuto (getContent) e il testo "in pratica" al sito
 function decorate(content) {
   if (!content) return content;
   const a = all();
-  if (Array.isArray(content.caps)) content.caps = content.caps.map(c => ({ ...c, uses: (a[c.id] && a[c.id].uses) || [], tech: (a[c.id] && a[c.id].tech) || [] }));
+  if (Array.isArray(content.caps)) content.caps = content.caps.map(c => ({ ...c, ...forCap(c.id) }));
   if (content.site && !content.site.hero_concrete) content.site = { ...content.site, hero_concrete: SITE.hero_concrete };
   return content;
 }
 // Per l'anteprima statica (senza database): applica i default al contenuto del seed
 function applyDefaults(content) {
-  content.caps = (content.caps || []).map(c => CAPS[c.id] ? { ...c, ...CAPS[c.id] } : { ...c, uses: c.uses || [], tech: c.tech || [] });
+  content.caps = (content.caps || []).map(c => CAPS[c.id] ? { ...c, ...CAPS[c.id] } : { ...c, uses: c.uses || [], tech: c.tech || [], use_images: c.use_images || [] });
   content.site = { ...content.site, hero_concrete: content.site.hero_concrete || SITE.hero_concrete, tech: SITE.tech };
   return content;
 }
@@ -120,4 +138,17 @@ function migrateV2() {
   return true;
 }
 
-module.exports = { CAPS, SITE, forCap, setCap, removeCap, decorate, applyDefaults, migrate, migrateV2, list };
+// v3 (visual dei casi d'uso): alle aree senza immagini si assegnano quelle standard, nell'ordine dell'elenco (dal backoffice si cambiano riga per riga)
+function migrateUsi() {
+  if (db().getSetting("usi_v1", false)) return false;
+  const a = all();
+  Object.entries(CAPS).forEach(([id, d]) => {
+    const c = a[id]; if (!c || !Array.isArray(c.uses) || !c.uses.length) return;
+    if (Array.isArray(c.use_images) && c.use_images.some(Boolean)) return;
+    a[id] = { ...c, use_images: images(d.use_images, c.uses.length) };
+  });
+  db().setSetting("caps_concrete", a); db().setSetting("usi_v1", true);
+  return true;
+}
+
+module.exports = { CAPS, SITE, forCap, setCap, removeCap, decorate, applyDefaults, migrate, migrateV2, migrateUsi, list };

@@ -183,11 +183,14 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
   <div class="caps-brief v-brief">
     <% if (site.areas_brief_intro) { %><p class="lead rv"><%= site.areas_brief_intro %></p><% } %>
     <ol class="caps-list">
-      <% content.caps.forEach((c, i) => { const uses = (c.uses || []).slice(0, 3), tech = (c.tech || []).slice(0, 5); %><li class="rv" style="--i:<%= i %>">
+      <% const thumb = (p) => String(p || "").replace(/^\/media\/usi\/([^/]+)$/, "/media/usi/sm/$1"); %>
+      <% content.caps.forEach((c, i) => { const uses = (c.uses || []).slice(0, 3), uimg = c.use_images || [], tech = (c.tech || []).slice(0, 5); %><li class="rv" style="--i:<%= i %>">
         <span class="eyebrow"><%= site.area_kicker %> <%= String(i + 1).padStart(2, '0') %></span>
         <b><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></b>
         <p><%= c.short %></p>
-        <% if (uses.length) { %><ul class="caps-uses"><% uses.forEach(u => { %><li><%= u %></li><% }) %></ul><% } %>
+        <%# tre esempi: con i visual (dal backoffice) sono mini card, altrimenti un elenco puntato %>
+        <% if (uses.length && uimg.some(Boolean)) { %><div class="use-mini"><% uses.forEach((u, k) => { %><figure class="use-card"><% if (uimg[k]) { %><img src="<%= thumb(uimg[k]) %>" alt="" loading="lazy"><% } else { %><span class="use-ph"></span><% } %><figcaption><span class="use-n"><%= String(k + 1).padStart(2, '0') %></span><%= u %></figcaption></figure><% }) %></div>
+        <% } else if (uses.length) { %><ul class="caps-uses"><% uses.forEach(u => { %><li><%= u %></li><% }) %></ul><% } %>
         <% if (tech.length) { %><div class="tags"><% tech.forEach(x => { %><span class="tag"><%= x %></span><% }) %></div><% } %>
       </li><% }) %>
     </ol>

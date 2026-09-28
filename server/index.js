@@ -24,6 +24,7 @@ const imagegen = require("./imagegen"); // Denoise: immagini generate da un ogge
 const figures = require("./figures"); // Il contesto: i numeri che il campo di particelle compone
 if (concrete.migrate()) console.log("Aree: testi concreti, tecnologie e casi d'uso applicati");
 if (concrete.migrateV2()) console.log("Aree: Activation System riscritta intorno all'engagement");
+if (concrete.migrateUsi()) console.log("Aree: visual standard assegnati ai casi d'uso");
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
 const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
 store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(q, 7, lang) })));

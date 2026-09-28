@@ -142,3 +142,10 @@ tr.moved td{background:rgba(191,0,255,.08)}
 .ord-ctl form{margin:0}
 .ord-ctl .mv:disabled{opacity:.3;cursor:default}
 .ord-ctl select.pos{margin:0 0 0 4px;width:auto;padding:4px 6px;font-size:12px;font-family:var(--mono);border-radius:6px}
+/* casi d'uso di un'area: una riga per caso (testo, immagine, scelta dai media, anteprima) */
+.uses-rows{display:grid;gap:6px;margin:8px 0 14px}
+.use-row{display:grid;grid-template-columns:28px minmax(0,2fr) minmax(0,1fr) 150px 64px;gap:8px;align-items:center}
+.use-row input,.use-row select{margin-top:0;min-width:0}
+.use-thumb{width:64px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--line);background:#000}
+.use-thumb[hidden]{display:none}
+@media (max-width:900px){.use-row{grid-template-columns:28px 1fr 1fr;gap:6px}.use-row select{grid-column:2 / span 2}.use-thumb{display:none}}

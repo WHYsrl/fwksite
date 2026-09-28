@@ -135,12 +135,14 @@ router.post("/dati", (req, res) => {
 
 // ---------- capacità ----------
 router.get("/capacita", (req, res) => res.render("admin/caps", { caps: store.listCaps(true) }));
-router.get("/capacita/new", (req, res) => res.render("admin/cap-form", { cap: { id: "", sort: store.listCaps(true).length + 1, name: "", accent: "", short: "", body: "", tags: [], uses: [], tech: [], image: "", published: true }, media: store.listMedia(), isNew: true }));
-router.get("/capacita/:id", (req, res) => { const cap = store.getCap(req.params.id); if (!cap) return res.redirect("/admin/capacita"); res.render("admin/cap-form", { cap: { ...cap, ...concrete.forCap(cap.id) }, media: store.listMedia(), isNew: false }); });
+// i visual standard dei casi d'uso (public/media/usi): si scelgono dal menu accanto a ogni caso d'uso, insieme ai media caricati
+const listUsi = () => { try { return fs.readdirSync(path.join(__dirname, "..", "public", "media", "usi")).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).sort().map(f => "/media/usi/" + f); } catch { return []; } };
+router.get("/capacita/new", (req, res) => res.render("admin/cap-form", { cap: { id: "", sort: store.listCaps(true).length + 1, name: "", accent: "", short: "", body: "", tags: [], uses: [], tech: [], use_images: [], image: "", published: true }, media: store.listMedia(), usi: listUsi(), isNew: true }));
+router.get("/capacita/:id", (req, res) => { const cap = store.getCap(req.params.id); if (!cap) return res.redirect("/admin/capacita"); res.render("admin/cap-form", { cap: { ...cap, ...concrete.forCap(cap.id) }, media: store.listMedia(), usi: listUsi(), isNew: false }); });
 router.post("/capacita/:id", upload.single("image_file"), (req, res) => {
   const b = req.body; const image = req.file ? registerUpload(req.file) : b.image;
   const id = store.upsertCap({ id: req.params.id === "new" ? (b.id || undefined) : req.params.id, sort: b.sort, name: b.name, accent: b.accent, short: b.short, body: b.body, tags: b.tags, image, published: !!b.published });
-  concrete.setCap(id, { uses: b.uses, tech: b.tech }); // casi d'uso e tecnologie (una voce per riga)
+  concrete.setCap(id, { uses: b.uses, tech: b.tech, use_images: b.use_images }); // casi d'uso (testo + immagine per riga) e tecnologie (una voce per riga)
   flash(req, "Capacità salvata"); res.redirect("/admin/capacita/" + id);
 });
 router.post("/capacita/:id/delete", (req, res) => { store.deleteCap(req.params.id); concrete.removeCap(req.params.id); flash(req, "Capacità eliminata"); res.redirect("/admin/capacita"); });

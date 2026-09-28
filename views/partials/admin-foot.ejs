@@ -6,7 +6,9 @@ document.querySelectorAll('[data-confirm]').forEach(f=>f.addEventListener('submi
 document.querySelectorAll('[data-reset]').forEach(b=>b.addEventListener('click',()=>{ const f=b.closest('.fld'); f.querySelectorAll('input:not([type=checkbox]),textarea').forEach(i=>{ i.value=''; }); f.classList.remove('is-custom'); f.classList.add('is-default'); const st=f.querySelector('.fld-state'); if(st) st.textContent='testo standard (dopo il salvataggio)'; b.remove(); }));
 document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{ const tr=b.closest('tr'); const tb=tr.parentElement; const dir=+b.dataset.move; const sib=dir<0?tr.previousElementSibling:tr.nextElementSibling; if(!sib||sib.dataset.fixed) return; if(dir<0) tb.insertBefore(tr,sib); else tb.insertBefore(sib,tr); const inp=tb.closest('form').querySelector('input[name="'+tb.dataset.order+'"]'); if(inp) inp.value=[...tb.querySelectorAll('tr[data-id]')].map(r=>r.dataset.id).join(','); tr.classList.add('moved'); setTimeout(()=>tr.classList.remove('moved'),600); }));
 document.querySelectorAll('.fld-head .show input').forEach(c=>c.addEventListener('change',()=>{ c.closest('.fld').classList.toggle('is-off', !c.checked); }));
-document.querySelectorAll('[data-pick]').forEach(sel=>sel.addEventListener('change',()=>{ const t=document.querySelector(sel.dataset.pick); if(t){ t.value=sel.value; const p=document.querySelector(sel.dataset.preview); if(p) p.src=sel.value; } }));
+document.querySelectorAll('[data-pick]').forEach(sel=>sel.addEventListener('change',()=>{ const t=document.querySelector(sel.dataset.pick); if(t){ t.value=sel.value; const p=document.querySelector(sel.dataset.preview); if(p){ p.src=sel.value; p.hidden=!sel.value; } } }));
+// l'immagine di un caso d'uso scritta a mano aggiorna l'anteprima
+document.querySelectorAll('.use-row input[id^=ui-]').forEach(inp=>inp.addEventListener('input',()=>{ const p=document.getElementById(inp.id.replace('ui-','up-')); if(p){ p.src=inp.value; p.hidden=!inp.value; } }));
 </script>
 </body>
 </html>
