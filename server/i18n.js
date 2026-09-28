@@ -108,32 +108,53 @@ Translate each Italian text into ${LANG_NAME[lang] || lang} for an international
 - Return ONLY JSON: {"items":[{"k":"<key exactly as given>","t":"<translation>"}]} with every key you received.`;
 
 let running = false, timer = 0;
+// Avanzamento del giro in corso (lo mostra /admin/inglese): lotti fatti/totali, voci tradotte, errori, quando è partito
+const progress = { running: false, started_at: null, batches: 0, done: 0, translated: 0, errors: [] };
+// Lotti per dimensione, non per numero: i testi lunghi (le schede dei lavori) in pochi per volta, così la risposta
+// del modello resta corta e non viene troncata; le voci brevi (tag, tecnologie) in tanti per volta
+const BATCH_CHARS = 4500, BATCH_MAX = 18, PARALLEL = 3;
+function makeBatches(items) {
+  const out = []; let cur = [], chars = 0;
+  items.forEach(it => { const n = it.text.length; if (cur.length && (chars + n > BATCH_CHARS || cur.length >= BATCH_MAX)) { out.push(cur); cur = []; chars = 0; } cur.push(it); chars += n; });
+  if (cur.length) out.push(cur);
+  return out;
+}
 async function translateBatch(items, lang) {
   const user = items.map(it => `[${it.key}]${it.hint ? ` (${it.hint})` : ""}\n${it.text}`).join("\n\n");
-  const out = await ai.complete({ system: SYSTEM(lang), user, json: true, maxTokens: 4000, kind: "i18n" });
+  const out = await ai.complete({ system: SYSTEM(lang), user, json: true, maxTokens: 8000, kind: "i18n", timeoutMs: 180000 });
   const byKey = new Map(items.map(it => [it.key, it]));
   let n = 0;
   (out.items || []).forEach(r => { const it = byKey.get(String(r.k || "").trim()); if (it && isText(r.t)) { save(lang, it.key, it.text, String(r.t).trim(), false); n++; } });
   return n;
 }
-// Traduce quello che manca (a lotti di 20). Ritorna { translated, pending, errors }
-async function run(lang = "en", { max = 400 } = {}) {
+// Traduce quello che manca: lotti per dimensione, tre alla volta. Ritorna { translated, pending, errors }
+async function run(lang = "en", { max = 600 } = {}) {
+  // un giro rimasto appeso (rete, processo) non deve bloccare per sempre: dopo 30 minuti si riparte
+  if (running && progress.started_at && Date.now() - Date.parse(progress.started_at) > 30 * 60000) { console.warn("[i18n] giro precedente scaduto, riparto"); running = false; }
   if (running) return { skipped: true, reason: "già in esecuzione", translated: 0, pending: 0, errors: [] };
   if (!ai.isConfigured()) return { skipped: true, reason: "AI non configurata", translated: 0, pending: 0, errors: [] };
   running = true;
   const res = { translated: 0, pending: 0, errors: [] };
+  Object.assign(progress, { running: true, started_at: new Date().toISOString(), batches: 0, done: 0, translated: 0, errors: [] });
   try {
     const content = require("./concrete").decorate(store.getContent()); content.reels = require("./reels").list(); content.figures = require("./figures").list();
     const todo = pending(content, lang).slice(0, max); res.pending = todo.length;
-    for (let i = 0; i < todo.length; i += 20) {
-      const batch = todo.slice(i, i + 20);
-      try { res.translated += await translateBatch(batch, lang); }
-      catch (e) { res.errors.push(e.message || String(e)); if (e.code === "rate_limited" || e.code === "not_configured") break; }
-    }
+    const batches = makeBatches(todo); progress.batches = batches.length;
+    if (batches.length) console.log(`[i18n] ${todo.length} voci da tradurre in ${batches.length} lotti (${PARALLEL} alla volta)`);
+    let stop = false, next = 0;
+    const worker = async () => {
+      while (!stop && next < batches.length) {
+        const k = next++; const batch = batches[k]; const t0 = Date.now();
+        try { const n = await translateBatch(batch, lang); res.translated += n; progress.translated += n; console.log(`[i18n] lotto ${k + 1}/${batches.length}: ${n}/${batch.length} voci in ${Math.round((Date.now() - t0) / 1000)} s`); }
+        catch (e) { const msg = `lotto ${k + 1}: ${e.message || e}`; res.errors.push(msg); progress.errors.push(msg); console.warn("[i18n]", msg); if (e.code === "rate_limited" || e.code === "not_configured") stop = true; }
+        progress.done++;
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(PARALLEL, batches.length) }, worker));
     res.pending -= res.translated;
     store.setSetting("i18n_last_run", { at: new Date().toISOString(), lang, ...res });
     return res;
-  } finally { running = false; }
+  } finally { running = false; progress.running = false; }
 }
 // Aggiornamento in background, con un piccolo ritardo (si chiama dopo ogni modifica dal backoffice e dopo ogni giro del Radar)
 function refreshSoon(delayMs = 15000) {
@@ -153,4 +174,4 @@ function browserLang(req) { const al = String(req.headers["accept-language"] || 
 function resolve(req) { const c = cookieLang(req); const l = c || browserLang(req); return l === "en" && !isPublic() ? "it" : l; }
 function setCookie(res, lang) { res.cookie("fw_lang", lang, { maxAge: 365 * 24 * 3600 * 1000, sameSite: "lax", httpOnly: false, path: "/" }); }
 
-module.exports = { LANGS, FIELDS, collect, apply, status, pending, save, remove, resetAuto, run, refreshSoon, getSetting, setSetting, isPublic, resolve, cookieLang, browserLang, setCookie, hash, ui, lastRun: () => store.getSetting("i18n_last_run", null) };
+module.exports = { LANGS, FIELDS, collect, apply, status, pending, save, remove, resetAuto, run, refreshSoon, getSetting, setSetting, isPublic, resolve, cookieLang, browserLang, setCookie, hash, ui, progress, lastRun: () => store.getSetting("i18n_last_run", null) };

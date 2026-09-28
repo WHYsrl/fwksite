@@ -19,7 +19,7 @@ function config() {
 }
 const isConfigured = () => !!config().key;
 
-async function complete({ system, user, maxTokens = 700, json = false, kind = "generic", cacheMinutes = 0 }) {
+async function complete({ system, user, maxTokens = 700, json = false, kind = "generic", cacheMinutes = 0, timeoutMs = 0 }) {
   const cfg = config();
   if (!cfg.key) { const e = new Error("AI non configurata: manca la chiave API"); e.code = "not_configured"; throw e; }
   if (store.aiCallsToday() >= cfg.dailyLimit) { const e = new Error("Limite giornaliero di chiamate AI raggiunto"); e.code = "rate_limited"; throw e; }
@@ -29,7 +29,7 @@ async function complete({ system, user, maxTokens = 700, json = false, kind = "g
   let text = "", tokens = 0;
   if (cfg.provider === "openai") {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${cfg.key}` },
+      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${cfg.key}` }, signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
       body: JSON.stringify({ model: cfg.model, max_tokens: maxTokens, temperature: 0.6,
         messages: [{ role: "system", content: system }, { role: "user", content: user }],
         ...(json ? { response_format: { type: "json_object" } } : {}) })
@@ -39,7 +39,7 @@ async function complete({ system, user, maxTokens = 700, json = false, kind = "g
     text = data.choices?.[0]?.message?.content || ""; tokens = data.usage?.total_tokens || 0;
   } else {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", headers: { "content-type": "application/json", "x-api-key": cfg.key, "anthropic-version": "2023-06-01" },
+      method: "POST", headers: { "content-type": "application/json", "x-api-key": cfg.key, "anthropic-version": "2023-06-01" }, signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
       body: JSON.stringify({ model: cfg.model, max_tokens: maxTokens, system: system + (json ? "\nRispondi SOLO con un oggetto JSON valido, senza testo prima o dopo." : ""),
         messages: [{ role: "user", content: user }] })
     });

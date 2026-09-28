@@ -11,7 +11,9 @@ const keys = Object.keys(groups); const show = gsel && groups[gsel] ? [gsel] : k
   <section class="card">
     <h2>Stato</h2>
     <p class="mono"><%= status.total %> campi · <b><%= status.ok %></b> tradotti (di cui <%= status.manual %> a mano) · <b><%= status.stale %></b> da rifare · <b><%= status.missing %></b> mancanti</p>
-    <% if (last) { %><p class="mono muted">Ultima traduzione automatica: <%= new Date(last.at).toLocaleString('it-IT') %> · tradotte <%= last.translated %><% if (last.errors && last.errors.length) { %> · errori: <%= last.errors.join("; ") %><% } %></p><% } %>
+    <% const prog = typeof progress !== "undefined" && progress ? progress : null; %>
+    <% if (prog && prog.running) { %><p class="mono" style="color:var(--accent2,#D96BFF)">Traduzione in corso: lotto <%= prog.done %> di <%= prog.batches %> · <%= prog.translated %> voci tradotte finora · partita alle <%= new Date(prog.started_at).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome' }) %><% if (prog.errors.length) { %> · errori: <%= prog.errors.slice(0, 3).join("; ") %><%= prog.errors.length > 3 ? " … e altri " + (prog.errors.length - 3) : "" %><% } %> — la pagina si ricarica da sola ogni 20 secondi.</p><meta http-equiv="refresh" content="20"><% } %>
+    <% if (last) { %><p class="mono muted">Ultima traduzione automatica: <%= new Date(last.at).toLocaleString('it-IT', { timeZone: 'Europe/Rome' }) %> · tradotte <%= last.translated %><% if (last.errors && last.errors.length) { %> · errori: <%= last.errors.slice(0, 3).join("; ") %><%= last.errors.length > 3 ? " … e altri " + (last.errors.length - 3) : "" %><% } %></p><% } %>
     <% if (!aiOn) { %><p class="muted">AI non configurata: la traduzione automatica non può partire (imposta la chiave in <a href="/admin/ai">AI</a>).</p><% } %>
     <div class="row">
       <form method="post" action="/admin/inglese/traduci"><button class="btn primary" type="submit" <%= aiOn ? '' : 'disabled' %>>Traduci adesso quello che manca (<%= status.stale + status.missing %>)</button></form>

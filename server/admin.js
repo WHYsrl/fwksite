@@ -61,16 +61,15 @@ router.get("/inglese", (req, res) => {
   const groups = {}; const label = { site: "Testi del sito", caps: "Aree", works: "Lavori", team: "Team", signals: "Radar (letture e riassunti)", reels: "Reel", figures: "Dati del contesto" };
   items.forEach(it => { const g = it.key.split(".")[0]; const r = m.get(it.key); const state = !r ? "missing" : r.src_hash !== i18n.hash(it.text) ? "stale" : r.manual ? "manual" : "ok"; (groups[g] = groups[g] || { name: label[g] || g, items: [] }).items.push({ ...it, value: r ? r.value : "", state, updated: r ? r.updated_at : "" }); });
   const only = req.query.only || ""; const gsel = req.query.g || "";
-  res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), only, gsel, aiOn: ai.isConfigured() });
+  res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), progress: i18n.progress, only, gsel, aiOn: ai.isConfigured() });
 });
 router.post("/inglese/impostazioni", (req, res) => { const b = req.body || {}; i18n.setSetting({ en_public: !!b.en_public, auto_when_private: !!b.auto_when_private }); flash(req, b.en_public ? "Versione inglese pubblica: il selettore IT/EN è visibile e chi ha il browser in un'altra lingua vede l'inglese" : "Versione inglese non pubblica: resta visibile solo su /en"); res.redirect("/admin/inglese"); });
-router.post("/inglese/traduci", async (req, res) => {
-  try {
-    const r = await i18n.run("en", { max: +req.body.max || 400 }); const errs = r.errors || [];
-    if (r.skipped) flash(req, r.reason === "già in esecuzione" ? "La traduzione automatica è già in corso (parte da sola all'avvio e dopo le modifiche): ricarica questa pagina tra un minuto per vedere i progressi" : "Traduzione non partita: " + r.reason, "err");
-    else flash(req, `Tradotte ${r.translated} voci${r.pending > 0 ? `, ne restano ${r.pending}` : ""}${errs.length ? " · errori: " + errs.join("; ") : ""}`, errs.length ? "err" : "ok");
-  } catch (e) { flash(req, "Errore: " + e.message, "err"); }
-  res.redirect("/admin/inglese");
+// "Traduci adesso": parte in background e la pagina mostra l'avanzamento (un giro intero può durare qualche minuto: la richiesta non resta appesa)
+router.post("/inglese/traduci", (req, res) => {
+  if (i18n.progress.running) flash(req, "La traduzione è già in corso: qui sotto vedi a che punto è", "err");
+  else if (!ai.isConfigured()) flash(req, "Traduzione non partita: AI non configurata", "err");
+  else { i18n.run("en", { max: +req.body.max || 600 }).catch(e => console.error("[i18n]", e.message)); flash(req, "Traduzione avviata in background: l'avanzamento è qui sotto, la pagina si aggiorna da sola"); }
+  setTimeout(() => res.redirect("/admin/inglese"), 400); // il tempo di far partire il primo lotto, così la pagina mostra già "in corso"
 });
 router.post("/inglese/rigenera", async (req, res) => { const n = i18n.resetAuto("en"); flash(req, `${n} traduzioni automatiche cancellate: si rifanno in background (le correzioni a mano restano)`); i18n.refreshSoon(2000); res.redirect("/admin/inglese"); });
 router.post("/inglese/salva", (req, res) => {
