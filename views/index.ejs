@@ -102,21 +102,6 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       <p class="intro-hint"><%- T("Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto.", { btn: '<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>' }) %></p>
     </section>
     </div>
-    <!-- Console già nell'intro (mobile): complementare alle domande, tiene conto delle scelte fatte -->
-    <div class="intro-console" id="intro-console">
-      <div class="intro-or"><i></i><span id="intro-or-text"><%= T("oppure · chiedi alla Console") %></span><i></i></div>
-      <form class="prompt-row" id="intro-form" autocomplete="off">
-        <label for="intro-q" class="sr-only"><%= T("Chiedi alla Console") %></label>
-        <input id="intro-q" type="text" placeholder="<%= T("Cosa cerchi? Te lo mostro subito") %>" enterkeyhint="send" maxlength="300">
-        <button type="submit" aria-label="<%= T("Chiedi alla Console") %>">→</button>
-      </form>
-      <div class="chips">
-        <button type="button" data-intro-ask="<%= T("Ho fretta: l'essenziale") %>"><%= T("Ho fretta") %></button>
-        <button type="button" data-intro-ask="<%= T("Cosa fate per il retail?") %>">Retail</button>
-        <button type="button" data-intro-ask="<%= T("Come usate l'AI?") %>">AI</button>
-        <button type="button" data-intro-ask="<%= T("Mostrami le esperienze immersive") %>"><%= T("Immersivo") %></button>
-        <button type="button" data-intro-ask="<%= T("Cosa dice il radar oggi?") %>">Radar</button>
-      </div>
     </div>
   </div>
 </div>

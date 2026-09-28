@@ -826,12 +826,8 @@ const Intro = {
       // "2 minuti": si entra subito nel sito, tema automatico. "10 minuti" / "tutto il tempo": prima il mood, poi si entra
       const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); if (this.time === "2") setTimeout(() => this.go(), 220); else setTimeout(() => this.step(2), 220); return; }
       const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); Modes.set("mood", this.mood); /* la palette dell'umore si vede subito */ setTimeout(() => this.go(), 220); return; }
-      const a = e.target.closest("[data-intro-ask]"); if (a) { this.console(a.dataset.introAsk); return; }
       if (e.target.closest("#intro-skip")) this.finish();
     });
-    // la Console dentro l'intro (mobile): scorciatoia opzionale alle domande
-    const f = $("#intro-form", this.el);
-    if (f) f.addEventListener("submit", e => { e.preventDefault(); const i = $("#intro-q", f); const q = i.value.trim(); i.blur(); if (q) this.console(q); });
   },
   // Applica le scelte fatte finora (o i valori di default: densità media, tema automatico)
   apply() {
@@ -840,16 +836,9 @@ const Intro = {
   },
   // Chiude l'intro e apre direttamente il sito (nessuna schermata di "preparazione")
   go() { this.apply(); this.finish(); },
-  // Chiude l'intro con le scelte fatte finora e apre la Console con la domanda
-  console(q) {
-    this.apply();
-    ConsoleWin.open(String(q || "").trim()); // la finestra sta sotto l'intro (z-index) e appare mentre l'intro sfuma
-    this.finish();
-  },
   step(n) {
     $$(".intro-step", this.el).forEach(s => s.classList.toggle("on", s.dataset.step === String(n)));
     this.el.dataset.step = String(n);
-    const q = $("#intro-q", this.el); if (q && n === 2) q.placeholder = t("Cosa cerchi? Terrò conto del tempo scelto");
   },
   finish(immediate) {
     if (this.done) return; this.done = true;

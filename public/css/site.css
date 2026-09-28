@@ -207,11 +207,12 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .intro-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center;max-width:680px;width:100%;padding:24px 0}
 .intro-steps{width:100%}
 .intro-hint{font-size:14px;color:var(--ink-3);margin:18px 0 0}
-/* mobile: tutto deve stare in una schermata (domande + Console) */
+/* mobile: le domande devono stare in una schermata */
 @media (max-width:820px){
   .intro{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
   .intro-top svg{width:118px;height:17px}
   .intro-body{justify-content:flex-start;padding:10px 0 0}
+  .intro-steps{margin:auto 0} /* centrate in verticale; se non ci stanno, i margini auto vanno a zero e nulla si taglia */
   .intro-step .eyebrow{font-size:10px}
   .intro-step h2{font-size:clamp(30px,8.6vw,40px);margin:6px 0 12px}
   .intro-opts{gap:6px}
@@ -226,8 +227,6 @@ body.on-paper .compose{color:var(--paper-ink-2)}
   .intro-opts button{padding:8px 12px}
   .intro-opts b{font-size:15px}
   .intro-opts span{font-size:12px}
-  .intro-console{margin-top:8px}
-  .intro-or{margin-bottom:8px}
   .intro-hint{display:none}
 }
 .intro-step{display:none;width:100%;animation:screen-in .5s cubic-bezier(.2,.8,.2,1)}
@@ -242,19 +241,7 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .intro-opts button{position:relative;padding-right:56px}
 .intro-opts .swatch{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:1px solid rgba(var(--ink-rgb),.18);background:linear-gradient(135deg,var(--s1) 0 50%,var(--s2) 50% 100%)}
 .intro-opts span{color:var(--ink-3);font-size:14.5px}
-/* Console nell'intro: solo mobile (su desktop la Console è la hero subito dopo) */
-.intro-console{display:none}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media (max-width:820px){
-  .intro-console{display:block;margin-top:12px;animation:screen-in .6s .15s both cubic-bezier(.2,.8,.2,1)}
-  .intro-or{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
-  .intro-or i{flex:1;height:1px;background:var(--line-2)}
-  .intro-console .prompt-row{margin-top:0;border-color:var(--accent);background:rgba(var(--bg2-rgb),.75);box-shadow:0 0 0 3px var(--accent-soft);padding:3px 3px 3px 16px}
-  .intro-console .prompt-row input{font-size:15px}
-  .intro-console .prompt-row button{background:var(--accent);color:var(--on-accent);width:38px;height:38px}
-  .intro-console .chips{padding:8px 0 0}
-  .intro-console .chips button{padding:7px 12px;font-size:12.5px}
-}
 .modes-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-weight:500;vertical-align:middle}
 html[data-mood="nervous"]{--amp:.35;--speed:.5;--glow:.2}
 html[data-mood="nervous"] .grain{display:none}
