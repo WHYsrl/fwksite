@@ -90,7 +90,7 @@ body.has-mouse .glow{opacity:1}
 .topbar>*{pointer-events:auto}
 .logo svg{height:30px;width:auto;transition:color .3s}
 body.on-paper .logo{color:var(--paper-ink)}
-body.on-paper .topnav a:not(.cta),body.on-paper .topnav button{background:rgba(238,234,241,.7);color:var(--paper-ink)}
+body.on-paper .topnav a:not(.cta),body.on-paper .topnav button{background:var(--paper-soft);color:var(--paper-ink)} /* sopra le sezioni "carta" il pillolo segue la carta: chiara col testo scuro nei mood scuri, scura col testo chiaro nel mood Chiaro */
 body.on-paper .compose{color:var(--paper-ink-2)}
 .topnav{display:flex;gap:6px;align-items:center}
 .topnav a,.topnav button{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:8px 12px;border:1px solid transparent;border-radius:999px;background:rgba(var(--bg-rgb),.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none}
@@ -98,7 +98,11 @@ body.on-paper .compose{color:var(--paper-ink-2)}
 .topnav .cta{border-color:var(--accent);color:var(--on-accent);background:var(--accent)}
 .topnav .cta:hover{background:#A800E6;border-color:#A800E6}
 .modes-ico{width:12px;height:12px;border-radius:50%;background:conic-gradient(var(--accent) 0 50%,#fff 50% 100%);display:inline-block}
-.topnav .modes-btn.reduced{border-color:var(--accent);color:var(--on-accent)}
+/* il pillolo «Essenziale · mostra tutto» (tempo = 2 minuti): bordo viola e testo leggibile su qualunque sfondo la barra attraversi */
+.topnav .modes-btn.reduced{border-color:var(--accent);color:var(--on-accent)}                              /* mood scuri: bianco sul pillolo scuro */
+html[data-mood="light"] .topnav .modes-btn.reduced{color:var(--accent-ink)}                                /* mood Chiaro: viola scuro sul pillolo chiaro */
+body.on-paper .topnav .modes-btn.reduced{color:var(--accent)}                                              /* sopra la carta chiara (mood scuri): viola pieno */
+html[data-mood="light"] body.on-paper .topnav .modes-btn.reduced{color:var(--paper-ink)}                   /* sopra la carta viola (mood Chiaro): bianco */
 .topnav .modes-btn.reduced .modes-ico{background:var(--accent)}
 .modes{position:fixed;right:var(--gutter);top:calc(64px + env(safe-area-inset-top,0px));z-index:45;width:min(380px,calc(100vw - 32px));background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 .modes-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
