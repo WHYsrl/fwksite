@@ -9,6 +9,7 @@
 // `vars` → segnaposto che il sito sostituisce ({n}, {btn}…). `cols[].i18n === false` → colonna non tradotta (latino, nomi propri).
 // `fixed: true` (pairs) → posti fissi: ogni cella vuota prende quella standard; altrimenti le righe compilate sostituiscono l'elenco standard.
 // `from: "altro_campo"` → se vuoto, il campo vale quanto l'altro (le etichette mobile seguono quelle desktop). `group` con `hint` → titolo di gruppo con spiegazione.
+// `optional: true` → elemento che il sito può non mostrare: nel backoffice ha la casella «Mostra»; spenta, la chiave finisce in site.hidden e il campo vale vuoto.
 
 const SECTIONS = [
   {
@@ -33,7 +34,7 @@ const SECTIONS = [
       { key: "intro_mood_title", label: "Seconda domanda (il mood)", def: "Che mood preferisci?" },
       { key: "intro_mood", label: "Risposte sul mood", hint: "Quattro risposte, nell'ordine: Chiaro, Acceso, Notturno, Quieto. I colori restano quelli dei temi.", type: "pairs", cols: [{ k: "k", label: "Titolo" }, { k: "text", label: "Riga sotto" }], count: 4, fixed: true,
         def: [{ k: "Chiaro", text: "Fondo chiaro e viola d'inchiostro, tutto in luce." }, { k: "Acceso", text: "Nero e viola, energia e movimento." }, { k: "Notturno", text: "Blu notte e lavanda, ritmo disteso." }, { k: "Quieto", text: "Verde e menta, dritto al punto, senza rumore." }] },
-      { key: "intro_hint", label: "Avviso sotto i mood", hint: "{btn} diventa il tasto «Modalità».", vars: ["btn"], def: "Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto." }
+      { key: "intro_hint", optional: true, label: "Avviso sotto i mood", hint: "{btn} diventa il tasto «Modalità».", vars: ["btn"], def: "Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto." }
     ]
   },
   {
@@ -44,21 +45,20 @@ const SECTIONS = [
       { key: "hero_title", label: "Titolo", em: true, def: "Contenuti creati per <em>sopravvivere.</em>" },
       { key: "hero_text", label: "Testo (il manifesto)", type: "textarea", rows: 4, hint: "Su mobile è il sottotitolo della card in cima.", def: "" },
       { key: "tagline", label: "Tagline (una riga)", hint: "Non compare sul sito: la usano l'AI e i motori di ricerca come descrizione.", def: "" },
-      { key: "hero_concrete", label: "«In pratica» (una riga concreta)", type: "textarea", rows: 2, hint: "Cosa facciamo, con che tecnologie, dove. La legge la Console; sul sito compare nelle schede.", def: "" },
+      { key: "hero_concrete", label: "«In pratica» (una riga concreta)", type: "textarea", rows: 2, hint: "Non compare sul sito: la legge la Console (AI) insieme alla tagline, per rispondere con i fatti.", def: "" },
       { group: "Solo desktop · bottoni e Console" },
       { key: "hero_cta", label: "Bottone bianco (porta ai lavori)", def: "Vedi i lavori" },
       { key: "hero_cta2", label: "Bottone secondario (apre il sistema nella mappa)", def: "Apri il sistema" },
       { key: "console_label", label: "Etichetta del campo Console", def: "Chiedi alla Console" },
       { key: "console_placeholder", label: "Suggerimento nel campo Console", def: "es. cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
-      { key: "console_hints", label: "Legenda della mappa (una voce per riga)", type: "lines", hint: "Le tre indicazioni in basso a destra della mappa.", def: ["trascina i nodi", "clic per aprire", "punti chiari = radar, fonti esterne"] },
+      { key: "console_hints", optional: true, label: "Legenda della mappa (una voce per riga)", type: "lines", hint: "Le tre indicazioni in basso a destra della mappa.", def: ["trascina i nodi", "clic per aprire", "punti chiari = radar, fonti esterne"] },
       { key: "ticker_label", label: "Etichetta della striscia Radar", hint: "La striscia viola che scorre sotto la hero con i titoli del Radar.", def: "Radar · fonti esterne" },
       { group: "Solo mobile", hint: "La card in cima alla Home ha lo stesso titolo e testo del desktop; in più il saluto e, sotto, il bottone della Console." },
-      { key: "m_greet", label: "Dopo il saluto", hint: "Il sito scrive «Buongiorno.» / «Buonasera.» seguito da questo.", def: "Siamo Frameworks." },
+      { key: "m_greet", optional: true, label: "Dopo il saluto", hint: "Il sito scrive «Buongiorno.» / «Buonasera.» seguito da questo.", def: "Siamo Frameworks." },
       { key: "m_ask", label: "Bottone della Console in Home", def: "Chiedi alla Console: cosa fate per…" },
-      { key: "m_ask_hint", label: "Esempi sotto il bottone", def: "Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
+      { key: "m_ask_hint", optional: true, label: "Esempi sotto il bottone", def: "Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
       { group: "Immagini" },
-      { key: "hero_image", label: "Immagine di sfondo (desktop)", type: "image", def: "/media/organism-wide.jpg" },
-      { key: "hero_image_mobile", label: "Immagine (mobile, schede)", type: "image", def: "/media/organism-tall.jpg" }
+      { key: "hero_image", label: "Immagine di sfondo (desktop)", type: "image", def: "/media/organism-wide.jpg" }
     ]
   },
   {
@@ -68,7 +68,7 @@ const SECTIONS = [
       { group: "Solo desktop" },
       { key: "reel_label", label: "Etichetta", def: "Reel" },
       { key: "reel_title", label: "Titolo", em: true, def: "Organismi in <em>movimento.</em>" },
-      { key: "reel_text", label: "Sottotitolo", def: "Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu." },
+      { key: "reel_text", optional: true, label: "Sottotitolo", def: "Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu." },
       { group: "Desktop e mobile" },
       { key: "reel_play", label: "Bottone su ogni reel", def: "Guarda con audio" },
       { group: "Solo mobile", hint: "La fila dei reel in Home e nella schermata Lavori: solo un titolo e un rimando." },
@@ -91,7 +91,7 @@ const SECTIONS = [
       { key: "m_all_areas", label: "Rimando accanto al titolo (porta all'elenco)", def: "Tutte" },
       { key: "areas_list_title", label: "Titolo dell'elenco in Sistema", def: "Le aree" },
       { group: "Versione breve" },
-      { key: "areas_brief_intro", label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: per ciascuna il nome, la sintesi, tre esempi concreti (i primi casi d'uso della scheda) e le tecnologie, senza rimandi alle schede. Questo testo sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo.", def: "Quattro sistemi, un solo organismo: contenuti che si declinano in ogni formato, attivazioni che reagiscono a chi passa, esperienze che escono dallo schermo, media che si adattano con l'AI. In breve, cosa facciamo in ciascuna area." }
+      { key: "areas_brief_intro", optional: true, label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: per ciascuna il nome, la sintesi, tre esempi concreti (i primi casi d'uso della scheda) e le tecnologie, senza rimandi alle schede. Questo testo sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo.", def: "Quattro sistemi, un solo organismo: contenuti che si declinano in ogni formato, attivazioni che reagiscono a chi passa, esperienze che escono dallo schermo, media che si adattano con l'AI. In breve, cosa facciamo in ciascuna area." }
     ]
   },
   {
@@ -100,7 +100,7 @@ const SECTIONS = [
     fields: [
       { key: "context_label", label: "Etichetta", def: "Il contesto" },
       { key: "context_text", label: "Testo", type: "textarea", rows: 4, def: "" },
-      { key: "context_quote", label: "Frase in corsivo sotto il testo", hint: "Una frase breve, da statement.", def: "Non importa quale sia il trend del momento. È già passato." },
+      { key: "context_quote", optional: true, label: "Frase in corsivo sotto il testo", hint: "Una frase breve, da statement.", def: "Non importa quale sia il trend del momento. È già passato." },
       { group: "Versione breve" },
       { key: "context_brief", label: "Testo breve (senza il campo dati)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
@@ -111,14 +111,14 @@ const SECTIONS = [
     fields: [
       { group: "Solo desktop" },
       { key: "works_label", label: "Etichetta", def: "Lavori" },
-      { key: "works_text", label: "Sottotitolo", em: true, def: "Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova." },
+      { key: "works_text", optional: true, label: "Sottotitolo", em: true, def: "Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova." },
       { group: "Desktop e mobile" },
       { key: "works_title", label: "Titolo", em: true, hint: "Su mobile è il titolo della schermata Lavori.", def: "Organismi in <em>azione.</em>" },
       { key: "works_all", label: "Filtro «tutti»", def: "Tutti" },
       { group: "Solo mobile", hint: "La fila dei lavori in Home e la nota in fondo alla schermata Lavori." },
       { key: "m_works_title", label: "Titolo della fila in Home", from: "works_label", hint: "Vuoto = come l'etichetta desktop.", def: "Lavori" },
       { key: "m_see_all", label: "Rimando accanto al titolo (porta alla schermata Lavori)", def: "Vedi tutti" },
-      { key: "m_works_hint", label: "Nota in fondo alla schermata Lavori", def: "Tocca un lavoro per aprirlo e adattarlo al tuo contesto" }
+      { key: "m_works_hint", optional: true, label: "Nota in fondo alla schermata Lavori", def: "Tocca un lavoro per aprirlo e adattarlo al tuo contesto" }
     ]
   },
   {
@@ -127,10 +127,10 @@ const SECTIONS = [
       { group: "Desktop e mobile" },
       { key: "organism_label", label: "Etichetta", def: "Adaptive Content Systems" },
       { key: "organism_title", label: "Titolo", em: true, def: "Ogni progetto è concepito come un <em>organismo vivente.</em>" },
-      { key: "organism_text", label: "Testo", type: "textarea", rows: 4, def: "" },
-      { group: "Solo mobile", hint: "Nella schermata Sistema: la frase di apertura e la didascalia sotto l'organismo interattivo." },
-      { key: "m_system_quote", label: "Frase di apertura della schermata Sistema", def: "Ogni progetto è concepito come un organismo vivente." },
-      { key: "m_org_title", label: "Didascalia sotto l'organismo · titolo", def: "È vivo." },
+      { key: "organism_text", optional: true, label: "Testo", type: "textarea", rows: 4, def: "" },
+      { group: "Solo mobile", hint: "Nella schermata Sistema: il blocco viola in cima e la didascalia sotto l'organismo interattivo." },
+      { key: "m_system_quote", label: "Blocco viola in cima alla schermata Sistema", hint: "La frase in corsivo, bianca su viola, prima del titolo dell'organismo. Con «Mostra» spento il blocco sparisce.", optional: true, def: "Ogni progetto è concepito come un organismo vivente." },
+      { key: "m_org_title", optional: true, label: "Didascalia sotto l'organismo · titolo", hint: "Con «Mostra» spento sparisce tutta la didascalia (titolo e testo).", def: "È vivo." },
       { key: "m_org_text", label: "Didascalia sotto l'organismo · testo", type: "textarea", rows: 3, def: "Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato." },
       { group: "Versione breve" },
       { key: "organism_brief", label: "Testo breve (senza l'organismo interattivo)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
@@ -141,7 +141,7 @@ const SECTIONS = [
     fields: [
       { key: "method_label", label: "Etichetta", def: "Metodo" },
       { key: "method_title", label: "Titolo", em: true, def: "Cinque fasi, un <em>ciclo.</em>" },
-      { key: "method_intro", label: "Introduzione", type: "textarea", rows: 3, def: "" },
+      { key: "method_intro", optional: true, label: "Introduzione", type: "textarea", rows: 3, def: "" },
       { key: "method", label: "Le fasi", hint: "Cinque fasi, nell'ordine. I nomi compaiono anche nel diagramma.", type: "pairs", cols: [{ k: "k", label: "Fase", i18n: false }, { k: "text", label: "Testo" }], count: 5, def: [] },
       { group: "Versione breve" },
       { key: "method_brief", label: "Testo breve (senza le fasi e il diagramma)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
@@ -153,8 +153,8 @@ const SECTIONS = [
     fields: [
       { key: "team_label", label: "Etichetta", hint: "{n} diventa il numero delle persone.", vars: ["n"], def: "Team · {n} persone" },
       { key: "team_title", label: "Titolo", em: true, def: "Un sistema è fatto di <em>persone.</em>" },
-      { key: "team_text", label: "Testo", type: "textarea", rows: 3, def: "" },
-      { key: "team_with", label: "«con» (prima dei nomi dei responsabili di unit)", def: "con" },
+      { key: "team_text", optional: true, label: "Testo", type: "textarea", rows: 3, def: "" },
+      { key: "team_with", optional: true, label: "«con» (prima dei nomi dei responsabili di unit)", def: "con" },
       { group: "Versione breve" },
       { key: "team_brief", label: "Testo breve (senza le persone)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
@@ -175,15 +175,15 @@ const SECTIONS = [
       { group: "Desktop e mobile" },
       { key: "radar_label", label: "Etichetta", def: "Radar · rassegna da fonti esterne" },
       { key: "radar_title", label: "Titolo", em: true, def: "" },
-      { key: "radar_text", label: "Testo", type: "textarea", rows: 3, hint: "Spiega che sono contenuti di terzi.", def: "" },
+      { key: "radar_text", optional: true, label: "Testo", type: "textarea", rows: 3, hint: "Spiega che sono contenuti di terzi.", def: "" },
       { group: "Ricerca dal vivo (desktop e mobile)" },
       { key: "radar_search_title", label: "Titolo della ricerca", def: "Cerca nel mondo, adesso" },
-      { key: "radar_search_text", label: "Testo della ricerca", def: "Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi." },
+      { key: "radar_search_text", optional: true, label: "Testo della ricerca", def: "Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi." },
       { key: "radar_search_placeholder", label: "Suggerimento nel campo di ricerca", def: "es. retail media, DOOH, AI generativa…" },
       { key: "radar_queries", label: "Ricerche suggerite", hint: "Le capsule sotto il campo: etichetta che si vede e ricerca che parte. Se ne compili anche una sola, valgono solo le tue.", type: "pairs", cols: [{ k: "k", label: "Etichetta" }, { k: "text", label: "Ricerca" }], count: 6,
         def: [{ k: "DOOH", text: "DOOH" }, { k: "Retail media", text: "retail media" }, { k: "AI generativa", text: "AI generativa pubblicità" }, { k: "Virtual production", text: "virtual production" }, { k: "Musei immersivi", text: "musei esperienze immersive" }] },
       { group: "Note" },
-      { key: "radar_note", label: "Nota in fondo (paternità dei titoli)", type: "textarea", rows: 2, def: "I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità." },
+      { key: "radar_note", optional: true, label: "Nota in fondo (paternità dei titoli)", type: "textarea", rows: 2, def: "I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità." },
       { group: "Solo mobile", hint: "La fila «Radar oggi» in Home e il titolo dell'elenco nella schermata Radar." },
       { key: "m_radar_title", label: "Titolo della fila in Home", def: "Radar oggi" },
       { key: "m_radar_list_title", label: "Titolo dell'elenco nella schermata Radar", def: "Selezione del Radar" },
@@ -220,14 +220,14 @@ const SECTIONS = [
       { key: "contact_email", label: "Email", i18n: false, def: "" },
       { key: "contact_copy", label: "Bottone accanto all'email", def: "Copia" },
       { key: "contact_address", label: "Indirizzo", type: "textarea", rows: 2, def: "" },
-      { key: "footer_note", label: "Riga del footer", def: "" }
+      { key: "footer_note", optional: true, label: "Riga del footer", def: "" }
     ]
   },
   {
     id: "modalita", nav: "Modalità", title: "Modalità — il pannello", where: "Desktop: il pannello che si apre dal tasto Modalità in alto (tempo, mood, ambiente, lingua). Mobile: gli stessi pulsanti stanno dentro la Console.",
     fields: [
       { key: "modes_title", label: "Titolo del pannello", def: "La pagina si adatta a te" },
-      { key: "modes_note", label: "Nota in fondo al pannello", type: "textarea", rows: 3, def: "Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server." },
+      { key: "modes_note", optional: true, label: "Nota in fondo al pannello", type: "textarea", rows: 3, def: "Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server." },
       { key: "modes_enabled", label: "Modalità ambientali", hint: "Se spente, il sito non cambia densità, ritmo e colori in base a tempo, umore e meteo.", type: "check", on: "Attive (tempo / umore / meteo)", def: true }
     ]
   }
@@ -258,12 +258,17 @@ function view(site, T) {
     }
     if (isEmpty(v)) s[f.key] = isEmpty(f.def) ? "" : tr(f.def);
   }
+  // campi opzionali con «Mostra» spento (site.hidden): valgono vuoto, e il sito non stampa l'elemento
+  const hidden = new Set(Array.isArray(src.hidden) ? src.hidden : []);
+  for (const f of ALL) if (f.optional && hidden.has(f.key)) s[f.key] = (f.type === "lines" || f.type === "pairs") ? [] : "";
+  if (hidden.has("m_org_title")) s.m_org_text = ""; // la didascalia dell'organismo ha un solo interruttore
+  s.hidden = [...hidden];
   // campi "come un altro" (from): vuoti, seguono il campo desktop corrispondente (es. il titolo della fila dei reel segue l'etichetta Reel)
   for (const f of ALL) if (f.from && isEmpty(src[f.key])) s[f.key] = s[f.from];
   // compatibilità con i vecchi "statement" (elenco): la seconda riga stava sotto il contesto, la terza apriva Sistema su mobile
   const st = Array.isArray(src.statements) ? src.statements : [];
-  if (isEmpty(src.context_quote) && st[1]) s.context_quote = st[1];
-  if (isEmpty(src.m_system_quote) && st[2]) s.m_system_quote = st[2];
+  if (isEmpty(src.context_quote) && st[1] && !hidden.has("context_quote")) s.context_quote = st[1];
+  if (isEmpty(src.m_system_quote) && st[2] && !hidden.has("m_system_quote")) s.m_system_quote = st[2];
   return s;
 }
 
@@ -273,8 +278,11 @@ function parse(sectionId, body, site) {
   const b = body || {}; const out = { ...(site || {}) };
   const str = (v) => String(v == null ? "" : v).trim();
   const rows = (v) => { if (Array.isArray(v)) return v; if (v && typeof v === "object") return Object.keys(v).sort((a, c) => +a - +c).map(k => v[k]); return []; };
+  const show = (b.show && typeof b.show === "object") ? b.show : {};
+  const hidden = new Set(Array.isArray(out.hidden) ? out.hidden : []);
   for (const f of sec.fields) {
     if (!f.key) continue;
+    if (f.optional) { if (show[f.key]) hidden.delete(f.key); else hidden.add(f.key); }
     if (f.type === "check") { out[f.key] = !!b[f.key]; continue; }
     if (f.type === "lines") { out[f.key] = str(b[f.key]).split(/\r?\n/).map(x => x.trim()).filter(Boolean); continue; }
     if (f.type === "pairs") {
@@ -285,6 +293,7 @@ function parse(sectionId, body, site) {
     }
     out[f.key] = str(b[f.key]);
   }
+  out.hidden = [...hidden];
   return out;
 }
 

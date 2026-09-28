@@ -76,7 +76,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   <div class="modes-row"><span class="k"><%= site.intro_mood_title %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= (site.intro_mood[0] || {}).k || T("Chiaro") %></button><button type="button" data-mood="vivid"><%= (site.intro_mood[1] || {}).k || T("Acceso") %></button><button type="button" data-mood="calm"><%= (site.intro_mood[2] || {}).k || T("Notturno") %></button><button type="button" data-mood="nervous"><%= (site.intro_mood[3] || {}).k || T("Quieto") %></button></div></div>
   <div class="modes-row"><span class="k"><%= T("Ambiente") %></span><div class="modes-env" id="modes-env"><%= T("Roma · in ascolto…") %></div></div>
   <% if (SHOW_LANG) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
-  <p class="modes-note"><%= site.modes_note %></p>
+  <% if (site.modes_note) { %><p class="modes-note"><%= site.modes_note %></p><% } %>
 </div>
 
 
@@ -100,7 +100,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       <div class="intro-opts">
         <% [["light", "#F5F2F8", "#8E00C4"], ["vivid", "#050307", "#BF00FF"], ["calm", "#0E1220", "#8A7CFF"], ["nervous", "#121A18", "#5FBFA5"]].forEach(([v, s1, s2], i) => { const o = site.intro_mood[i] || {}; %><button type="button" data-mood="<%= v %>"><i class="swatch" style="--s1:<%= s1 %>;--s2:<%= s2 %>" aria-hidden="true"></i><b><%= o.k %></b><span><%= o.text %></span></button><% }) %>
       </div>
-      <p class="intro-hint"><%- cx(site.intro_hint).split("{btn}").join('<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>') %></p>
+      <% if (site.intro_hint) { %><p class="intro-hint"><%- cx(site.intro_hint).split("{btn}").join('<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>') %></p><% } %>
     </section>
     </div>
     </div>
@@ -123,7 +123,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="<%= site.console_placeholder %>"><button type="submit" aria-label="<%= T("Apri la Console") %>">→</button></div>
     </form>
   </div>
-  <div class="hint" aria-hidden="true"><% site.console_hints.forEach(h => { %><span><%= h %> <i></i></span><% }) %></div>
+  <% if (site.console_hints.length) { %><div class="hint" aria-hidden="true"><% site.console_hints.forEach(h => { %><span><%= h %> <i></i></span><% }) %></div><% } %>
   <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span><%= T("Roma") %> <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
   <div class="ticker" aria-label="<%= T("Radar: titoli da fonti esterne") %>"><div class="label"><%= site.ticker_label %></div><div class="track"><div class="row" id="ticker-row"></div></div></div>
 </section>
@@ -146,7 +146,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 <!-- ============================ REEL ============================ -->
 <%# Reel: i video tematici (Vimeo) in un carosello; si gestiscono da /admin/reel. data-prio: priorità 1-2-3 (nascosti via CSS in base al tempo) %>
 <section class="section reels desktop-only" <%- vis("reel") %> id="reel" aria-label="Reel">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.reel_label %></div><div><h2 class="rv"><%- em(site.reel_title) %></h2><p class="rv"><%= site.reel_text %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.reel_label %></div><div><h2 class="rv"><%- em(site.reel_title) %></h2><% if (site.reel_text) { %><p class="rv"><%= site.reel_text %></p><% } %></div></div>
   <div class="reels-wrap rv">
     <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="<%= T("Reel precedente") %>">←</button>
     <div class="reels-track" id="reels-track">
@@ -199,7 +199,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
     <div>
       <div class="eyebrow rv"><span class="dot"></span><%= site.context_label %></div>
       <p class="big rv"><%= site.context_text %></p>
-      <p class="serif statement-inline rv"><%= site.context_quote %></p>
+      <% if (site.context_quote) { %><p class="serif statement-inline rv"><%= site.context_quote %></p><% } %>
     </div>
   </div>
   <div class="brief-text v-brief"><div class="eyebrow rv"><span class="dot"></span><%= site.context_label %></div><p class="big rv"><%= site.context_brief %></p></div>
@@ -207,7 +207,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 <% } else if (SEC === "lavori") { %>
 <!-- ============================ LAVORI ============================ -->
 <section class="section desktop-only" id="lavori" <%- vis("lavori") %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.works_label %></div><div><h2 class="rv"><%- em(site.works_title) %></h2><p class="rv"><%- site.works_text %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.works_label %></div><div><h2 class="rv"><%- em(site.works_title) %></h2><% if (site.works_text) { %><p class="rv"><%- site.works_text %></p><% } %></div></div>
   <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro. data-prio: priorità 1-2-3, i lavori oltre il livello del tempo scelto sono nascosti via CSS %>
   <div class="works-chips rv" role="group" aria-label="<%= T("Filtra i lavori") %>"><button type="button" class="on" data-wfilter="all"><%= site.works_all %> <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
   <div class="works">
@@ -224,7 +224,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 <section class="section organism desktop-only" <%- vis("organismo") %> id="organismo">
   <div class="section-head">
     <div><div class="eyebrow rv"><span class="dot"></span><%= site.organism_label %></div></div>
-    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv v-full"><%= site.organism_text %></p><p class="rv v-brief"><%= site.organism_brief %></p></div>
+    <div><h2 class="rv"><%- em(site.organism_title) %></h2><% if (site.organism_text) { %><p class="rv v-full"><%= site.organism_text %></p><% } %><p class="rv v-brief"><%= site.organism_brief %></p></div>
   </div>
   <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
   <div class="rv v-full"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
@@ -236,7 +236,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
     <div>
       <div class="eyebrow rv"><span class="dot"></span><%= site.method_label %></div>
       <h2 class="rv"><%- em(site.method_title) %></h2>
-      <p class="lead rv"><%= site.method_intro %></p>
+      <% if (site.method_intro) { %><p class="lead rv"><%= site.method_intro %></p><% } %>
       <ol class="method-list">
         <% (site.method || []).forEach((m, i) => { %><li class="rv" style="--i:<%= i %>"><b><%= m.k %></b><span><%= m.text %></span></li><% }) %>
       </ol>
@@ -257,7 +257,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 <% } else if (SEC === "team") { %>
 <!-- ============================ TEAM ============================ -->
 <section class="section team desktop-only" id="team" <%- vis("team") %> <%= team.length ? '' : 'hidden' %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.team_label.split("{n}").join(team.length) %></div><div><h2 class="rv"><%- em(site.team_title) %></h2><p class="rv v-full"><%= site.team_text %></p><p class="rv v-brief"><%= site.team_brief %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.team_label.split("{n}").join(team.length) %></div><div><h2 class="rv"><%- em(site.team_title) %></h2><% if (site.team_text) { %><p class="rv v-full"><%= site.team_text %></p><% } %><p class="rv v-brief"><%= site.team_brief %></p></div></div>
   <div class="people v-full">
     <% keyPeople.forEach((m, i) => { %>
     <div class="person rv" style="--i:<%= i %>">
@@ -268,7 +268,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
   </div>
   <div class="roster rv v-full">
     <% units.forEach(u => { const list = team.filter(m => m.unit === u && !m.is_key); if (!list.length) return; const leads = keyPeople.filter(m => m.unit === u); %>
-    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line"><%= site.team_with %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
+    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length && site.team_with) { %><p class="lead-line"><%= site.team_with %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
     <% }) %>
   </div>
 </section>
@@ -286,9 +286,9 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 <% } else if (SEC === "radar") { %>
 <!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
 <section class="section radar paper desktop-only" id="radar" <%- vis("radar") %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.radar_label %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv v-full"><%= site.radar_text %></p><p class="rv v-brief"><%= site.radar_brief %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.radar_label %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><% if (site.radar_text) { %><p class="rv v-full"><%= site.radar_text %></p><% } %><p class="rv v-brief"><%= site.radar_brief %></p></div></div>
   <div class="radar-live rv v-full">
-    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= site.radar_search_title %></div><p><%= site.radar_search_text %></p></div>
+    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= site.radar_search_title %></div><% if (site.radar_search_text) { %><p><%= site.radar_search_text %></p><% } %></div>
     <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="<%= site.radar_search_placeholder %>" maxlength="80" aria-label="<%= T("Cerca nel radar") %>"><button type="submit"><%= T("Cerca") %></button></form>
     <div class="radar-chips"><% site.radar_queries.forEach(q => { %><button type="button" data-live-q="<%= q.text || q.k %>"><%= q.k %></button><% }) %></div>
     <div class="radar-results" data-radar-results hidden></div>
@@ -303,7 +303,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
     <% }) %>
   </div>
   <% if (content.signals.length > 5) { %><div class="radar-more-row v-full"><button type="button" class="btn radar-more" data-radar-more><%= T("Leggi ancora") %> <span>+<%= Math.min(5, content.signals.length - 5) %> <%= T("di") %> <%= content.signals.length - 5 %></span></button></div><% } %>
-  <p class="note v-full"><%= site.radar_note %></p>
+  <% if (site.radar_note) { %><p class="note v-full"><%= site.radar_note %></p><% } %>
 </section>
 <% } else if (SEC === "narrow") { %>
 <!-- ============================ CONTESTO PERSONALE (narrowcasting) ============================ -->
@@ -332,7 +332,7 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 </section>
 <% } %>
 <% }) %>
-<footer class="desktop-only path-keep"><span><%= site.footer_note %></span><span>Adaptive Content Systems · v0.2</span></footer>
+<footer class="desktop-only path-keep"><span><%= site.footer_note %></span><span><%= site.claim %></span></footer>
 
 <!-- ============================ MOBILE (app) ============================ -->
 <div class="app-shell mobile-only">

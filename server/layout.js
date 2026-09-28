@@ -36,7 +36,7 @@ const HOME = [
   { id: "contact", label: "Contatti", what: "", fixed: "last", def: F("full", "full", "full") }
 ];
 const SISTEMA = [
-  { id: "quote", label: "Frase di apertura", what: "", def: F("full", "full", "full") },
+  { id: "quote", label: "Blocco viola (frase di apertura)", what: "il testo si cambia in Contenuti → L'organismo → Solo mobile", def: F("full", "full", "full") },
   { id: "organism", label: "Organismo · titolo e testo", what: "breve: il testo breve", brief: true, def: F("full", "full", "full") },
   { id: "contesto", label: "Il contesto", what: "campo dati + testo · breve: solo il testo breve", brief: true, def: F("full", "full", "full") },
   { id: "canvas", label: "L'organismo (interattivo)", what: "", def: F("off", "full", "full") },

@@ -66,7 +66,8 @@ function contentIndex(lang = "it") {
   const sig = c.signals.slice(0, 20).map(x => `- [signal:${x.id}] ${x.src} (${x.date}): ${x.title} · aree: ${x.caps.join(", ")}`).join("\n");
   const team = (c.team || []).map(m => `- ${m.name}: ${m.role}${m.unit ? " (" + m.unit + ")" : ""}${m.is_key ? " · persona chiave" : ""}`).join("\n");
   const sections = SECTIONS.map(x => `- [sec:${x.id}] ${x.name}: ${x.desc}`).join("\n");
-  return { c, text: `AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}\n\nSEZIONI DEL SITO (si propongono con "sections"):\n${sections}${team ? `\n\nTEAM (persone; non sono id da proporre: per le persone proponi la sezione team):\n${team}` : ""}` };
+  const who = [c.site && c.site.tagline ? `CHI SIAMO: ${c.site.tagline}` : "", c.site && c.site.hero_concrete ? `IN PRATICA: ${c.site.hero_concrete}` : ""].filter(Boolean).join("\n");
+  return { c, text: `${who ? who + "\n\n" : ""}AREE (capacità):\n${caps}\n\nLAVORI:\n${works}\n\nRADAR (notizie esterne, di terzi, non nostre):\n${sig}\n\nSEZIONI DEL SITO (si propongono con "sections"):\n${sections}${team ? `\n\nTEAM (persone; non sono id da proporre: per le persone proponi la sezione team):\n${team}` : ""}` };
 }
 // Le sezioni del sito che la Console può proporre come navigazione
 const SECTIONS = [
