@@ -45,10 +45,10 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="157" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
-    <a href="#aree"><%= site.areas_label || T("Aree") %></a><a href="#sistema"><%= T("Sistema") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
+    <a href="#aree"><%= site.areas_label %></a><a href="#sistema"><%= site.nav_sistema %></a><a href="#lavori"><%= site.nav_lavori %></a><a href="#metodo"><%= site.nav_metodo %></a><a href="#team"><%= site.nav_team %></a><a href="#radar"><%= site.nav_radar %></a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
     <% if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
-    <a class="cta" href="#contatti"><%= T("Parliamone") %></a>
+    <a class="cta" href="#contatti"><%= site.nav_cta %></a>
   </nav>
 </header>
 
@@ -65,12 +65,12 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 </div>
 
 <div class="modes" id="modes" hidden>
-  <div class="modes-head"><span class="eyebrow"><span class="dot"></span><%= T("La pagina si adatta a te") %></span><button type="button" class="x" id="modes-close" aria-label="<%= T("Chiudi") %>">✕</button></div>
-  <div class="modes-row"><span class="k"><%= T("Quanto tempo hai?") %></span><div class="seg" role="group" aria-label="<%= T("Tempo") %>"><button type="button" data-density="2"><%= T("2 minuti") %></button><button type="button" data-density="10" class="on"><%= T("10 minuti") %></button><button type="button" data-density="all"><%= T("Tutto il tempo") %></button></div></div>
-  <div class="modes-row"><span class="k"><%= T("Che mood preferisci?") %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= T("Chiaro") %></button><button type="button" data-mood="vivid"><%= T("Acceso") %></button><button type="button" data-mood="calm"><%= T("Notturno") %></button><button type="button" data-mood="nervous"><%= T("Quieto") %></button></div></div>
+  <div class="modes-head"><span class="eyebrow"><span class="dot"></span><%= site.modes_title %></span><button type="button" class="x" id="modes-close" aria-label="<%= T("Chiudi") %>">✕</button></div>
+  <div class="modes-row"><span class="k"><%= site.intro_time_title %></span><div class="seg" role="group" aria-label="<%= T("Tempo") %>"><button type="button" data-density="2"><%= T("2 minuti") %></button><button type="button" data-density="10" class="on"><%= T("10 minuti") %></button><button type="button" data-density="all"><%= T("Tutto il tempo") %></button></div></div>
+  <div class="modes-row"><span class="k"><%= site.intro_mood_title %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= (site.intro_mood[0] || {}).k || T("Chiaro") %></button><button type="button" data-mood="vivid"><%= (site.intro_mood[1] || {}).k || T("Acceso") %></button><button type="button" data-mood="calm"><%= (site.intro_mood[2] || {}).k || T("Notturno") %></button><button type="button" data-mood="nervous"><%= (site.intro_mood[3] || {}).k || T("Quieto") %></button></div></div>
   <div class="modes-row"><span class="k"><%= T("Ambiente") %></span><div class="modes-env" id="modes-env"><%= T("Roma · in ascolto…") %></div></div>
   <% if (SHOW_LANG) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
-  <p class="modes-note"><%= T("Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.") %></p>
+  <p class="modes-note"><%= site.modes_note %></p>
 </div>
 
 
@@ -82,24 +82,19 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     <div class="intro-steps">
     <%# due passi: il tempo (con "2 minuti" si entra subito, tema automatico) e il mood (solo per 10 minuti / tutto il tempo). Poi il sito si apre direttamente. La lingua si cambia dalla barra o da Modalità. %>
     <section class="intro-step on" data-step="1">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> 2</div>
-      <h2 class="serif"><%= T("Quanto tempo hai?") %></h2>
+      <div class="eyebrow"><span class="dot"></span><%= site.intro_eyebrow %> · 1 <%= T("di") %> 2</div>
+      <h2 class="serif"><%= site.intro_time_title %></h2>
       <div class="intro-opts">
-        <button type="button" data-time="2"><b><%= T("2 minuti") %></b><span><%= T("Fammi capire cosa fate.") %></span></button>
-        <button type="button" data-time="10"><b><%= T("10 minuti") %></b><span><%= T("Come lavorate e cosa avete fatto.") %></span></button>
-        <button type="button" data-time="all"><b><%= T("Tutto il tempo che serve") %></b><span><%= T("Voglio godermi l'esperienza.") %></span></button>
+        <% ["2", "10", "all"].forEach((v, i) => { const o = site.intro_time[i] || {}; %><button type="button" data-time="<%= v %>"><b><%= o.k %></b><span><%= o.text %></span></button><% }) %>
       </div>
     </section>
     <section class="intro-step" data-step="2">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 2 <%= T("di") %> 2</div>
-      <h2 class="serif"><%= T("Che mood preferisci?") %></h2>
+      <div class="eyebrow"><span class="dot"></span><%= site.intro_eyebrow %> · 2 <%= T("di") %> 2</div>
+      <h2 class="serif"><%= site.intro_mood_title %></h2>
       <div class="intro-opts">
-        <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b><%= T("Chiaro") %></b><span><%= T("Fondo chiaro e viola d'inchiostro, tutto in luce.") %></span></button>
-        <button type="button" data-mood="vivid"><i class="swatch" style="--s1:#050307;--s2:#BF00FF" aria-hidden="true"></i><b><%= T("Acceso") %></b><span><%= T("Nero e viola, energia e movimento.") %></span></button>
-        <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b><%= T("Notturno") %></b><span><%= T("Blu notte e lavanda, ritmo disteso.") %></span></button>
-        <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b><%= T("Quieto") %></b><span><%= T("Verde e menta, dritto al punto, senza rumore.") %></span></button>
+        <% [["light", "#F5F2F8", "#8E00C4"], ["vivid", "#050307", "#BF00FF"], ["calm", "#0E1220", "#8A7CFF"], ["nervous", "#121A18", "#5FBFA5"]].forEach(([v, s1, s2], i) => { const o = site.intro_mood[i] || {}; %><button type="button" data-mood="<%= v %>"><i class="swatch" style="--s1:<%= s1 %>;--s2:<%= s2 %>" aria-hidden="true"></i><b><%= o.k %></b><span><%= o.text %></span></button><% }) %>
       </div>
-      <p class="intro-hint"><%- T("Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto.", { btn: '<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>' }) %></p>
+      <p class="intro-hint"><%- cx(site.intro_hint).split("{btn}").join('<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>') %></p>
     </section>
     </div>
     </div>
@@ -116,15 +111,15 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     <div class="eyebrow"><span class="dot"></span><%= site.claim %></div>
     <h1 class="split"><%- em(site.hero_title) %></h1>
     <p class="lead"><%= site.hero_text %></p>
-    <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core"><%= T("Apri il sistema") %></button></div>
+    <div class="hero-actions"><a class="btn primary" href="#lavori"><%= site.hero_cta %></a><button class="btn" type="button" data-open-node="core"><%= site.hero_cta2 %></button></div>
     <form class="prompt" id="prompt" autocomplete="off" <%= content.features.console ? '' : 'hidden' %>>
-      <label class="eyebrow" for="prompt-q"><span class="dot"></span><%= T("Chiedi alla Console") %></label>
-      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="<%= T("es. cosa fate per il retail? · quali visori usate? · come usate l'AI?") %>"><button type="submit" aria-label="<%= T("Apri la Console") %>">→</button></div>
+      <label class="eyebrow" for="prompt-q"><span class="dot"></span><%= site.console_label %></label>
+      <div class="prompt-row"><input id="prompt-q" name="q" type="text" maxlength="200" placeholder="<%= site.console_placeholder %>"><button type="submit" aria-label="<%= T("Apri la Console") %>">→</button></div>
     </form>
   </div>
-  <div class="hint" aria-hidden="true"><span><%= T("trascina i nodi") %> <i></i></span><span><%= T("clic per aprire") %> <i></i></span><span><%= T("punti chiari = radar, fonti esterne") %> <i></i></span></div>
+  <div class="hint" aria-hidden="true"><% site.console_hints.forEach(h => { %><span><%= h %> <i></i></span><% }) %></div>
   <div class="statusbar"><span class="live"><b id="status-words">On Air</b></span><span><%= T("Roma") %> <span class="clock" id="clock">--:--:--</span> <span id="status-weather"></span></span><span id="status-right"></span></div>
-  <div class="ticker" aria-label="<%= T("Radar: titoli da fonti esterne") %>"><div class="label"><%= T("Radar · fonti esterne") %></div><div class="track"><div class="row" id="ticker-row"></div></div></div>
+  <div class="ticker" aria-label="<%= T("Radar: titoli da fonti esterne") %>"><div class="label"><%= site.ticker_label %></div><div class="track"><div class="row" id="ticker-row"></div></div></div>
 </section>
 
 <!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
@@ -134,7 +129,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <%# Reel: i video tematici (Vimeo) in un carosello, al posto dello statement scorrevole; si gestiscono da /admin/reel %>
 <% const reels = (content.reels || []).filter(r => r.vimeo || r.cover); if (reels.length) { %>
 <section class="section reels desktop-only" data-tier="10" id="reel" aria-label="Reel">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Reel</div><div><h2 class="rv"><%- T("Organismi in <span class=\"serif\">movimento.</span>") %></h2><p class="rv"><%= T("Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu.") %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.reel_label %></div><div><h2 class="rv"><%- em(site.reel_title) %></h2><p class="rv"><%= site.reel_text %></p></div></div>
   <div class="reels-wrap rv">
     <button type="button" class="reels-arrow prev" data-reels-nav="-1" aria-label="<%= T("Reel precedente") %>">←</button>
     <div class="reels-track" id="reels-track">
@@ -143,7 +138,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
         <div class="reel-media"><% if (r.cover) { %><img src="<%= r.cover %>" alt="" loading="lazy"><% } %></div>
         <div class="reel-meta">
           <div><div class="eyebrow"><span class="dot"></span><%= r.theme || 'Reel' %><% if (r.placeholder) { %> · <%= T("anteprima") %><% } %></div><h3><%= r.title %></h3></div>
-          <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play><%= T("Guarda con audio") %></button><% } %>
+          <% if (r.vimeo) { %><button type="button" class="reel-play" data-reel-play><%= site.reel_play %></button><% } %>
         </div>
       </article>
       <% }) %>
@@ -155,13 +150,13 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <!-- ============================ AREE ============================ -->
 <section class="section desktop-only" id="aree" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label || T("Aree") %></div><h2 class="rv"><%- site.areas_title ? em(site.areas_title) : T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label %></div><h2 class="rv"><%- em(site.areas_title) %></h2></div>
   <div class="caps">
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
       <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
-      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
+      <div class="cap-body"><div class="eyebrow"><%= site.area_kicker %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><span class="cap-more"><%= site.area_more %> →</span></div>
     </button>
     <% }) %>
   </div>
@@ -172,18 +167,18 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   <div class="split2">
     <div class="ph df rv" data-datafield><img src="/media/particles.jpg" alt="" loading="lazy"></div>
     <div>
-      <div class="eyebrow rv"><span class="dot"></span><%= T("Il contesto") %></div>
+      <div class="eyebrow rv"><span class="dot"></span><%= site.context_label %></div>
       <p class="big rv"><%= site.context_text %></p>
-      <p class="serif statement-inline rv"><%= site.statements[1] %></p>
+      <p class="serif statement-inline rv"><%= site.context_quote %></p>
     </div>
   </div>
 </section>
 
 <!-- ============================ LAVORI ============================ -->
 <section class="section desktop-only" id="lavori" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Lavori") %></div><div><h2 class="rv"><%- T("Organismi in <span class=\"serif\">azione.</span>") %></h2><p class="rv"><%- T("Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.") %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.works_label %></div><div><h2 class="rv"><%- em(site.works_title) %></h2><p class="rv"><%- site.works_text %></p></div></div>
   <%# filtri: pochi, per sistema; il conteggio dice quante case ci sono dietro %>
-  <div class="works-chips rv" role="group" aria-label="<%= T("Filtra i lavori") %>"><button type="button" class="on" data-wfilter="all"><%= T("Tutti") %> <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
+  <div class="works-chips rv" role="group" aria-label="<%= T("Filtra i lavori") %>"><button type="button" class="on" data-wfilter="all"><%= site.works_all %> <small><%= content.works.length %></small></button><% content.caps.forEach(c => { const n = content.works.filter(w => w.caps.includes(c.id)).length; if (!n) return; %><button type="button" data-wfilter="<%= c.id %>"><%= c.name %> <small><%= n %></small></button><% }) %></div>
   <div class="works">
     <% content.works.forEach((w, i) => { %>
     <button class="work rv" type="button" data-open="<%= w.id %>" data-caps="<%= w.caps.join(' ') %>" data-tilt style="--i:<%= i %>">
@@ -197,7 +192,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <!-- ============================ ORGANISMO ============================ -->
 <section class="section organism desktop-only" data-tier="10" id="organismo">
   <div class="section-head">
-    <div><div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div></div>
+    <div><div class="eyebrow rv"><span class="dot"></span><%= site.organism_label %></div></div>
     <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv"><%= site.organism_text %></p></div>
   </div>
   <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
@@ -208,8 +203,8 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <section class="section desktop-only" id="metodo" data-tier="10">
   <div class="split2">
     <div>
-      <div class="eyebrow rv"><span class="dot"></span><%= T("Metodo") %></div>
-      <h2 class="rv"><%- T("Cinque fasi, un <span class=\"serif\">ciclo.</span>") %></h2>
+      <div class="eyebrow rv"><span class="dot"></span><%= site.method_label %></div>
+      <h2 class="rv"><%- em(site.method_title) %></h2>
       <p class="lead rv"><%= site.method_intro %></p>
       <ol class="method-list">
         <% (site.method || []).forEach((m, i) => { %><li class="rv" style="--i:<%= i %>"><b><%= m.k %></b><span><%= m.text %></span></li><% }) %>
@@ -230,7 +225,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <!-- ============================ TEAM ============================ -->
 <section class="section team desktop-only" id="team" data-tier="10" <%= team.length ? '' : 'hidden' %>>
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Team · {n} persone", { n: team.length }) %></div><div><h2 class="rv"><%- em(site.team_title || T('Un sistema è fatto di <em>persone.</em>')) %></h2><p class="rv"><%= site.team_text || '' %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.team_label.split("{n}").join(team.length) %></div><div><h2 class="rv"><%- em(site.team_title) %></h2><p class="rv"><%= site.team_text %></p></div></div>
   <div class="people">
     <% keyPeople.forEach((m, i) => { %>
     <div class="person rv" style="--i:<%= i %>">
@@ -241,7 +236,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   </div>
   <div class="roster rv">
     <% units.forEach(u => { const list = team.filter(m => m.unit === u && !m.is_key); if (!list.length) return; const leads = keyPeople.filter(m => m.unit === u); %>
-    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line"><%= T("con") %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
+    <div class="roster-col"><div class="eyebrow"><span class="dot"></span><%= u %></div><% if (leads.length) { %><p class="lead-line"><%= site.team_with %> <%= leads.map(l => l.name).join(", ") %></p><% } %><ul><% list.forEach(m => { %><li><b><%= m.name %></b><span><%= m.role %></span></li><% }) %></ul></div>
     <% }) %>
   </div>
 </section>
@@ -258,11 +253,11 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <!-- ============================ RADAR (contenuti di terzi, su carta) ============================ -->
 <section class="section radar paper desktop-only" id="radar" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Radar · rassegna da fonti esterne") %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.radar_label %><% if (content.radar_at) { %><span class="radar-at"> · <%= T("aggiornato") %> <%= fmtWhen(content.radar_at) %></span><% } %></div><div><h2 class="rv"><%- em(site.radar_title) %></h2><p class="rv"><%= site.radar_text %></p></div></div>
   <div class="radar-live rv">
-    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= T("Cerca nel mondo, adesso") %></div><p><%= T("Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi.") %></p></div>
-    <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="<%= T("es. retail media, DOOH, AI generativa…") %>" maxlength="80" aria-label="<%= T("Cerca nel radar") %>"><button type="submit"><%= T("Cerca") %></button></form>
-    <div class="radar-chips"><button type="button" data-live-q="DOOH">DOOH</button><button type="button" data-live-q="retail media">Retail media</button><button type="button" data-live-q="<%= T("AI generativa pubblicità") %>"><%= T("AI generativa") %></button><button type="button" data-live-q="virtual production">Virtual production</button><button type="button" data-live-q="<%= T("musei esperienze immersive") %>"><%= T("Musei immersivi") %></button></div>
+    <div class="radar-live-head"><div class="eyebrow"><span class="dot"></span><%= site.radar_search_title %></div><p><%= site.radar_search_text %></p></div>
+    <form class="radar-form" data-radar-search autocomplete="off"><input type="search" name="q" placeholder="<%= site.radar_search_placeholder %>" maxlength="80" aria-label="<%= T("Cerca nel radar") %>"><button type="submit"><%= T("Cerca") %></button></form>
+    <div class="radar-chips"><% site.radar_queries.forEach(q => { %><button type="button" data-live-q="<%= q.text || q.k %>"><%= q.k %></button><% }) %></div>
     <div class="radar-results" data-radar-results hidden></div>
   </div>
   <div class="signals">
@@ -275,18 +270,18 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     <% }) %>
   </div>
   <% if (content.signals.length > 5) { %><div class="radar-more-row"><button type="button" class="btn radar-more" data-radar-more><%= T("Leggi ancora") %> <span>+<%= Math.min(5, content.signals.length - 5) %> <%= T("di") %> <%= content.signals.length - 5 %></span></button></div><% } %>
-  <p class="note"><%= T("I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità.") %></p>
+  <p class="note"><%= site.radar_note %></p>
 </section>
 
 <!-- ============================ CONTESTO PERSONALE ============================ -->
 <section class="section desktop-only" id="contesto" data-tier="10">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span>Narrowcasting</div><h2 class="rv"><%- T("Questa pagina si è composta <span class=\"serif\">per te.</span>") %></h2></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.narrow_label %></div><h2 class="rv"><%- em(site.narrow_title) %></h2></div>
   <div class="context"><p class="big" id="context-text"></p><div class="kv" id="context-kv"></div></div>
 </section>
 
 <!-- ============================ TRIADE (in fondo, prima della chiusura) ============================ -->
 <section class="section triad desktop-only" data-tier="all">
-  <div class="eyebrow rv"><span class="dot"></span>Firmitas · Utilitas · Venustas</div>
+  <div class="eyebrow rv"><span class="dot"></span><%= site.triad_label %></div>
   <div class="triad-grid">
     <% (site.triad || []).forEach((t, i) => { %><div class="triad-item rv" style="--i:<%= i %>"><h3 class="serif"><%= t.la %></h3><p class="k"><%= t.it %></p><p><%= t.text %></p></div><% }) %>
   </div>
@@ -296,7 +291,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <section class="closing desktop-only" data-tier="10" aria-label="<%= T("Chiusura") %>"><div class="closing-words" id="closing"><% (site.closing || []).forEach((w, i) => { %><span class="serif" style="--i:<%= i %>"><%= w %></span><% }) %></div></section>
 <section class="section contact desktop-only path-keep" id="contatti" data-tier="2">
   <div class="split2">
-    <div><div class="eyebrow rv"><span class="dot"></span><%= T("Contatti") %></div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>"><%= T("Copia") %></button></div></div>
+    <div><div class="eyebrow rv"><span class="dot"></span><%= site.contact_label %></div><h2 class="rv"><%- em(site.contact_title) %></h2><div class="mail rv"><code><%= site.contact_email %></code><button class="copy" type="button" data-copy="<%= site.contact_email %>"><%= site.contact_copy %></button></div></div>
     <figure class="ph rv" data-tilt><img src="/media/roma.jpg" alt="" loading="lazy" data-parallax="0.08"><figcaption class="address"><%- cx(site.contact_address).replace(/\n/g, "<br>") %></figcaption></figure>
   </div>
 </section>

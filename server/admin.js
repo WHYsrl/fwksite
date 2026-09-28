@@ -11,6 +11,7 @@ const concrete = require("./concrete");
 const imagegen = require("./imagegen");
 const figures = require("./figures");
 const i18n = require("./i18n");
+const siteFields = require("./site-fields");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -28,7 +29,7 @@ const upload = multer({
 function safeEq(a, b) { const A = Buffer.from(String(a)), B = Buffer.from(String(b)); return A.length === B.length && crypto.timingSafeEqual(A, B); }
 function requireAdmin(req, res, next) { if (req.session && req.session.admin) return next(); res.redirect("/admin/login?next=" + encodeURIComponent(req.originalUrl)); }
 const flash = (req, msg, kind = "ok") => { req.session.flash = { msg, kind }; };
-router.use((req, res, next) => { res.locals.flash = req.session.flash || null; req.session.flash = null; res.locals.path = req.path; res.locals.aiOn = ai.isConfigured(); next(); });
+router.use((req, res, next) => { res.locals.flash = req.session.flash || null; req.session.flash = null; res.locals.path = req.path; res.locals.aiOn = ai.isConfigured(); res.locals.sections = siteFields.SECTIONS; next(); });
 
 // ---------- login ----------
 router.get("/login", (req, res) => res.render("admin/login", { next: req.query.next || "/admin", error: null }));
@@ -83,20 +84,18 @@ router.post("/inglese/salva", (req, res) => {
 // ---------- testi ----------
 const lines = (s) => String(s || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
 const arr = (v) => Array.isArray(v) ? v : (v && typeof v === "object" ? Object.values(v) : []);
-router.get("/testi", (req, res) => res.render("admin/testi", { site: store.getSetting("site", {}) }));
-router.post("/testi", (req, res) => {
-  const b = req.body; const site = store.getSetting("site", {});
-  const s = { ...site,
-    brand: b.brand, claim: b.claim, tagline: b.tagline, hero_title: b.hero_title, hero_text: b.hero_text, hero_concrete: b.hero_concrete, hero_cta: b.hero_cta, hero_image: b.hero_image, hero_image_mobile: b.hero_image_mobile,
-    context_text: b.context_text, organism_title: b.organism_title, organism_text: b.organism_text, tech_title: b.tech_title, method_intro: b.method_intro, team_title: b.team_title, team_text: b.team_text,
-    contact_title: b.contact_title, contact_email: b.contact_email, contact_address: b.contact_address, footer_note: b.footer_note, radar_title: b.radar_title, radar_text: b.radar_text,
-    areas_label: String(b.areas_label || "").trim(), areas_title: String(b.areas_title || "").trim(), areas_home_title: String(b.areas_home_title || "").trim(), areas_list_title: String(b.areas_list_title || "").trim(),
-    statements: lines(b.statements), closing: lines(b.closing),
-    triad: arr(b.triad).filter(t => t.la || t.it).map(t => ({ la: t.la, it: t.it, text: t.text })),
-    tech: arr(b.tech).filter(t => t.k).map(t => ({ k: t.k, text: t.text })),
-    method: arr(b.method).filter(t => t.k).map(t => ({ k: t.k, text: t.text })),
-    modes_enabled: !!b.modes_enabled };
-  store.setSetting("site", s); flash(req, "Testi salvati"); res.redirect("/admin/testi");
+// ---------- contenuti: i testi di ogni sezione del sito (schema in server/site-fields.js) ----------
+router.get("/testi", (req, res) => res.redirect("/admin/contenuti")); // vecchio indirizzo
+router.get("/contenuti", (req, res) => res.redirect("/admin/contenuti/" + siteFields.SECTIONS[0].id));
+router.get("/contenuti/:id", (req, res) => {
+  const sec = siteFields.byId(req.params.id); if (!sec) return res.redirect("/admin/contenuti");
+  const i = siteFields.SECTIONS.indexOf(sec);
+  res.render("admin/contenuti", { sec, prev: siteFields.SECTIONS[i - 1] || null, next: siteFields.SECTIONS[i + 1] || null, site: store.getSetting("site", {}), media: store.listMedia().filter(m => /^image\//.test(m.mime || "") || /\.(jpe?g|png|webp|gif|avif)$/i.test(m.path || "")) });
+});
+router.post("/contenuti/:id", (req, res) => {
+  const sec = siteFields.byId(req.params.id); if (!sec) return res.redirect("/admin/contenuti");
+  store.setSetting("site", siteFields.parse(sec.id, req.body, store.getSetting("site", {})));
+  flash(req, `${sec.title}: testi salvati`); res.redirect("/admin/contenuti/" + sec.id);
 });
 
 // ---------- contesto della Console (pagina nascosta: non è pubblicata, la legge solo l'AI) ----------

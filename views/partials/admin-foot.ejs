@@ -1,6 +1,9 @@
 </main>
+</div>
+</div>
 <script>
 document.querySelectorAll('[data-confirm]').forEach(f=>f.addEventListener('submit',e=>{ if(!confirm(f.dataset.confirm)) e.preventDefault(); }));
+document.querySelectorAll('[data-reset]').forEach(b=>b.addEventListener('click',()=>{ const f=b.closest('.fld'); f.querySelectorAll('input:not([type=checkbox]),textarea').forEach(i=>{ i.value=''; }); f.classList.remove('is-custom'); f.classList.add('is-default'); const st=f.querySelector('.fld-state'); if(st) st.textContent='testo standard (dopo il salvataggio)'; b.remove(); }));
 document.querySelectorAll('[data-pick]').forEach(sel=>sel.addEventListener('change',()=>{ const t=document.querySelector(sel.dataset.pick); if(t){ t.value=sel.value; const p=document.querySelector(sel.dataset.preview); if(p) p.src=sel.value; } }));
 </script>
 </body>

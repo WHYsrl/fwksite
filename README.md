@@ -30,14 +30,16 @@ Al primo avvio il database viene creato in `data/site.db` e riempito con i conte
 
 ## 2. Backoffice (/admin)
 
-- **Testi**: hero, statement, triade, organismo, tecnologie, metodo, radar, contatti, modalità ambientali.
+Il backoffice è organizzato come un CMS: a sinistra i gruppi (Sito, Collezioni, Radar, Console e AI, Sistema), a destra la pagina.
+
+- **Contenuti** (`/admin/contenuti`): tutte le scritte del sito, una pagina per sezione nell'ordine in cui le sezioni compaiono (menu, domande iniziali, hero, reel, servizi, contesto, lavori, organismo, metodo, team, tecnologie, radar, narrowcasting, triade, chiusura, contatti, app mobile, modalità). Ogni campo mostra il testo standard come suggerimento: vuoto = standard, scritto = personalizzato (e si traduce da solo in inglese). Lo schema dei campi, con etichette, spiegazioni e testi standard, è in `server/site-fields.js`: per rendere modificabile una nuova scritta si aggiunge lì il campo e nel template si usa `site.<chiave>`.
 - **Aree**: i quattro sistemi (nodi principali della Console), con immagine e tag.
 - **Lavori**: cliente, titolo, descrizione, aree collegate, immagine (URL, media caricati o upload diretto), stato (placeholder / proposta / in corso / consegnato).
 - **Radar**: notizie in attesa (con punteggio e bozza AI), pubblicate, scartate; pulsante "Esegui il Radar ora"; inserimento manuale.
 - **Fonti e filtri**: feed RSS (attiva/disattiva, peso), parole chiave incluse/escluse, età massima, notizie per giro, intervallo, classificazione AI, auto-pubblicazione.
 - **AI**: provider, chiavi, modelli, funzioni attive, limite giornaliero, test di connessione, consumi.
 - **Media**: upload di immagini e video (salvati in `data/uploads`, serviti su `/media/...`).
-- **Dashboard**: export JSON di tutti i contenuti e import.
+- **Panoramica**: accesso rapido alle sezioni dei contenuti, stato del Radar e dell'AI, export JSON di tutti i contenuti e import.
 
 ## 3. Attivare l'AI
 

@@ -1,6 +1,11 @@
-<%- include('../partials/admin-head', { title: 'Dashboard' }) %>
-<h1>Dashboard</h1>
-<div class="grid4">
+<%- include('../partials/admin-head', { title: 'Panoramica' }) %>
+<h1>Panoramica</h1>
+<section class="card">
+  <div class="head"><h2>Contenuti del sito</h2><a class="btn sm" href="/admin/contenuti">Apri i contenuti →</a></div>
+  <p class="muted" style="margin-top:0">Le scritte di ogni sezione, nell'ordine in cui compaiono sul sito. Aree, lavori, reel e persone si gestiscono nelle Collezioni.</p>
+  <div class="sec-grid"><% sections.forEach((sc, i) => { %><a href="/admin/contenuti/<%= sc.id %>"><i><%= String(i + 1).padStart(2, '0') %></i><%= sc.nav %></a><% }) %></div>
+</section>
+<div class="stats">
   <a class="card stat" href="/admin/capacita"><small>Aree</small><b><%= counts.caps %></b></a>
   <a class="card stat" href="/admin/lavori"><small>Lavori</small><b><%= counts.works %></b></a>
   <a class="card stat" href="/admin/team"><small>Team</small><b><%= counts.team %></b></a>

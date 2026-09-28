@@ -21,11 +21,10 @@ const isText = (v) => typeof v === "string" && v.trim().length > 0;
 // ---------- i campi traducibili, come percorsi dentro il contenuto ----------
 // "[]" = ogni elemento; "{id}" = ogni elemento, con chiave stabile dal suo id; "*" = ogni voce di un oggetto.
 // Le liste di stringhe (tag, tecnologie, casi d'uso, statement) hanno chiave dal testo: riordinarle non invalida nulla.
+// I testi del sito (site.*) vengono dallo schema dei Contenuti (server/site-fields.js): si traducono solo quelli scritti dal
+// backoffice, i testi standard hanno già l'inglese nel dizionario dell'interfaccia. "statements" resta per i contenuti vecchi.
 const FIELDS = [
-  "site.tagline", "site.hero_title", "site.hero_text", "site.hero_cta", "site.hero_concrete", "site.context_text",
-  "site.organism_title", "site.organism_text", "site.tech_title", "site.method_intro", "site.contact_title", "site.contact_address",
-  "site.footer_note", "site.radar_title", "site.radar_text", "site.team_title", "site.team_text", "site.areas_label", "site.areas_title", "site.areas_home_title", "site.areas_list_title",
-  "site.statements[]", "site.triad[].it", "site.triad[].text", "site.tech[].k", "site.tech[].text", "site.method[].text",
+  ...require("./site-fields").I18N_PATHS, "site.statements[]",
   "caps{id}.short", "caps{id}.body", "caps{id}.tags[]", "caps{id}.tech[]", "caps{id}.uses[]",
   "works{id}.title", "works{id}.short", "works{id}.body", "works{id}.status", "works{id}.label",
   "team{id}.role", "team{id}.unit", "team{id}.bio",
