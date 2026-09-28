@@ -61,7 +61,7 @@ router.get("/inglese", (req, res) => {
   const groups = {}; const label = { site: "Testi del sito", caps: "Aree", works: "Lavori", team: "Team", signals: "Radar (letture e riassunti)", reels: "Reel", figures: "Dati del contesto" };
   items.forEach(it => { const g = it.key.split(".")[0]; const r = m.get(it.key); const state = !r ? "missing" : r.src_hash !== i18n.hash(it.text) ? "stale" : r.manual ? "manual" : "ok"; (groups[g] = groups[g] || { name: label[g] || g, items: [] }).items.push({ ...it, value: r ? r.value : "", state, updated: r ? r.updated_at : "" }); });
   const only = req.query.only || ""; const gsel = req.query.g || "";
-  res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), progress: i18n.progress, only, gsel, aiOn: ai.isConfigured() });
+  res.render("admin/inglese", { groups, status: i18n.status(content), settings: i18n.getSetting(), last: i18n.lastRun(), progress: i18n.progress, probe: i18n.lastProbe(), only, gsel, aiOn: ai.isConfigured() });
 });
 router.post("/inglese/impostazioni", (req, res) => { const b = req.body || {}; i18n.setSetting({ en_public: !!b.en_public, auto_when_private: !!b.auto_when_private }); flash(req, b.en_public ? "Versione inglese pubblica: il selettore IT/EN è visibile e chi ha il browser in un'altra lingua vede l'inglese" : "Versione inglese non pubblica: resta visibile solo su /en"); res.redirect("/admin/inglese"); });
 // "Traduci adesso": parte in background e la pagina mostra l'avanzamento (un giro intero può durare qualche minuto: la richiesta non resta appesa)
@@ -71,6 +71,8 @@ router.post("/inglese/traduci", (req, res) => {
   else { i18n.run("en", { max: +req.body.max || 600 }).catch(e => console.error("[i18n]", e.message)); flash(req, "Traduzione avviata in background: l'avanzamento è qui sotto, la pagina si aggiorna da sola"); }
   setTimeout(() => res.redirect("/admin/inglese"), 400); // il tempo di far partire il primo lotto, così la pagina mostra già "in corso"
 });
+// Prova: un lotto di tre voci, con la risposta grezza del modello mostrata in pagina (diagnostica)
+router.post("/inglese/prova", async (req, res) => { try { const r = await i18n.probe("en"); flash(req, r.error ? "Prova fatta: " + r.error : `Prova fatta: ${r.matched} voci su ${r.keys.length} riconosciute e salvate`, r.error ? "err" : "ok"); } catch (e) { flash(req, "Errore: " + e.message, "err"); } res.redirect("/admin/inglese#prova"); });
 router.post("/inglese/rigenera", async (req, res) => { const n = i18n.resetAuto("en"); flash(req, `${n} traduzioni automatiche cancellate: si rifanno in background (le correzioni a mano restano)`); i18n.refreshSoon(2000); res.redirect("/admin/inglese"); });
 router.post("/inglese/salva", (req, res) => {
   const b = req.body || {}; const content = enContent(); const src = new Map(i18n.collect(content).map(it => [it.key, it.text]));

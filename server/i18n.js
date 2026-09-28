@@ -105,27 +105,61 @@ Translate each Italian text into ${LANG_NAME[lang] || lang} for an international
 - Do not translate brand names, product names, client names, people, technologies, formats (16:9, 9:16, LED wall, Reels, DOOH, XR…), "Adaptive Content Systems", "Frameworks", "Frame by Frame", "Radar", "Console", nor the Latin words Firmitas/Utilitas/Venustas.
 - Numbers: use English formatting ("6,04 mld" → "6.04 bn", "500 mln" → "500 m", "3,2 quadrilioni" → "3.2 quadrillion"; dates like "ott 2025" → "Oct 2025").
 - Radar items are third-party news: "why" texts are our reading of them, keep the first person plural ("we").
-- Return ONLY JSON: {"items":[{"k":"<key exactly as given>","t":"<translation>"}]} with every key you received.`;
+- Inside JSON strings escape double quotes (\\") and use \\n for line breaks; prefer curly quotes “ ” in the English text.
+- Return ONLY JSON: {"items":[{"k":"<key exactly as given, without brackets>","t":"<translation>"}]} with every key you received, in the same order.`;
 
 let running = false, timer = 0;
 // Avanzamento del giro in corso (lo mostra /admin/inglese): lotti fatti/totali, voci tradotte, errori, quando è partito
 const progress = { running: false, started_at: null, batches: 0, done: 0, translated: 0, errors: [] };
 // Lotti per dimensione, non per numero: i testi lunghi (le schede dei lavori) in pochi per volta, così la risposta
 // del modello resta corta e non viene troncata; le voci brevi (tag, tecnologie) in tanti per volta
-const BATCH_CHARS = 4500, BATCH_MAX = 18, PARALLEL = 3;
+const BATCH_CHARS = 3000, BATCH_MAX = 12, PARALLEL = 3;
 function makeBatches(items) {
   const out = []; let cur = [], chars = 0;
   items.forEach(it => { const n = it.text.length; if (cur.length && (chars + n > BATCH_CHARS || cur.length >= BATCH_MAX)) { out.push(cur); cur = []; chars = 0; } cur.push(it); chars += n; });
   if (cur.length) out.push(cur);
   return out;
 }
-async function translateBatch(items, lang) {
+// La risposta del modello, in tutte le forme in cui può arrivare: {"items":[{k,t}]}, una lista, o un oggetto {chiave: traduzione}
+const normKey = (k) => String(k || "").trim().replace(/^\[/, "").replace(/\].*$/, "").trim();
+function parseItems(out) {
+  if (!out) return [];
+  if (Array.isArray(out)) return out;
+  if (Array.isArray(out.items)) return out.items;
+  if (Array.isArray(out.translations)) return out.translations;
+  if (typeof out === "object") return Object.keys(out).filter(k => typeof out[k] === "string").map(k => ({ k, t: out[k] }));
+  return [];
+}
+// JSON rotto o troncato (una virgoletta non protetta, la risposta tagliata): si recuperano le coppie complete
+function salvage(raw) {
+  const out = []; const re = /"k"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"t"\s*:\s*"((?:[^"\\]|\\.)*)"/g; let m;
+  while ((m = re.exec(String(raw || "")))) { let k = m[1], t = m[2]; try { k = JSON.parse('"' + m[1] + '"'); t = JSON.parse('"' + m[2] + '"'); } catch {} out.push({ k, t }); }
+  return out;
+}
+let lastProbe = null; // l'ultima prova fatta da /admin/inglese (risposta grezza del modello, per capire cosa non va)
+async function translateBatch(items, lang, { probe = false } = {}) {
   const user = items.map(it => `[${it.key}]${it.hint ? ` (${it.hint})` : ""}\n${it.text}`).join("\n\n");
-  const out = await ai.complete({ system: SYSTEM(lang), user, json: true, maxTokens: 8000, kind: "i18n", timeoutMs: 180000 });
-  const byKey = new Map(items.map(it => [it.key, it]));
+  let out, raw = "", salvaged = false;
+  try { out = await ai.complete({ system: SYSTEM(lang), user, json: true, maxTokens: 8000, kind: "i18n", timeoutMs: 180000 }); }
+  catch (e) {
+    if (e.code === "bad_json" && e.raw) { raw = e.raw; out = { items: salvage(raw) }; salvaged = true; if (!out.items.length) { e.message = "risposta non in formato JSON (inizio: " + JSON.stringify(String(raw).slice(0, 80)) + ")"; if (probe) lastProbe = { at: new Date().toISOString(), model: ai.config().model, keys: items.map(i => i.key), raw: String(raw).slice(0, 4000), matched: 0, error: e.message }; throw e; } }
+    else throw e;
+  }
+  const byKey = new Map(items.map(it => [it.key, it])); const list = parseItems(out);
   let n = 0;
-  (out.items || []).forEach(r => { const it = byKey.get(String(r.k || "").trim()); if (it && isText(r.t)) { save(lang, it.key, it.text, String(r.t).trim(), false); n++; } });
+  list.forEach(r => { const it = byKey.get(normKey(r.k)); if (it && isText(r.t)) { save(lang, it.key, it.text, String(r.t).trim(), false); n++; } });
+  // stesso numero di voci ma chiavi diverse (il modello le ha riscritte): si abbinano per posizione
+  if (!n && list.length === items.length) list.forEach((r, i) => { if (isText(r.t)) { save(lang, items[i].key, items[i].text, String(r.t).trim(), false); n++; } });
+  if (probe) lastProbe = { at: new Date().toISOString(), model: ai.config().model, keys: items.map(i => i.key), raw: raw ? String(raw).slice(0, 4000) : JSON.stringify(out, null, 1).slice(0, 4000), matched: n, salvaged, error: null };
+  if (!n) { const e = new Error(list.length ? `risposta senza chiavi riconoscibili (es. ${JSON.stringify(list[0]).slice(0, 100)})` : "risposta vuota"); e.code = "no_match"; throw e; }
   return n;
+}
+// Prova: traduce le prime tre voci mancanti e tiene la risposta grezza del modello, da leggere in /admin/inglese
+async function probe(lang = "en") {
+  const content = require("./concrete").decorate(store.getContent()); content.reels = require("./reels").list(); content.figures = require("./figures").list();
+  const todo = pending(content, lang).slice(0, 3); if (!todo.length) { lastProbe = { at: new Date().toISOString(), model: ai.config().model, keys: [], raw: "", matched: 0, error: "niente da tradurre" }; return lastProbe; }
+  try { await translateBatch(todo, lang, { probe: true }); } catch (e) { if (!lastProbe || lastProbe.error == null) lastProbe = { at: new Date().toISOString(), model: ai.config().model, keys: todo.map(i => i.key), raw: String(e.raw || "").slice(0, 4000), matched: 0, error: e.message }; }
+  return lastProbe;
 }
 // Traduce quello che manca: lotti per dimensione, tre alla volta. Ritorna { translated, pending, errors }
 async function run(lang = "en", { max = 600 } = {}) {
@@ -141,12 +175,18 @@ async function run(lang = "en", { max = 600 } = {}) {
     const todo = pending(content, lang).slice(0, max); res.pending = todo.length;
     const batches = makeBatches(todo); progress.batches = batches.length;
     if (batches.length) console.log(`[i18n] ${todo.length} voci da tradurre in ${batches.length} lotti (${PARALLEL} alla volta)`);
-    let stop = false, next = 0;
+    let stop = false, next = 0; res.batches = batches.length; res.ok = 0;
     const worker = async () => {
       while (!stop && next < batches.length) {
         const k = next++; const batch = batches[k]; const t0 = Date.now();
-        try { const n = await translateBatch(batch, lang); res.translated += n; progress.translated += n; console.log(`[i18n] lotto ${k + 1}/${batches.length}: ${n}/${batch.length} voci in ${Math.round((Date.now() - t0) / 1000)} s`); }
-        catch (e) { const msg = `lotto ${k + 1}: ${e.message || e}`; res.errors.push(msg); progress.errors.push(msg); console.warn("[i18n]", msg); if (e.code === "rate_limited" || e.code === "not_configured") stop = true; }
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try { const n = await translateBatch(batch, lang); res.translated += n; progress.translated += n; res.ok++; console.log(`[i18n] lotto ${k + 1}/${batches.length}: ${n}/${batch.length} voci in ${Math.round((Date.now() - t0) / 1000)} s`); break; }
+          catch (e) {
+            const limit = /rate|429|overloaded|529|timeout|abort/i.test(String(e.message)) && e.code !== "rate_limited";
+            if (limit && attempt === 1) { console.warn(`[i18n] lotto ${k + 1}: ${e.message} — riprovo tra 20 s`); await new Promise(r => setTimeout(r, 20000)); continue; }
+            const msg = `lotto ${k + 1}: ${e.message || e}`; res.errors.push(msg); progress.errors.push(msg); console.warn("[i18n]", msg); if (e.code === "rate_limited" || e.code === "not_configured") stop = true; break;
+          }
+        }
         progress.done++;
       }
     };
@@ -174,4 +214,4 @@ function browserLang(req) { const al = String(req.headers["accept-language"] || 
 function resolve(req) { const c = cookieLang(req); const l = c || browserLang(req); return l === "en" && !isPublic() ? "it" : l; }
 function setCookie(res, lang) { res.cookie("fw_lang", lang, { maxAge: 365 * 24 * 3600 * 1000, sameSite: "lax", httpOnly: false, path: "/" }); }
 
-module.exports = { LANGS, FIELDS, collect, apply, status, pending, save, remove, resetAuto, run, refreshSoon, getSetting, setSetting, isPublic, resolve, cookieLang, browserLang, setCookie, hash, ui, progress, lastRun: () => store.getSetting("i18n_last_run", null) };
+module.exports = { LANGS, FIELDS, collect, apply, status, pending, save, remove, resetAuto, run, probe, lastProbe: () => lastProbe, refreshSoon, getSetting, setSetting, isPublic, resolve, cookieLang, browserLang, setCookie, hash, ui, progress, lastRun: () => store.getSetting("i18n_last_run", null) };

@@ -18,7 +18,15 @@ const keys = Object.keys(groups); const show = gsel && groups[gsel] ? [gsel] : k
     <div class="row">
       <form method="post" action="/admin/inglese/traduci"><button class="btn primary" type="submit" <%= aiOn ? '' : 'disabled' %>>Traduci adesso quello che manca (<%= status.stale + status.missing %>)</button></form>
       <form method="post" action="/admin/inglese/rigenera" data-confirm="Cancellare tutte le traduzioni automatiche e rifarle da capo? Le correzioni a mano restano."><button class="btn danger" type="submit" <%= aiOn ? '' : 'disabled' %>>Rigenera tutto</button></form>
+      <form method="post" action="/admin/inglese/prova"><button class="btn" type="submit" <%= aiOn ? '' : 'disabled' %>>Prova un lotto (diagnostica)</button></form>
     </div>
+    <% if (last && last.batches != null) { %><p class="mono muted">Ultimo giro: <%= last.batches %> lotti, <%= last.ok %> riusciti, <%= (last.errors || []).length %> falliti.</p><% } %>
+    <% const pr = typeof probe !== "undefined" ? probe : null; if (pr) { %>
+    <details id="prova" open><summary class="mono">Ultima prova · <%= new Date(pr.at).toLocaleString('it-IT', { timeZone: 'Europe/Rome' }) %> · modello <%= pr.model %> · <%= pr.error ? "errore: " + pr.error : pr.matched + " su " + pr.keys.length + " riconosciute" %></summary>
+      <p class="mono muted">Chiavi inviate: <%= pr.keys.join(" · ") %></p>
+      <pre style="white-space:pre-wrap;font-size:12px;line-height:1.4;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px"><%= pr.raw || "(risposta vuota)" %></pre>
+    </details>
+    <% } %>
   </section>
   <section class="card">
     <h2>Pubblicazione</h2>
