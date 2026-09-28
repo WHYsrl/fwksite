@@ -1,9 +1,13 @@
 <%- include('../partials/admin-head', { title: 'Lavori' }) %>
-<div class="head"><h1>Lavori</h1><div class="row"><a class="btn sm" href="/admin/fruizione#priorita">Priorità di tutti i lavori →</a><a class="btn primary" href="/admin/lavori/new">Nuovo lavoro</a></div></div>
+<div class="head"><div><h1>Lavori</h1><p class="muted" style="margin:0">L'ordine qui è l'ordine sul sito: usa le frecce o scegli la posizione dal menu. La priorità decide in quali tempi si vede.</p></div><div class="row"><a class="btn sm" href="/admin/fruizione#priorita">Priorità di tutti i lavori →</a><a class="btn primary" href="/admin/lavori/new">Nuovo lavoro</a></div></div>
 <table>
-<tr><th>#</th><th></th><th>Cliente · Titolo</th><th>Aree</th><th>Stato</th><th title="1 sempre · 2 da 10 minuti · 3 solo con tutto il tempo">Priorità</th><th></th></tr>
-<% works.forEach(w => { %>
-<tr><td class="mono"><%= w.sort %></td><td><% if (w.image) { %><img class="thumb" src="<%= w.image %>" alt=""><% } %></td><td><b><%= w.client %></b><br><%= w.title %> <small class="mono">· <%= w.year %></small></td><td><small><%= w.caps.map(id => (caps.find(c => c.id === id) || {}).name || id).join(', ') %></small></td><td><span class="pill <%= w.status %>"><%= w.status %></span><% if (!w.published) { %> · nascosto<% } %></td><td><span class="pill prio-<%= w.priority %>">P<%= w.priority %></span></td><td><a class="btn sm" href="/admin/lavori/<%= w.id %>">Modifica</a></td></tr>
+<tr><th class="ord-h">Posizione</th><th></th><th>Cliente · Titolo</th><th>Aree</th><th>Stato</th><th title="1 sempre · 2 da 10 minuti · 3 solo con tutto il tempo">Priorità</th><th></th></tr>
+<% works.forEach((w, i) => { %>
+<tr id="w-<%= w.id %>"><td class="ord"><div class="ord-ctl">
+  <form method="post" action="/admin/lavori/<%= w.id %>/move"><input type="hidden" name="dir" value="-1"><button type="submit" class="mv" title="Sposta su" aria-label="Sposta su" <%= i === 0 ? 'disabled' : '' %>>▲</button></form>
+  <form method="post" action="/admin/lavori/<%= w.id %>/move"><input type="hidden" name="dir" value="1"><button type="submit" class="mv" title="Sposta giù" aria-label="Sposta giù" <%= i === works.length - 1 ? 'disabled' : '' %>>▼</button></form>
+  <form method="post" action="/admin/lavori/<%= w.id %>/pos"><select name="pos" class="pos" title="Posizione nell'elenco" onchange="this.form.submit()"><% works.forEach((x, k) => { %><option value="<%= k + 1 %>" <%= k === i ? 'selected' : '' %>><%= k + 1 %></option><% }) %></select></form>
+</div></td><td><% if (w.image) { %><img class="thumb" src="<%= w.image %>" alt=""><% } %></td><td><b><%= w.client %></b><br><%= w.title %> <small class="mono">· <%= w.year %></small></td><td><small><%= w.caps.map(id => (caps.find(c => c.id === id) || {}).name || id).join(', ') %></small></td><td><span class="pill <%= w.status %>"><%= w.status %></span><% if (!w.published) { %> · nascosto<% } %></td><td><span class="pill prio-<%= w.priority %>">P<%= w.priority %></span></td><td><a class="btn sm" href="/admin/lavori/<%= w.id %>">Modifica</a></td></tr>
 <% }) %>
 </table>
 <%- include('../partials/admin-foot') %>

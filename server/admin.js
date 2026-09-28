@@ -155,6 +155,14 @@ router.post("/lavori/:id", upload.single("image_file"), (req, res) => {
   priority.setWork(id, b.priority);
   flash(req, "Lavoro salvato"); res.redirect("/admin/lavori/" + id);
 });
+// ordine dei lavori: frecce e menu della posizione nell'elenco; dopo ogni spostamento l'ordine viene rinumerato 1..N
+function reorderWorks(id, to) {
+  const list = store.listWorks(true); const i = list.findIndex(w => w.id === id); if (i < 0) return;
+  const [w] = list.splice(i, 1); list.splice(Math.max(0, Math.min(list.length, to)), 0, w);
+  list.forEach((x, k) => { if (x.sort !== k + 1) store.upsertWork({ ...x, sort: k + 1 }); });
+}
+router.post("/lavori/:id/move", (req, res) => { const list = store.listWorks(true); const i = list.findIndex(w => w.id === req.params.id); if (i >= 0) reorderWorks(req.params.id, i + (+req.body.dir || 1)); res.redirect("/admin/lavori#w-" + req.params.id); });
+router.post("/lavori/:id/pos", (req, res) => { reorderWorks(req.params.id, (parseInt(req.body.pos, 10) || 1) - 1); res.redirect("/admin/lavori#w-" + req.params.id); });
 router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); priority.removeWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
 
 // ---------- team ----------

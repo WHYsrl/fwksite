@@ -30,6 +30,7 @@ const HOME = [
   { id: "reels", label: "Fila dei Reel", what: "", def: F("full", "full", "full") },
   { id: "ask", label: "Bottone Console + esempi", what: "solo se l'AI è configurata", def: F("full", "full", "full") },
   { id: "aree", label: "Carosello Servizi", what: "breve: elenco compatto delle 4 aree (sintesi, esempi, tecnologie), senza schede", brief: true, def: F("brief", "full", "full") },
+  { id: "contesto", label: "Il contesto", what: "campo dati + testo (lo stesso blocco della schermata Sistema) · breve: solo il testo breve", brief: true, def: F("off", "off", "off") },
   { id: "lavori", label: "Fila Lavori", what: "i primi 6 lavori (filtrati dalle priorità)", def: F("off", "full", "full") },
   { id: "radar", label: "Radar oggi", what: "3 segnali; dentro un percorso della Console compare comunque", def: F("off", "full", "full") },
   { id: "metodo", label: "Metodo", what: "5 fasi · breve: solo il testo breve", brief: true, def: F("off", "full", "full") },

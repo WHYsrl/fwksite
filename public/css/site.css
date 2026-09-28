@@ -690,8 +690,9 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .m-statement{padding:26px 20px;border-radius:18px;background:var(--accent);color:var(--on-accent)}
   .m-statement h2{font-family:var(--serif);font-style:italic;font-weight:400;font-size:30px;line-height:1.08;letter-spacing:-.01em}
   .m-text{padding:18px;border-radius:18px;border:1px solid var(--line);background:var(--bg-2)}
-  .m-context .df{aspect-ratio:1/1;margin-top:12px}
-  .m-context>p{margin-top:12px;font-size:15px;line-height:1.5;color:var(--ink-2)}
+  .m-context{padding:18px;border-radius:18px;border:1px solid var(--line);background:var(--bg-2)} /* una card come gli altri blocchi: dentro, il campo dati e il testo */
+  .m-context .df{aspect-ratio:1/1;margin-top:12px;border-radius:12px}
+  .m-context>p{margin-top:14px;font-size:15px;line-height:1.5;color:var(--ink-2)}
   .m-context .df-title{font-size:14px;max-width:none}.m-context .df-title b{font-size:18px}.m-context .df-hint{display:none}
   .m-text h2{font-size:22px}
   .m-text p{color:var(--ink-2);font-size:15px;margin-top:10px}

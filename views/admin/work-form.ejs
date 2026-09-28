@@ -4,7 +4,7 @@
   <section class="card">
     <div class="grid3">
       <% if (isNew) { %><label>ID (slug, opzionale) <input name="id" value=""></label><% } %>
-      <label>Ordine <input name="sort" type="number" value="<%= work.sort %>"></label>
+      <label>Ordine (numero; più comodo dall'elenco Lavori, con frecce e posizione) <input name="sort" type="number" value="<%= work.sort %>"></label>
       <label>Anno <input name="year" value="<%= work.year %>"></label>
       <label>Stato <select name="status"><% ['placeholder','proposta','in corso','consegnato'].forEach(s => { %><option value="<%= s %>" <%= work.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select></label>
     </div>

@@ -136,3 +136,9 @@ tr.moved td{background:rgba(191,0,255,.08)}
 .fld-head .show input{width:auto;margin:0;accent-color:var(--accent)}
 .fld.is-off .fld-head .show{color:#ffb86b}
 .fld.is-off input:not([type=checkbox]),.fld.is-off textarea{opacity:.45}
+/* ordine dei lavori: frecce + posizione */
+.ord{width:132px;white-space:nowrap}
+.ord-ctl{display:flex;align-items:center;gap:3px}
+.ord-ctl form{margin:0}
+.ord-ctl .mv:disabled{opacity:.3;cursor:default}
+.ord-ctl select.pos{margin:0 0 0 4px;width:auto;padding:4px 6px;font-size:12px;font-family:var(--mono);border-radius:6px}
