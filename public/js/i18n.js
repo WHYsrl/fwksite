@@ -42,7 +42,7 @@
     "mood notturno": "night mood", "mood acceso": "vivid mood", "mood quieto, dritto al punto": "quiet mood, straight to the point", "mood chiaro": "light mood",
     "acceso": "vivid", "notturno": "night", "quieto": "quiet", "chiaro": "light",
     // ---- intro ----
-    "Benvenuto": "Welcome", "Salta": "Skip", "Prima di cominciare": "Before we start", "di": "of",
+    "Benvenuto": "Welcome", "Salta": "Skip", "Prima di cominciare": "Before we start", "di": "of", "In che lingua?": "Which language?",
     "Fammi capire cosa fate.": "Show me what you do.", "Come lavorate e cosa avete fatto.": "How you work and what you have done.", "Voglio godermi l'esperienza.": "I want to enjoy the experience.",
     "Fondo chiaro e viola d'inchiostro, tutto in luce.": "Light background and ink purple, everything in the light.", "Nero e viola, energia e movimento.": "Black and purple, energy and motion.", "Blu notte e lavanda, ritmo disteso.": "Midnight blue and lavender, a relaxed pace.", "Verde e menta, dritto al punto, senza rumore.": "Green and mint, straight to the point, no noise.",
     "oppure · chiedi alla Console": "or · ask the Console", "Chiedi alla Console": "Ask the Console", "Cosa cerchi? Te lo mostro subito": "What are you looking for? I will show you right away", "Cosa cerchi? Terrò conto del tempo scelto": "What are you looking for? I will keep the time you chose in mind",

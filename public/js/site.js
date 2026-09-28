@@ -514,7 +514,6 @@ const App = {
       ${reelsBlock("Reel", `<button type="button" data-tab="lavori">${t("Tutti i lavori")}</button>`)}
       <div data-m-tier="10" ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>${t("Lavori")}</h2><button type="button" data-tab="lavori">${t("Vedi tutti")}</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
       <div class="m-context" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Il contesto")}</div><div class="ph df" data-datafield></div><p>${esc(site.context_text)}</p></div>
-      <div class="m-statement" data-m-tier="10"><h2>${esc((site.statements || [])[0] || "")}</h2></div>
       <div data-m-tier="${Focus.ids && Focus.list(DATA.signals).length ? "2" : "10"}" ${Focus.list(DATA.signals).length ? "" : "hidden"}><div class="row-head"><h2>${t("Radar oggi")}</h2><button type="button" data-tab="radar">${t("Tutto il radar")}</button></div><div class="news">${Focus.list(DATA.signals).slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
       <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Metodo")}</div><h2 style="margin-top:8px">${t("Cinque fasi, un <span class=\"serif\">ciclo.</span>")}</h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
       ${contactHTML()}
@@ -679,7 +678,7 @@ const Path = {
   // desktop: porta la pagina all'inizio della sezione Percorso, e lo ripete dopo che layout, font e ScrollTrigger si sono assestati
   scrollToTop() { const go = () => { const sec = $("#percorso"); if (sec && !sec.hidden) window.scrollTo({ top: sec.offsetTop, behavior: "instant" }); }; go(); [120, 450, 900].forEach(t => setTimeout(go, t)); }, // "instant": con "auto" varrebbe lo scroll-behavior smooth del css
   // "Scopri tutta Frameworks": esce dal percorso e porta all'inizio del racconto completo
-  discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = $("main > .statement"); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
+  discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = $("main > .statement") || $("#sistema"); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
   go(delta) { const t = this.track; if (!t || !t.isConnected) return; const k = Math.round(t.scrollLeft / t.clientWidth) + delta; t.scrollTo({ left: Math.max(0, Math.min(t.children.length - 1, k)) * t.clientWidth, behavior: reduced ? "auto" : "smooth" }); }
 };
 
@@ -823,7 +822,11 @@ const Intro = {
     this.onDone = onDone;
     if (!this.el || this.seen()) { this.finish(true); return; }
     this.el.hidden = false; document.body.style.overflow = "hidden";
+    // se si è appena cambiata lingua dal passo "In che lingua?", l'intro riprende dal passo dopo (la scelta è già fatta)
+    let resumed = false; try { if (sessionStorage.getItem("fw.introLang") === "1") { sessionStorage.removeItem("fw.introLang"); resumed = true; } } catch {}
+    if (resumed && $('.intro-step[data-step="0"]', this.el)) this.step(1);
     this.el.addEventListener("click", e => {
+      const l = e.target.closest(".intro-opts [data-lang]"); if (l) { $$("[data-lang]", this.el).forEach(b => b.classList.toggle("on", b === l)); if (l.dataset.lang === LANG) setTimeout(() => this.step(1), 220); else { try { sessionStorage.setItem("fw.introLang", "1"); } catch {} location.href = "/" + l.dataset.lang; } return; }
       const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
       const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); Modes.set("mood", this.mood); /* la palette dell'umore si vede subito */ setTimeout(() => this.configure(), 220); return; }
       const a = e.target.closest("[data-intro-ask]"); if (a) { this.console(a.dataset.introAsk); return; }

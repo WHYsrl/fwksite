@@ -880,6 +880,3 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
 @media (max-width:820px){.topnav a.lang-switch{display:inline-block}}
 .seg a{flex:1;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-radius:999px;color:var(--ink-3);text-decoration:none}
 .seg a.on{background:var(--ink);color:var(--bg)}
-.intro-top-r{display:flex;align-items:center;gap:6px}
-.intro-lang{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);padding:8px 12px;border:1px solid var(--line);border-radius:999px;text-decoration:none}
-.intro-lang:hover{color:var(--ink);border-color:var(--ink)}

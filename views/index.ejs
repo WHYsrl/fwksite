@@ -10,7 +10,9 @@ const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[
 const team = content.team || []; const keyPeople = team.filter(m => m.is_key); const units = [...new Set(team.map(m => m.unit).filter(Boolean))];
 // Lingua: il server passa lang ("it" | "en") e t(); nell'anteprima statica mancano e si resta in italiano
 const LANG = typeof lang === "string" && lang === "en" ? "en" : "it"; const T = typeof t === "function" ? t : (s, v) => { let o = String(s); if (v) Object.keys(v).forEach(k => { o = o.split("{" + k + "}").join(v[k]); }); return o; };
-const EN_PUBLIC = typeof enPublic !== "undefined" && !!enPublic; // la versione inglese è pubblica (selettore visibile)
+const EN_PUBLIC = typeof enPublic !== "undefined" && !!enPublic; // la versione inglese è pubblica
+const SHOW_LANG = !preview && (EN_PUBLIC || LANG === "en"); // scelta della lingua (barra, Modalità, intro): quando l'inglese è pubblico, o se si sta già guardando l'inglese (anteprima da /en)
+const NSTEPS = SHOW_LANG ? 3 : 2; const stepNo = (n) => SHOW_LANG ? n + 1 : n; // l'intro ha un passo in più (la lingua) quando la scelta c'è
 const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, m, day] = d.split("-"); const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m ? `${+day || ""} ${mo[(+m) - 1] || ""} ${y}`.trim() : d; };
 %><!doctype html>
 <html lang="<%= LANG %>" data-energy="auto" data-density="10" data-weather="unknown">
@@ -46,7 +48,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
     <a href="#sistema"><%= T("Sistema") %></a><a href="#aree"><%= T("Aree") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
-    <% if (EN_PUBLIC && !preview) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
+    <% if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
     <a class="cta" href="#contatti"><%= T("Parliamone") %></a>
   </nav>
 </header>
@@ -68,7 +70,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   <div class="modes-row"><span class="k"><%= T("Quanto tempo hai?") %></span><div class="seg" role="group" aria-label="<%= T("Tempo") %>"><button type="button" data-density="2"><%= T("2 minuti") %></button><button type="button" data-density="10" class="on"><%= T("10 minuti") %></button><button type="button" data-density="all"><%= T("Tutto il tempo") %></button></div></div>
   <div class="modes-row"><span class="k"><%= T("Che mood preferisci?") %></span><div class="seg" role="group" aria-label="Mood"><button type="button" data-mood="light"><%= T("Chiaro") %></button><button type="button" data-mood="vivid"><%= T("Acceso") %></button><button type="button" data-mood="calm"><%= T("Notturno") %></button><button type="button" data-mood="nervous"><%= T("Quieto") %></button></div></div>
   <div class="modes-row"><span class="k"><%= T("Ambiente") %></span><div class="modes-env" id="modes-env"><%= T("Roma · in ascolto…") %></div></div>
-  <% if (EN_PUBLIC && !preview) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
+  <% if (SHOW_LANG) { %><div class="modes-row"><span class="k"><%= T("Lingua") %></span><div class="seg" role="group" aria-label="<%= T("Lingua") %>"><a href="/it" class="<%= LANG === "it" ? "on" : "" %>" lang="it">Italiano</a><a href="/en" class="<%= LANG === "en" ? "on" : "" %>" lang="en">English</a></div></div><% } %>
   <p class="modes-note"><%= T("Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server.") %></p>
 </div>
 
@@ -76,11 +78,22 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <!-- ============================ INTRO ============================ -->
 <div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-label="<%= T("Benvenuto") %>">
   <div class="intro-bg" aria-hidden="true"><img src="<%= site.hero_image %>" alt=""></div>
-  <div class="intro-top"><svg viewBox="0 0 421.23 59" width="143" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><span class="intro-top-r"><% if (EN_PUBLIC && !preview) { %><a class="intro-lang" href="<%= LANG === "en" ? "/it" : "/en" %>" lang="<%= LANG === "en" ? "it" : "en" %>"><%= LANG === "en" ? "Italiano" : "English" %></a><% } %><button type="button" class="intro-skip" id="intro-skip"><%= T("Salta") %></button></span></div>
+  <div class="intro-top"><svg viewBox="0 0 421.23 59" width="143" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><button type="button" class="intro-skip" id="intro-skip"><%= T("Salta") %></button></div>
   <div class="intro-body">
     <div class="intro-steps">
-    <section class="intro-step on" data-step="1">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> 2</div>
+    <% if (SHOW_LANG) { %>
+    <%# passo 0: la lingua. Preselezionata quella della pagina (cookie o browser); l'altra ricarica su /it o /en e l'intro riprende dal passo dopo %>
+    <section class="intro-step on" data-step="0">
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> <%= NSTEPS %></div>
+      <h2 class="serif"><%= T("In che lingua?") %></h2>
+      <div class="intro-opts">
+        <button type="button" data-lang="it" lang="it" class="<%= LANG === "it" ? "on" : "" %>"><b>Italiano</b><span>Continua in italiano.</span></button>
+        <button type="button" data-lang="en" lang="en" class="<%= LANG === "en" ? "on" : "" %>"><b>English</b><span>Continue in English.</span></button>
+      </div>
+    </section>
+    <% } %>
+    <section class="intro-step <%= SHOW_LANG ? "" : "on" %>" data-step="1">
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · <%= stepNo(1) %> <%= T("di") %> <%= NSTEPS %></div>
       <h2 class="serif"><%= T("Quanto tempo hai?") %></h2>
       <div class="intro-opts">
         <button type="button" data-time="2"><b><%= T("2 minuti") %></b><span><%= T("Fammi capire cosa fate.") %></span></button>
@@ -89,7 +102,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       </div>
     </section>
     <section class="intro-step" data-step="2">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 2 <%= T("di") %> 2</div>
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · <%= stepNo(2) %> <%= T("di") %> <%= NSTEPS %></div>
       <h2 class="serif"><%= T("Che mood preferisci?") %></h2>
       <div class="intro-opts">
         <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b><%= T("Chiaro") %></b><span><%= T("Fondo chiaro e viola d'inchiostro, tutto in luce.") %></span></button>
@@ -149,9 +162,6 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
 <section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="<%= T("Percorso") %>"></section>
-
-<!-- ============================ STATEMENT ============================ -->
-<section class="statement purple desktop-only" data-tier="10" aria-label="Statement"><h2 class="serif drift" data-drift="-0.25"><%= site.statements[0] %></h2></section>
 
 <!-- ============================ CONTESTO ============================ -->
 <section class="section desktop-only" id="sistema" data-tier="10">
