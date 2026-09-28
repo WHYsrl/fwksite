@@ -613,9 +613,14 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   body{background:var(--bg)}
   .glow,.grain{display:none}
   .topbar,.modes{display:none} /* niente barra fissa in alto: mood, tempo e lingua stanno nella Console */
-  .m-logo{display:flex;justify-content:center;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;color:var(--accent-ink)} /* logo centrato in cima, nel flusso della pagina: scorre via */
-  .m-logo svg{width:150px;height:21px;fill:currentColor}
-  body.on-paper .m-logo{color:var(--paper-ink)}
+  /* il logo in cima: una card tutta sua (come le altre, ma con un alone viola), nel flusso della pagina. Scorrendo, il logo si solleva
+     e sfuma prima della card (site.js, scroll-driven); tornando in cima rientra */
+  .m-mast{position:relative;overflow:hidden;margin:calc(12px + env(safe-area-inset-top,0px)) 16px 0;padding:34px 20px;border-radius:20px;border:1px solid var(--line);background:var(--bg-2);display:flex;justify-content:center;align-items:center;isolation:isolate}
+  .m-mast-glow{position:absolute;left:50%;top:50%;width:70%;aspect-ratio:2.2/1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),0));filter:blur(12px);z-index:0;pointer-events:none}
+  .m-logo{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;color:var(--accent-ink);will-change:transform,opacity;transform-origin:50% 50%}
+  .m-logo svg{width:min(210px,62vw);height:auto;fill:currentColor}
+  body.on-paper .m-mast{background:var(--paper-card);border-color:var(--paper-line)}body.on-paper .m-logo{color:var(--paper-ink)}
+  @media (prefers-reduced-motion:reduce){.m-logo{will-change:auto}}
   .app{padding:0 0 calc(70px + env(safe-area-inset-bottom,0px))}
   .screen{display:none;padding:0 16px;animation:screen-in .35s cubic-bezier(.2,.8,.2,1)}
   .screen.on{display:block}

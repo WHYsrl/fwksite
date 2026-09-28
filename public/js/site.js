@@ -898,6 +898,14 @@ if (window.Organismo) Organismo.mountAll(); // L'organismo (desktop: sezione Ada
 if (window.DataField) DataField.mountAll(); // Il contesto: campo dati (desktop)
 Focus.apply();
 Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m-status"); const w = Ctx.weather; if (st && w && w.temp != null) st.textContent = `On Air · ${t("Roma")} ${w.temp}° ${weatherLabel(w)}`; });
+// Il logo in cima (mobile) esce di scena scorrendo: si solleva, si restringe e sfuma nei primi ~150px, più veloce della pagina; tornando su rientra
+(function mastExit() {
+  const logo = $("#m-mast .m-logo"); if (!logo || reduced) return;
+  let tick = false;
+  const draw = () => { tick = false; const p = Math.max(0, Math.min(1, (window.scrollY || 0) / 150)); const e = p * p * (3 - 2 * p); /* ease in-out */ logo.style.opacity = String(1 - e); logo.style.transform = `translateY(${-34 * e}px) scale(${1 - .22 * e})`; logo.style.filter = e > .02 ? `blur(${2.5 * e}px)` : ""; };
+  addEventListener("scroll", () => { if (!tick && isMobile()) { tick = true; requestAnimationFrame(draw); } }, { passive: true });
+  draw();
+})();
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
 // la densità cambia la composizione del feed
