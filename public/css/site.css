@@ -893,3 +893,18 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
   .cover h1{font-size:clamp(32px,9vw,42px)}
   .cover p{font-size:15px;max-width:none;color:var(--ink-2)}
 }
+
+/* ---- Home mobile: intestazione col campo dati. Le particelle compongono i numeri del contesto nella metà alta
+   (didascalia e avanzamento in alto, stato in alto a destra); sotto, su una sfumatura del fondo, titolo e manifesto ---- */
+@media (max-width:820px){
+  .cover.cover-field{padding:0;min-height:0;aspect-ratio:auto;height:min(78vh,560px);display:flex;flex-direction:column;justify-content:flex-end;background:var(--bg-2)}
+  .cover-df{position:absolute;inset:0;border:0;border-radius:0;background:transparent;cursor:pointer}
+  html[data-mood="light"] .cover-df{background:transparent}
+  .cover-df .df-dots{top:18px;left:20px}
+  .cover-df .df-hint{display:none}
+  .cover-df .df-cap{top:44px;bottom:auto;left:20px;right:20px}
+  .cover-df .df-title{font-size:13.5px;max-width:30ch}.cover-df .df-title b{font-size:17px}
+  .cover.cover-field .status{position:absolute;top:14px;right:14px;left:auto;margin:0;align-self:auto}
+  .cover-text{position:relative;z-index:1;padding:120px 20px 22px;background:linear-gradient(180deg,rgba(var(--bg2-rgb),0),rgba(var(--bg2-rgb),.9) 40%,rgba(var(--bg2-rgb),.97));pointer-events:none}
+  .cover-text .greet,.cover-text h1,.cover-text p{pointer-events:auto}
+}

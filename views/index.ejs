@@ -46,7 +46,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="157" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
-    <a href="#sistema"><%= T("Sistema") %></a><a href="#aree"><%= T("Aree") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
+    <a href="#sistema"><%= T("Sistema") %></a><a href="#aree"><%= site.areas_label || T("Aree") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
     <% if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
     <a class="cta" href="#contatti"><%= T("Parliamone") %></a>
@@ -177,7 +177,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <!-- ============================ AREE ============================ -->
 <section class="section desktop-only" id="aree" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Aree") %></div><h2 class="rv"><%- T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label || T("Aree") %></div><h2 class="rv"><%- site.areas_title ? em(site.areas_title) : T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
   <div class="caps">
     <% content.caps.forEach((c, i) => { %>
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">

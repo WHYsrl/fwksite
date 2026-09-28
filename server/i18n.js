@@ -24,7 +24,7 @@ const isText = (v) => typeof v === "string" && v.trim().length > 0;
 const FIELDS = [
   "site.tagline", "site.hero_title", "site.hero_text", "site.hero_cta", "site.hero_concrete", "site.context_text",
   "site.organism_title", "site.organism_text", "site.tech_title", "site.method_intro", "site.contact_title", "site.contact_address",
-  "site.footer_note", "site.radar_title", "site.radar_text", "site.team_title", "site.team_text",
+  "site.footer_note", "site.radar_title", "site.radar_text", "site.team_title", "site.team_text", "site.areas_label", "site.areas_title", "site.areas_home_title", "site.areas_list_title",
   "site.statements[]", "site.triad[].it", "site.triad[].text", "site.tech[].k", "site.tech[].text", "site.method[].text",
   "caps{id}.short", "caps{id}.body", "caps{id}.tags[]", "caps{id}.tech[]", "caps{id}.uses[]",
   "works{id}.title", "works{id}.short", "works{id}.body", "works{id}.status", "works{id}.label",

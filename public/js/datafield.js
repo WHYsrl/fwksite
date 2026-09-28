@@ -22,6 +22,7 @@ const DataField = (() => {
     const oc = document.createElement("canvas"), octx = oc.getContext("2d", { willReadFrequently: true });
     const capEye = root.querySelector(".df-eyebrow"), capTitle = root.querySelector(".df-title"), capSrc = root.querySelector(".df-src"), dots = root.querySelectorAll(".df-dots i");
     const mobile = matchMedia("(max-width: 820px)").matches;
+    const hero = root.dataset.dfMode === "hero"; // intestazione della Home mobile: il dato sta nella metà alta, sotto c'è il titolo
     const N = mobile ? 1100 : 2300;
     const st = { W: 0, H: 0, dpr: 1, i: -1, fig: null, at: 0, word: 0, wordAt: 0, labels: [], streams: null, counter: 0, parts: [], visible: false, raf: 0, last: 0, col: null };
 
@@ -64,18 +65,18 @@ const DataField = (() => {
     // ---- scene
     function layout() {
       const f = st.fig; if (!f || !st.W) return; st.labels = []; st.streams = null;
-      const pad = mobile ? 16 : 24, capH = mobile ? 78 : 92; // spazio della didascalia in basso
-      const step = mobile ? 2.6 : 2.7;
-      if (f.kind === "number") assign(textPoints(f.display, Math.round(st.W * 0.24), st.W / 2, (st.H - capH) / 2 + 4, st.W - pad * 2, step));
-      else if (f.kind === "words") assign(textPoints(f.words[st.word % f.words.length], Math.round(st.W * 0.27), st.W / 2, (st.H - capH) / 2 + 4, st.W - pad * 2, step, 700));
+      const pad = mobile ? 16 : 24, capH = hero ? Math.round(st.H * 0.54) : (mobile ? 78 : 92), topH = hero ? 118 : 0; // spazio della didascalia (in basso; nell'intestazione in alto, e sotto resta il titolo)
+      const step = mobile ? 2.6 : 2.7; const cy0 = topH + (st.H - capH - topH) / 2 + 4;
+      if (f.kind === "number") assign(textPoints(f.display, Math.round(st.W * (hero ? 0.22 : 0.24)), st.W / 2, cy0, st.W - pad * 2, step));
+      else if (f.kind === "words") assign(textPoints(f.words[st.word % f.words.length], Math.round(st.W * (hero ? 0.24 : 0.27)), st.W / 2, cy0, st.W - pad * 2, step, 700));
       else if (f.kind === "bars") {
-        const bars = f.bars, max = Math.max(...bars.map(b => b.value)); const top = pad + 18, avail = st.H - capH - top - 6; const rowH = avail / bars.length; const bh = Math.max(6, Math.min(mobile ? 12 : 16, rowH * 0.5));
-        const lw = mobile ? 84 : 118, vw = mobile ? 74 : 104; const x0 = pad + lw, zone = st.W - x0 - pad - vw; let pts = [];
+        const bars = f.bars, max = Math.max(...bars.map(b => b.value)); const top = topH + pad + (hero ? 0 : 18), avail = st.H - capH - top - 6; const rowH = avail / bars.length; const bh = Math.max(6, Math.min(mobile ? 12 : 16, rowH * 0.5));
+        const lw = mobile ? 84 : 118, vw = mobile ? (hero ? 100 : 74) : 104; const x0 = pad + lw, zone = st.W - x0 - pad - vw; let pts = [];
         bars.forEach((b, k) => { const y = top + rowH * k + (rowH - bh) / 2; const w = Math.max(6, zone * b.value / max); pts = pts.concat(rectPoints(x0, y, w, bh, mobile ? 3 : 3.4)); st.labels.push({ text: b.name, x: x0 - 10, y: y + bh / 2, align: "right", font: `500 ${mobile ? 10.5 : 12}px ${SANS}`, col: "ink" }); st.labels.push({ text: b.display, x: x0 + w + 10, y: y + bh / 2, align: "left", font: `500 ${mobile ? 10 : 11}px ${MONO}`, col: "acc" }); });
         assign(pts);
       } else if (f.kind === "stream") {
         // tre correnti che attraversano il campo: le particelle scorrono, il contatore corre
-        const cy = (st.H - capH) / 2; const amp = Math.min(st.H * 0.16, 70); st.streams = [0, 1, 2].map(k => ({ y: cy + (k - 1) * amp * 0.9, amp: amp * (0.6 + k * 0.25), k: (0.9 + k * 0.35) * Math.PI * 2 / st.W, ph: k * 1.7 }));
+        const cy = cy0; const amp = Math.min((st.H - capH - topH) * 0.3, 70); st.streams = [0, 1, 2].map(k => ({ y: cy + (k - 1) * amp * 0.9, amp: amp * (0.6 + k * 0.25), k: (0.9 + k * 0.35) * Math.PI * 2 / st.W, ph: k * 1.7 }));
         st.parts.forEach(p => { p.free = false; p.lane = p.g; p.x = rnd(-20, st.W + 20); p.off = rnd(0, 1); });
       }
     }

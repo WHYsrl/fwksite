@@ -34,6 +34,16 @@
     <label>Contesto (il mondo che cambia) <textarea name="context_text" rows="3"><%= site.context_text %></textarea></label>
   </section>
   <section class="card">
+    <h2>Etichette delle aree</h2>
+    <p class="muted">Come chiamare le quattro aree nel sito. Vuoto = testo standard (tra parentesi). In inglese si traducono da sole (Backoffice → Inglese).</p>
+    <div class="grid2">
+      <label>Voce di menu ed etichetta (Aree) <input name="areas_label" value="<%= site.areas_label || '' %>" placeholder="Aree"></label>
+      <label>Titolo della sezione su desktop (Quattro sistemi, un &lt;em&gt;organismo.&lt;/em&gt;) <input name="areas_title" value="<%= site.areas_title || '' %>" placeholder="Quattro sistemi, un <em>organismo.</em>"></label>
+      <label>Titolo nella Home dell'app mobile (I nostri servizi) <input name="areas_home_title" value="<%= site.areas_home_title || '' %>" placeholder="I nostri servizi"></label>
+      <label>Titolo dell'elenco in Sistema, mobile (Le aree) <input name="areas_list_title" value="<%= site.areas_list_title || '' %>" placeholder="Le aree"></label>
+    </div>
+  </section>
+  <section class="card">
     <h2>Organismo vivente</h2>
     <label>Titolo <input name="organism_title" value="<%= site.organism_title %>"></label>
     <label>Testo <textarea name="organism_text" rows="4"><%= site.organism_text %></textarea></label>
