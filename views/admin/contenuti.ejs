@@ -24,12 +24,13 @@ const idx = sections.findIndex(x => x.id === sec.id);
   <section class="card fields">
   <% sec.fields.forEach((f, fi) => { %>
     <% if (!f.key) { %>
-      <h3 class="fgroup"><%= f.group %></h3>
-    <% } else { const v = val(f.key); const custom = f.type === 'check' ? true : (has(v) && !same(v, f.def)); %>
+      <h3 class="fgroup"><%= f.group %></h3><% if (f.hint) { %><p class="fh fgroup-hint"><%= f.hint %></p><% } %>
+    <% } else { const v = val(f.key); const custom = f.type === 'check' ? true : (has(v) && !same(v, f.from ? (resolved[f.from] || f.def) : f.def)); %>
     <div class="fld <%= custom ? 'is-custom' : 'is-default' %>" data-type="<%= f.type || 'text' %>">
+      <% const ph = f.from ? (resolved[f.from] || f.def || '') : (f.def || ''); %>
       <div class="fld-head">
         <label for="f-<%= f.key %>"><%= f.label %><% if (f.em) { %> <span class="tag-em" title="Per il corsivo serif viola scrivi &lt;em&gt;parola&lt;/em&gt;">&lt;em&gt;</span><% } %></label>
-        <% if (f.type !== 'check') { %><span class="fld-state"><%= custom ? 'personalizzato' : 'testo standard' %></span><% } %>
+        <% if (f.type !== 'check') { %><span class="fld-state"><%= custom ? 'personalizzato' : (f.from ? 'come desktop' : 'testo standard') %></span><% } %>
         <% if (custom && f.type !== 'check') { %><button type="button" class="lnk" data-reset>ripristina lo standard</button><% } %>
       </div>
       <% if (f.hint) { %><p class="fh"><%= f.hint %></p><% } %>
@@ -60,10 +61,10 @@ const idx = sections.findIndex(x => x.id === sec.id);
         <label class="check"><input type="checkbox" name="<%= f.key %>" <%= (v == null ? !!f.def : !!v) ? 'checked' : '' %>> <%= f.on || 'Attivo' %></label>
 
       <% } else { %>
-        <input id="f-<%= f.key %>" name="<%= f.key %>" value="<%= custom ? v : '' %>" placeholder="<%= f.def || '' %>">
+        <input id="f-<%= f.key %>" name="<%= f.key %>" value="<%= custom ? v : '' %>" placeholder="<%= ph %>">
       <% } %>
 
-      <% if (custom && f.def && f.type !== 'check' && f.type !== 'image' && f.type !== 'pairs') { %><p class="fh def">Standard: <span><%= Array.isArray(f.def) ? f.def.join(' · ') : f.def %></span></p><% } %>
+      <% if (custom && (f.from || f.def) && f.type !== 'check' && f.type !== 'image' && f.type !== 'pairs') { %><p class="fh def"><%= f.from ? 'Come desktop sarebbe' : 'Standard' %>: <span><%= f.from ? ph : (Array.isArray(f.def) ? f.def.join(' · ') : f.def) %></span></p><% } %>
     </div>
     <% } %>
   <% }) %>

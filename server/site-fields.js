@@ -8,6 +8,7 @@
 // · image (URL + scelta dai media) · check. `em: true` → nel testo si può usare <em>parola</em> per il corsivo serif viola.
 // `vars` → segnaposto che il sito sostituisce ({n}, {btn}…). `cols[].i18n === false` → colonna non tradotta (latino, nomi propri).
 // `fixed: true` (pairs) → posti fissi: ogni cella vuota prende quella standard; altrimenti le righe compilate sostituiscono l'elenco standard.
+// `from: "altro_campo"` → se vuoto, il campo vale quanto l'altro (le etichette mobile seguono quelle desktop). `group` con `hint` → titolo di gruppo con spiegazione.
 
 const SECTIONS = [
   {
@@ -38,18 +39,23 @@ const SECTIONS = [
   {
     id: "hero", nav: "Hero", title: "Hero — l'apertura", where: "Desktop: la prima schermata, con la mappa interattiva e la Console. Mobile: la card in cima alla Home (titolo e testo sono gli stessi).", anchor: "#top",
     fields: [
+      { group: "Desktop e mobile" },
       { key: "claim", label: "Etichetta sopra il titolo", def: "Adaptive Content Systems" },
       { key: "hero_title", label: "Titolo", em: true, def: "Contenuti creati per <em>sopravvivere.</em>" },
       { key: "hero_text", label: "Testo (il manifesto)", type: "textarea", rows: 4, hint: "Su mobile è il sottotitolo della card in cima.", def: "" },
       { key: "tagline", label: "Tagline (una riga)", hint: "Non compare sul sito: la usano l'AI e i motori di ricerca come descrizione.", def: "" },
       { key: "hero_concrete", label: "«In pratica» (una riga concreta)", type: "textarea", rows: 2, hint: "Cosa facciamo, con che tecnologie, dove. La legge la Console; sul sito compare nelle schede.", def: "" },
-      { group: "Bottoni e Console" },
+      { group: "Solo desktop · bottoni e Console" },
       { key: "hero_cta", label: "Bottone bianco (porta ai lavori)", def: "Vedi i lavori" },
       { key: "hero_cta2", label: "Bottone secondario (apre il sistema nella mappa)", def: "Apri il sistema" },
       { key: "console_label", label: "Etichetta del campo Console", def: "Chiedi alla Console" },
       { key: "console_placeholder", label: "Suggerimento nel campo Console", def: "es. cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
       { key: "console_hints", label: "Legenda della mappa (una voce per riga)", type: "lines", hint: "Le tre indicazioni in basso a destra della mappa.", def: ["trascina i nodi", "clic per aprire", "punti chiari = radar, fonti esterne"] },
       { key: "ticker_label", label: "Etichetta della striscia Radar", hint: "La striscia viola che scorre sotto la hero con i titoli del Radar.", def: "Radar · fonti esterne" },
+      { group: "Solo mobile", hint: "La card in cima alla Home ha lo stesso titolo e testo del desktop; in più il saluto e, sotto, il bottone della Console." },
+      { key: "m_greet", label: "Dopo il saluto", hint: "Il sito scrive «Buongiorno.» / «Buonasera.» seguito da questo.", def: "Siamo Frameworks." },
+      { key: "m_ask", label: "Bottone della Console in Home", def: "Chiedi alla Console: cosa fate per…" },
+      { key: "m_ask_hint", label: "Esempi sotto il bottone", def: "Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
       { group: "Immagini" },
       { key: "hero_image", label: "Immagine di sfondo (desktop)", type: "image", def: "/media/organism-wide.jpg" },
       { key: "hero_image_mobile", label: "Immagine (mobile, schede)", type: "image", def: "/media/organism-tall.jpg" }
@@ -59,22 +65,31 @@ const SECTIONS = [
     id: "reel", nav: "Reel", title: "Reel — Organismi in movimento", where: "Desktop: subito dopo la hero. Mobile: la fila di reel sotto la card in cima alla Home e nella schermata Lavori.", anchor: "#reel",
     manage: [{ label: "I video dei reel", href: "/admin/reel" }],
     fields: [
+      { group: "Solo desktop" },
       { key: "reel_label", label: "Etichetta", def: "Reel" },
       { key: "reel_title", label: "Titolo", em: true, def: "Organismi in <em>movimento.</em>" },
       { key: "reel_text", label: "Sottotitolo", def: "Un reel per tema. Scorrono muti: con l'audio, quando vuoi tu." },
-      { key: "reel_play", label: "Bottone su ogni reel", def: "Guarda con audio" }
+      { group: "Desktop e mobile" },
+      { key: "reel_play", label: "Bottone su ogni reel", def: "Guarda con audio" },
+      { group: "Solo mobile", hint: "La fila dei reel in Home e nella schermata Lavori: solo un titolo e un rimando." },
+      { key: "m_reel_title", label: "Titolo della fila", from: "reel_label", hint: "Vuoto = come l'etichetta desktop.", def: "Reel" },
+      { key: "m_all_works", label: "Rimando accanto al titolo (porta ai lavori)", def: "Tutti i lavori" }
     ]
   },
   {
     id: "servizi", nav: "Servizi (aree)", title: "Servizi — le aree", where: "Desktop: le quattro card sotto i reel. Mobile: il carosello in Home e l'elenco nella schermata Sistema.", anchor: "#aree",
     manage: [{ label: "Le quattro aree (testi, immagini, tecnologie)", href: "/admin/capacita" }],
     fields: [
+      { group: "Desktop e mobile" },
       { key: "areas_label", label: "Voce di menu ed etichetta della sezione", def: "Aree" },
-      { key: "areas_title", label: "Titolo (desktop)", em: true, def: "Quattro sistemi, un <em>organismo.</em>" },
-      { key: "areas_home_title", label: "Titolo del carosello in Home (mobile)", def: "I nostri servizi" },
-      { key: "areas_list_title", label: "Titolo dell'elenco in Sistema (mobile)", def: "Le aree" },
       { key: "area_kicker", label: "Etichetta su ogni card", hint: "Seguita dal numero: «Area 01», «Area 02»…", def: "Area" },
       { key: "area_more", label: "Rimando in fondo a ogni card", def: "Casi d'uso e tecnologie" },
+      { group: "Solo desktop" },
+      { key: "areas_title", label: "Titolo", em: true, def: "Quattro sistemi, un <em>organismo.</em>" },
+      { group: "Solo mobile", hint: "Le aree compaiono due volte: come carosello in Home e come elenco nella schermata Sistema." },
+      { key: "areas_home_title", label: "Titolo del carosello in Home", def: "I nostri servizi" },
+      { key: "m_all_areas", label: "Rimando accanto al titolo (porta all'elenco)", def: "Tutte" },
+      { key: "areas_list_title", label: "Titolo dell'elenco in Sistema", def: "Le aree" },
       { group: "Versione breve" },
       { key: "areas_brief_intro", label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: nome e sintesi di ciascuna, senza rimandi alle schede. Questo testo, se c'è, sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
@@ -94,20 +109,26 @@ const SECTIONS = [
     id: "lavori", nav: "Lavori", title: "Lavori — Organismi in azione", where: "Desktop: la griglia dei lavori con i filtri per area. Mobile: la schermata Lavori e la fila in Home.", anchor: "#lavori",
     manage: [{ label: "I lavori (schede, immagini, aree)", href: "/admin/lavori" }],
     fields: [
+      { group: "Solo desktop" },
       { key: "works_label", label: "Etichetta", def: "Lavori" },
-      { key: "works_title", label: "Titolo", em: true, def: "Organismi in <em>azione.</em>" },
       { key: "works_text", label: "Sottotitolo", em: true, def: "Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova." },
+      { group: "Desktop e mobile" },
+      { key: "works_title", label: "Titolo", em: true, hint: "Su mobile è il titolo della schermata Lavori.", def: "Organismi in <em>azione.</em>" },
       { key: "works_all", label: "Filtro «tutti»", def: "Tutti" },
-      { key: "m_works_hint", label: "Nota in fondo (mobile)", def: "Tocca un lavoro per aprirlo e adattarlo al tuo contesto" }
+      { group: "Solo mobile", hint: "La fila dei lavori in Home e la nota in fondo alla schermata Lavori." },
+      { key: "m_works_title", label: "Titolo della fila in Home", from: "works_label", hint: "Vuoto = come l'etichetta desktop.", def: "Lavori" },
+      { key: "m_see_all", label: "Rimando accanto al titolo (porta alla schermata Lavori)", def: "Vedi tutti" },
+      { key: "m_works_hint", label: "Nota in fondo alla schermata Lavori", def: "Tocca un lavoro per aprirlo e adattarlo al tuo contesto" }
     ]
   },
   {
     id: "organismo", nav: "L'organismo", title: "L'organismo vivente", where: "Desktop: la sezione con l'organismo che cresce col Radar. Mobile: nella schermata Sistema.", anchor: "#organismo",
     fields: [
+      { group: "Desktop e mobile" },
       { key: "organism_label", label: "Etichetta", def: "Adaptive Content Systems" },
       { key: "organism_title", label: "Titolo", em: true, def: "Ogni progetto è concepito come un <em>organismo vivente.</em>" },
       { key: "organism_text", label: "Testo", type: "textarea", rows: 4, def: "" },
-      { group: "Mobile" },
+      { group: "Solo mobile", hint: "Nella schermata Sistema: la frase di apertura e la didascalia sotto l'organismo interattivo." },
       { key: "m_system_quote", label: "Frase di apertura della schermata Sistema", def: "Ogni progetto è concepito come un organismo vivente." },
       { key: "m_org_title", label: "Didascalia sotto l'organismo · titolo", def: "È vivo." },
       { key: "m_org_text", label: "Didascalia sotto l'organismo · testo", type: "textarea", rows: 3, def: "Uno solo per tutto il sito: lo nutrono il Radar, gli umori dei visitatori e il meteo di Roma. Tocca nel vuoto: reagisce, e resta. Tocca un nodo: ti dice da quale notizia è nato." },
@@ -151,10 +172,11 @@ const SECTIONS = [
     id: "radar", nav: "Radar", title: "Radar — rassegna da fonti esterne", where: "Desktop: la sezione «su carta» con la ricerca dal vivo e i segnali pubblicati. Mobile: la schermata Radar.", anchor: "#radar",
     manage: [{ label: "I segnali (approva, modifica, pubblica)", href: "/admin/radar" }, { label: "Fonti e filtri", href: "/admin/fonti" }],
     fields: [
+      { group: "Desktop e mobile" },
       { key: "radar_label", label: "Etichetta", def: "Radar · rassegna da fonti esterne" },
       { key: "radar_title", label: "Titolo", em: true, def: "" },
       { key: "radar_text", label: "Testo", type: "textarea", rows: 3, hint: "Spiega che sono contenuti di terzi.", def: "" },
-      { group: "Ricerca dal vivo" },
+      { group: "Ricerca dal vivo (desktop e mobile)" },
       { key: "radar_search_title", label: "Titolo della ricerca", def: "Cerca nel mondo, adesso" },
       { key: "radar_search_text", label: "Testo della ricerca", def: "Il Radar cerca in tempo reale tra le notizie degli ultimi 14 giorni. Scrivi un tema, o prova uno di questi." },
       { key: "radar_search_placeholder", label: "Suggerimento nel campo di ricerca", def: "es. retail media, DOOH, AI generativa…" },
@@ -162,7 +184,10 @@ const SECTIONS = [
         def: [{ k: "DOOH", text: "DOOH" }, { k: "Retail media", text: "retail media" }, { k: "AI generativa", text: "AI generativa pubblicità" }, { k: "Virtual production", text: "virtual production" }, { k: "Musei immersivi", text: "musei esperienze immersive" }] },
       { group: "Note" },
       { key: "radar_note", label: "Nota in fondo (paternità dei titoli)", type: "textarea", rows: 2, def: "I titoli e i riassunti appartengono alle rispettive testate. Frameworks li segnala e li commenta; non ne rivendica la paternità." },
-      { key: "m_radar_title", label: "Titolo della fila in Home (mobile)", def: "Radar oggi" },
+      { group: "Solo mobile", hint: "La fila «Radar oggi» in Home e il titolo dell'elenco nella schermata Radar." },
+      { key: "m_radar_title", label: "Titolo della fila in Home", def: "Radar oggi" },
+      { key: "m_radar_list_title", label: "Titolo dell'elenco nella schermata Radar", def: "Selezione del Radar" },
+      { key: "m_radar_all", label: "Rimando accanto al titolo in Home", def: "Tutto il radar" },
       { group: "Versione breve" },
       { key: "radar_brief", label: "Testo breve (senza ricerca e segnali)", type: "textarea", rows: 3, hint: "Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
     ]
@@ -199,20 +224,7 @@ const SECTIONS = [
     ]
   },
   {
-    id: "mobile", nav: "App mobile", title: "App mobile — Home", where: "Le scritte che esistono solo nella versione mobile (le altre sono nelle rispettive sezioni).",
-    fields: [
-      { key: "m_greet", label: "Dopo il saluto", hint: "Il sito scrive «Buongiorno.» / «Buonasera.» seguito da questo.", def: "Siamo Frameworks." },
-      { key: "m_ask", label: "Bottone della Console in Home", def: "Chiedi alla Console: cosa fate per…" },
-      { key: "m_ask_hint", label: "Esempi sotto il bottone", def: "Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?" },
-      { key: "m_reel_title", label: "Titolo della fila dei reel", def: "Reel" },
-      { key: "m_works_title", label: "Titolo della fila dei lavori", def: "Lavori" },
-      { key: "m_all_works", label: "Rimando «tutti i lavori»", def: "Tutti i lavori" },
-      { key: "m_see_all", label: "Rimando «vedi tutti»", def: "Vedi tutti" },
-      { key: "m_all_areas", label: "Rimando «tutte» (le aree)", def: "Tutte" }
-    ]
-  },
-  {
-    id: "modalita", nav: "Modalità", title: "Modalità — il pannello", where: "Il pannello che si apre dal tasto Modalità in alto (tempo, mood, ambiente, lingua).",
+    id: "modalita", nav: "Modalità", title: "Modalità — il pannello", where: "Desktop: il pannello che si apre dal tasto Modalità in alto (tempo, mood, ambiente, lingua). Mobile: gli stessi pulsanti stanno dentro la Console.",
     fields: [
       { key: "modes_title", label: "Titolo del pannello", def: "La pagina si adatta a te" },
       { key: "modes_note", label: "Nota in fondo al pannello", type: "textarea", rows: 3, def: "Densità dei contenuti, ritmo delle animazioni e tonalità cambiano in base alle tue risposte, all'ora e al meteo di Roma. Nessun dato viene salvato sui nostri server." },
@@ -246,6 +258,8 @@ function view(site, T) {
     }
     if (isEmpty(v)) s[f.key] = isEmpty(f.def) ? "" : tr(f.def);
   }
+  // campi "come un altro" (from): vuoti, seguono il campo desktop corrispondente (es. il titolo della fila dei reel segue l'etichetta Reel)
+  for (const f of ALL) if (f.from && isEmpty(src[f.key])) s[f.key] = s[f.from];
   // compatibilità con i vecchi "statement" (elenco): la seconda riga stava sotto il contesto, la terza apriva Sistema su mobile
   const st = Array.isArray(src.statements) ? src.statements : [];
   if (isEmpty(src.context_quote) && st[1]) s.context_quote = st[1];

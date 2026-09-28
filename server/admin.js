@@ -92,7 +92,8 @@ router.get("/contenuti", (req, res) => res.redirect("/admin/contenuti/" + siteFi
 router.get("/contenuti/:id", (req, res) => {
   const sec = siteFields.byId(req.params.id); if (!sec) return res.redirect("/admin/contenuti");
   const i = siteFields.SECTIONS.indexOf(sec);
-  res.render("admin/contenuti", { sec, prev: siteFields.SECTIONS[i - 1] || null, next: siteFields.SECTIONS[i + 1] || null, site: store.getSetting("site", {}), media: store.listMedia().filter(m => /^image\//.test(m.mime || "") || /\.(jpe?g|png|webp|gif|avif)$/i.test(m.path || "")) });
+  const site = store.getSetting("site", {});
+  res.render("admin/contenuti", { sec, prev: siteFields.SECTIONS[i - 1] || null, next: siteFields.SECTIONS[i + 1] || null, site, resolved: siteFields.view(site), media: store.listMedia().filter(m => /^image\//.test(m.mime || "") || /\.(jpe?g|png|webp|gif|avif)$/i.test(m.path || "")) });
 });
 router.post("/contenuti/:id", (req, res) => {
   const sec = siteFields.byId(req.params.id); if (!sec) return res.redirect("/admin/contenuti");
