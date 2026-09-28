@@ -509,9 +509,9 @@ const App = {
     const askBox = `<button class="ask" type="button" data-tab="console"><b>✦</b><span>${t("Chiedi alla Console: cosa fate per…")}</span></button>`;
     const home = `<section class="screen on" data-screen="home">
       <div class="cover cover-field"><div class="cover-df df" data-datafield data-df-mode="hero"></div><span class="status" id="m-status">On Air${w && w.temp != null ? " · " + t("Roma") + " " + w.temp + "° " + weatherLabel(w) : ""}</span><div class="cover-text"><div class="greet">${greet()} ${t("Siamo Frameworks.")}</div><h1>${em(site.hero_title)}</h1><p>${esc(site.hero_text || site.tagline)}</p></div></div>
+      ${reelsBlock("Reel", `<button type="button" data-tab="lavori">${t("Tutti i lavori")}</button>`)}
       <div data-m-tier="2">${askBox}<p class="ask-hint">${t("Per esempio: cosa fate per il retail? · quali visori usate? · come usate l'AI?")}</p></div>
       <div ${Focus.list(DATA.caps).length ? "" : "hidden"}><div class="row-head"><h2>${Focus.ids ? t("Le aree del tuo percorso") : esc(site.areas_home_title || t("I nostri servizi"))}</h2><button type="button" data-tab="sistema">${t("Tutte")}</button></div><div class="carousel">${Focus.list(DATA.caps).map(tile).join("")}</div></div>
-      ${reelsBlock("Reel", `<button type="button" data-tab="lavori">${t("Tutti i lavori")}</button>`)}
       <div data-m-tier="10" ${Focus.list(DATA.works).length ? "" : "hidden"}><div class="row-head"><h2>${t("Lavori")}</h2><button type="button" data-tab="lavori">${t("Vedi tutti")}</button></div><div class="carousel">${Focus.list(DATA.works).slice(0, 6).map(wtile).join("")}</div></div>
       <div data-m-tier="${Focus.ids && Focus.list(DATA.signals).length ? "2" : "10"}" ${Focus.list(DATA.signals).length ? "" : "hidden"}><div class="row-head"><h2>${t("Radar oggi")}</h2><button type="button" data-tab="radar">${t("Tutto il radar")}</button></div><div class="news">${Focus.list(DATA.signals).slice(0, 3).map(sg => news(sg, true)).join("")}</div></div>
       <div class="m-text" data-m-tier="10"><div class="eyebrow"><span class="dot"></span>${t("Metodo")}</div><h2 style="margin-top:8px">${t("Cinque fasi, un <span class=\"serif\">ciclo.</span>")}</h2><ol class="steps">${(site.method || []).map((m, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span><b>${esc(m.k)}</b>${esc(m.text)}</span></li>`).join("")}</ol></div>
@@ -677,7 +677,7 @@ const Path = {
   // desktop: porta la pagina all'inizio della sezione Percorso, e lo ripete dopo che layout, font e ScrollTrigger si sono assestati
   scrollToTop() { const go = () => { const sec = $("#percorso"); if (sec && !sec.hidden) window.scrollTo({ top: sec.offsetTop, behavior: "instant" }); }; go(); [120, 450, 900].forEach(t => setTimeout(go, t)); }, // "instant": con "auto" varrebbe lo scroll-behavior smooth del css
   // "Scopri tutta Frameworks": esce dal percorso e porta all'inizio del racconto completo
-  discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = $("main > .statement") || $("#sistema"); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
+  discover() { Focus.clear(); if (ConsoleWin.el && !ConsoleWin.el.hidden) ConsoleWin.close(); if (isMobile()) { App.show("home"); return; } const first = ["#reel", "#aree", "#sistema"].map(x => $(x)).find(el => el && el.offsetParent); setTimeout(() => { if (first) first.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }, 60); },
   go(delta) { const t = this.track; if (!t || !t.isConnected) return; const k = Math.round(t.scrollLeft / t.clientWidth) + delta; t.scrollTo({ left: Math.max(0, Math.min(t.children.length - 1, k)) * t.clientWidth, behavior: reduced ? "auto" : "smooth" }); }
 };
 
@@ -822,25 +822,27 @@ const Intro = {
     this.onDone = onDone;
     if (!this.el || this.seen()) { this.finish(true); return; }
     this.el.hidden = false; document.body.style.overflow = "hidden";
-    // se si è appena cambiata lingua dal passo "In che lingua?", l'intro riprende dal passo dopo (la scelta è già fatta)
-    let resumed = false; try { if (sessionStorage.getItem("fw.introLang") === "1") { sessionStorage.removeItem("fw.introLang"); resumed = true; } } catch {}
-    if (resumed && $('.intro-step[data-step="0"]', this.el)) this.step(1);
     this.el.addEventListener("click", e => {
-      const l = e.target.closest(".intro-opts [data-lang]"); if (l) { $$("[data-lang]", this.el).forEach(b => b.classList.toggle("on", b === l)); if (l.dataset.lang === LANG) setTimeout(() => this.step(1), 220); else { try { sessionStorage.setItem("fw.introLang", "1"); } catch {} location.href = "/" + l.dataset.lang; } return; }
-      const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); setTimeout(() => this.step(2), 220); return; }
-      const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); Modes.set("mood", this.mood); /* la palette dell'umore si vede subito */ setTimeout(() => this.configure(), 220); return; }
+      // "2 minuti": si entra subito nel sito, tema automatico. "10 minuti" / "tutto il tempo": prima il mood, poi si entra
+      const t = e.target.closest(".intro-opts [data-time]"); if (t) { this.time = t.dataset.time; $$("[data-time]", this.el).forEach(b => b.classList.toggle("on", b === t)); if (this.time === "2") setTimeout(() => this.go(), 220); else setTimeout(() => this.step(2), 220); return; }
+      const m = e.target.closest(".intro-opts [data-mood]"); if (m) { this.mood = m.dataset.mood; $$("[data-mood]", this.el).forEach(b => b.classList.toggle("on", b === m)); Modes.set("mood", this.mood); /* la palette dell'umore si vede subito */ setTimeout(() => this.go(), 220); return; }
       const a = e.target.closest("[data-intro-ask]"); if (a) { this.console(a.dataset.introAsk); return; }
-      if (e.target.closest("#intro-ask")) { this.console(""); return; }
-      if (e.target.closest("#intro-skip") || e.target.closest("#intro-go")) this.finish();
+      if (e.target.closest("#intro-skip")) this.finish();
     });
     // la Console dentro l'intro (mobile): scorciatoia opzionale alle domande
     const f = $("#intro-form", this.el);
     if (f) f.addEventListener("submit", e => { e.preventDefault(); const i = $("#intro-q", f); const q = i.value.trim(); i.blur(); if (q) this.console(q); });
   },
-  // Chiude l'intro con le scelte fatte finora (o i valori di default) e apre la Console con la domanda
-  console(q) {
+  // Applica le scelte fatte finora (o i valori di default: densità media, tema automatico)
+  apply() {
     Prefs.set({ time: this.time, mood: this.mood });
     Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
+  },
+  // Chiude l'intro e apre direttamente il sito (nessuna schermata di "preparazione")
+  go() { this.apply(); this.finish(); },
+  // Chiude l'intro con le scelte fatte finora e apre la Console con la domanda
+  console(q) {
+    this.apply();
     ConsoleWin.open(String(q || "").trim()); // la finestra sta sotto l'intro (z-index) e appare mentre l'intro sfuma
     this.finish();
   },
@@ -849,21 +851,8 @@ const Intro = {
     this.el.dataset.step = String(n);
     const q = $("#intro-q", this.el); if (q && n === 2) q.placeholder = t("Cosa cerchi? Terrò conto del tempo scelto");
   },
-  configure() {
-    Prefs.set({ time: this.time, mood: this.mood });
-    Modes.set("density", this.time || "10"); Modes.set("mood", this.mood || "auto");
-    const c = Ctx.local(); const w = Ctx.weather;
-    const timeTxt = { "2": t("ti mostro l'essenziale: cosa facciamo, quattro aree, qualche lavoro e come contattarci"), "10": t("ti mostro il sistema, le aree, i lavori, il metodo e il radar"), all: t("apro tutto: l'esperienza completa, con calma") }[this.time] || "";
-    const moodTxt = { calm: t("in blu notte, con un ritmo disteso"), vivid: t("in nero e viola, con tutta l'energia accesa"), nervous: t("in verde e menta, senza rumore, dritto al punto"), light: t("in chiaro, tutto in luce") }[this.mood] || "";
-    $("#intro-msg").textContent = t("Va bene: {time}, {mood}.", { time: timeTxt, mood: moodTxt });
-    const log = $("#intro-log"); log.innerHTML = "";
-    const lines = [`<b>${t("Densità")}</b> ${this.time === "2" ? t("essenziale") : this.time === "all" ? t("completa") : t("media")}`, `<b>${t("Ritmo")}</b> ${this.mood === "nervous" ? t("essenziale") : this.mood === "vivid" ? t("vivace") : t("calmo")}`, `<b>${t("Contesto")}</b> ${c.day} ${c.slot} · ${c.device}${w && w.temp != null ? ` · ${t("Roma")} ${w.temp}° ${weatherLabel(w)}` : ""}`, `<b>${t("Sistema")}</b> on air`];
-    this.step(3);
-    lines.forEach((l, i) => { const li = document.createElement("li"); li.innerHTML = l; li.style.animationDelay = (0.35 + i * 0.45) + "s"; log.appendChild(li); });
-    clearTimeout(this.timer); this.timer = setTimeout(() => this.finish(), 4200);
-  },
   finish(immediate) {
-    if (this.done) return; this.done = true; clearTimeout(this.timer);
+    if (this.done) return; this.done = true;
     try { sessionStorage.setItem("fw.intro", "1"); } catch {}
     if (this.el) { if (immediate) this.el.hidden = true; else { this.el.classList.add("out"); setTimeout(() => { this.el.hidden = true; }, 650); } }
     document.body.style.overflow = ""; window.scrollTo(0, 0);

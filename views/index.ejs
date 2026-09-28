@@ -12,7 +12,6 @@ const team = content.team || []; const keyPeople = team.filter(m => m.is_key); c
 const LANG = typeof lang === "string" && lang === "en" ? "en" : "it"; const T = typeof t === "function" ? t : (s, v) => { let o = String(s); if (v) Object.keys(v).forEach(k => { o = o.split("{" + k + "}").join(v[k]); }); return o; };
 const EN_PUBLIC = typeof enPublic !== "undefined" && !!enPublic; // la versione inglese è pubblica
 const SHOW_LANG = !preview && (EN_PUBLIC || LANG === "en"); // scelta della lingua (barra, Modalità, intro): quando l'inglese è pubblico, o se si sta già guardando l'inglese (anteprima da /en)
-const NSTEPS = SHOW_LANG ? 3 : 2; const stepNo = (n) => SHOW_LANG ? n + 1 : n; // l'intro ha un passo in più (la lingua) quando la scelta c'è
 const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, m, day] = d.split("-"); const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m ? `${+day || ""} ${mo[(+m) - 1] || ""} ${y}`.trim() : d; };
 %><!doctype html>
 <html lang="<%= LANG %>" data-energy="auto" data-density="10" data-weather="unknown">
@@ -46,7 +45,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="157" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
-    <a href="#sistema"><%= T("Sistema") %></a><a href="#aree"><%= site.areas_label || T("Aree") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
+    <a href="#aree"><%= site.areas_label || T("Aree") %></a><a href="#sistema"><%= T("Sistema") %></a><a href="#lavori"><%= T("Lavori") %></a><a href="#metodo"><%= T("Metodo") %></a><a href="#team">Team</a><a href="#radar">Radar</a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
     <% if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
     <a class="cta" href="#contatti"><%= T("Parliamone") %></a>
@@ -81,19 +80,9 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
   <div class="intro-top"><svg viewBox="0 0 421.23 59" width="143" height="20" aria-hidden="true"><use href="#fw-logo"/></svg><button type="button" class="intro-skip" id="intro-skip"><%= T("Salta") %></button></div>
   <div class="intro-body">
     <div class="intro-steps">
-    <% if (SHOW_LANG) { %>
-    <%# passo 0: la lingua. Preselezionata quella della pagina (cookie o browser); l'altra ricarica su /it o /en e l'intro riprende dal passo dopo %>
-    <section class="intro-step on" data-step="0">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> <%= NSTEPS %></div>
-      <h2 class="serif"><%= T("In che lingua?") %></h2>
-      <div class="intro-opts">
-        <button type="button" data-lang="it" lang="it" class="<%= LANG === "it" ? "on" : "" %>"><b>Italiano</b><span>Continua in italiano.</span></button>
-        <button type="button" data-lang="en" lang="en" class="<%= LANG === "en" ? "on" : "" %>"><b>English</b><span>Continue in English.</span></button>
-      </div>
-    </section>
-    <% } %>
-    <section class="intro-step <%= SHOW_LANG ? "" : "on" %>" data-step="1">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · <%= stepNo(1) %> <%= T("di") %> <%= NSTEPS %></div>
+    <%# due passi: il tempo (con "2 minuti" si entra subito, tema automatico) e il mood (solo per 10 minuti / tutto il tempo). Poi il sito si apre direttamente. La lingua si cambia dalla barra o da Modalità. %>
+    <section class="intro-step on" data-step="1">
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 1 <%= T("di") %> 2</div>
       <h2 class="serif"><%= T("Quanto tempo hai?") %></h2>
       <div class="intro-opts">
         <button type="button" data-time="2"><b><%= T("2 minuti") %></b><span><%= T("Fammi capire cosa fate.") %></span></button>
@@ -102,7 +91,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
       </div>
     </section>
     <section class="intro-step" data-step="2">
-      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · <%= stepNo(2) %> <%= T("di") %> <%= NSTEPS %></div>
+      <div class="eyebrow"><span class="dot"></span><%= T("Prima di cominciare") %> · 2 <%= T("di") %> 2</div>
       <h2 class="serif"><%= T("Che mood preferisci?") %></h2>
       <div class="intro-opts">
         <button type="button" data-mood="light"><i class="swatch" style="--s1:#F5F2F8;--s2:#8E00C4" aria-hidden="true"></i><b><%= T("Chiaro") %></b><span><%= T("Fondo chiaro e viola d'inchiostro, tutto in luce.") %></span></button>
@@ -110,6 +99,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
         <button type="button" data-mood="calm"><i class="swatch" style="--s1:#0E1220;--s2:#8A7CFF" aria-hidden="true"></i><b><%= T("Notturno") %></b><span><%= T("Blu notte e lavanda, ritmo disteso.") %></span></button>
         <button type="button" data-mood="nervous"><i class="swatch" style="--s1:#121A18;--s2:#5FBFA5" aria-hidden="true"></i><b><%= T("Quieto") %></b><span><%= T("Verde e menta, dritto al punto, senza rumore.") %></span></button>
       </div>
+      <p class="intro-hint"><%- T("Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto.", { btn: '<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>' }) %></p>
     </section>
     </div>
     <!-- Console già nell'intro (mobile): complementare alle domande, tiene conto delle scelte fatte -->
@@ -128,14 +118,6 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
         <button type="button" data-intro-ask="<%= T("Cosa dice il radar oggi?") %>">Radar</button>
       </div>
     </div>
-    <section class="intro-step" data-step="3">
-      <div class="eyebrow"><span class="dot"></span><%= T("Configurazione") %></div>
-      <h2 class="serif" id="intro-title"><%- T("Il sito si sta configurando <em>per te.</em>") %></h2>
-      <p class="intro-msg" id="intro-msg"></p>
-      <ul class="intro-log" id="intro-log"></ul>
-      <p class="intro-hint"><%- T("Puoi cambiare scelta in qualsiasi momento premendo il tasto {btn} in alto.", { btn: '<b class="modes-pill"><span class="modes-ico"></span>' + T("Modalità") + '</b>' }) %></p>
-      <div class="intro-actions"><button type="button" class="btn primary" id="intro-go"><%= T("Via") %></button><button type="button" class="btn intro-ask" id="intro-ask">✦ <%= T("Chiedi alla Console") %></button></div>
-    </section>
   </div>
 </div>
 
@@ -163,43 +145,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <!-- ============================ PERCORSO (desktop): il sito configurato dalla Console ============================ -->
 <section class="section percorso desktop-only path-keep" id="percorso" data-tier="2" hidden aria-label="<%= T("Percorso") %>"></section>
 
-<!-- ============================ CONTESTO ============================ -->
-<section class="section desktop-only" id="sistema" data-tier="10">
-  <div class="split2">
-    <div class="ph df rv" data-datafield><img src="/media/particles.jpg" alt="" loading="lazy"></div>
-    <div>
-      <div class="eyebrow rv"><span class="dot"></span><%= T("Il contesto") %></div>
-      <p class="big rv"><%= site.context_text %></p>
-      <p class="serif statement-inline rv"><%= site.statements[1] %></p>
-    </div>
-  </div>
-</section>
-
-<!-- ============================ AREE ============================ -->
-<section class="section desktop-only" id="aree" data-tier="2">
-  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label || T("Aree") %></div><h2 class="rv"><%- site.areas_title ? em(site.areas_title) : T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
-  <div class="caps">
-    <% content.caps.forEach((c, i) => { %>
-    <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
-      <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
-      <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
-      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
-    </button>
-    <% }) %>
-  </div>
-</section>
-
-<!-- ============================ ORGANISMO ============================ -->
-<section class="section organism desktop-only" data-tier="10" id="organismo">
-  <div class="section-head">
-    <div><div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div></div>
-    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv"><%= site.organism_text %></p></div>
-  </div>
-  <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
-  <div class="rv"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
-</section>
-
-<!-- ============================ STATEMENT ============================ -->
+<!-- ============================ REEL (subito dopo la hero) ============================ -->
 <%# Reel: i video tematici (Vimeo) in un carosello, al posto dello statement scorrevole; si gestiscono da /admin/reel %>
 <% const reels = (content.reels || []).filter(r => r.vimeo || r.cover); if (reels.length) { %>
 <section class="section reels desktop-only" data-tier="10" id="reel" aria-label="Reel">
@@ -222,6 +168,32 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 </section>
 <% } %>
 
+<!-- ============================ AREE ============================ -->
+<section class="section desktop-only" id="aree" data-tier="2">
+  <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= site.areas_label || T("Aree") %></div><h2 class="rv"><%- site.areas_title ? em(site.areas_title) : T("Quattro sistemi, un <span class=\"serif\">organismo.</span>") %></h2></div>
+  <div class="caps">
+    <% content.caps.forEach((c, i) => { %>
+    <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
+      <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
+      <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
+      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
+    </button>
+    <% }) %>
+  </div>
+</section>
+
+<!-- ============================ CONTESTO ============================ -->
+<section class="section desktop-only" id="sistema" data-tier="10">
+  <div class="split2">
+    <div class="ph df rv" data-datafield><img src="/media/particles.jpg" alt="" loading="lazy"></div>
+    <div>
+      <div class="eyebrow rv"><span class="dot"></span><%= T("Il contesto") %></div>
+      <p class="big rv"><%= site.context_text %></p>
+      <p class="serif statement-inline rv"><%= site.statements[1] %></p>
+    </div>
+  </div>
+</section>
+
 <!-- ============================ LAVORI ============================ -->
 <section class="section desktop-only" id="lavori" data-tier="2">
   <div class="section-head"><div class="eyebrow rv"><span class="dot"></span><%= T("Lavori") %></div><div><h2 class="rv"><%- T("Organismi in <span class=\"serif\">azione.</span>") %></h2><p class="rv"><%- T("Una selezione. Ogni scheda si può <em>adattare al tuo contesto</em>: apri un lavoro e prova.") %></p></div></div>
@@ -235,6 +207,16 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     </button>
     <% }) %>
   </div>
+</section>
+
+<!-- ============================ ORGANISMO ============================ -->
+<section class="section organism desktop-only" data-tier="10" id="organismo">
+  <div class="section-head">
+    <div><div class="eyebrow rv"><span class="dot"></span>Adaptive Content Systems</div></div>
+    <div><h2 class="rv"><%- em(site.organism_title) %></h2><p class="rv"><%= site.organism_text %></p></div>
+  </div>
+  <%# L'Organismo: uno solo per tutto il sito, nutrito dal Radar, dagli umori e dal meteo; secondo schermo dal QR, AR dal telefono (partial condiviso con /organismo) %>
+  <div class="rv"><%- include("partials/organismo", { mode: "desktop", room: "", standalone: false }) %></div>
 </section>
 
 <!-- ============================ METODO ============================ -->
