@@ -22,7 +22,8 @@ const DataField = (() => {
     const oc = document.createElement("canvas"), octx = oc.getContext("2d", { willReadFrequently: true });
     const capEye = root.querySelector(".df-eyebrow"), capTitle = root.querySelector(".df-title"), capSrc = root.querySelector(".df-src"), dots = root.querySelectorAll(".df-dots i");
     const mobile = matchMedia("(max-width: 820px)").matches;
-    const hero = root.dataset.dfMode === "hero"; // intestazione della Home mobile: il dato sta nella metà alta, sotto c'è il titolo
+    const hero = root.dataset.dfMode === "hero"; // intestazione della Home mobile: il dato sta sopra il testo (.cover-text), che si misura davvero: cambia con la larghezza del telefono e la lunghezza dei testi
+    const heroText = hero && root.parentElement ? root.parentElement.querySelector(".cover-text") : null;
     const N = mobile ? 1100 : 2300;
     const st = { W: 0, H: 0, dpr: 1, i: -1, fig: null, at: 0, word: 0, wordAt: 0, labels: [], streams: null, counter: 0, parts: [], visible: false, raf: 0, last: 0, col: null };
 
@@ -65,7 +66,14 @@ const DataField = (() => {
     // ---- scene
     function layout() {
       const f = st.fig; if (!f || !st.W) return; st.labels = []; st.streams = null;
-      const pad = mobile ? 16 : 24, capH = hero ? Math.round(st.H * 0.54) : (mobile ? 78 : 92), topH = hero ? 118 : 0; // spazio della didascalia (in basso; nell'intestazione in alto, e sotto resta il titolo)
+      const pad = mobile ? 16 : 24;
+      // spazio riservato: nel campo normale la didascalia sta in basso (capH); nell'intestazione la didascalia sta in alto (topH, misurata) e in basso c'è il testo della cover (capH, misurato)
+      let capH = mobile ? 78 : 92, topH = 0;
+      if (hero) {
+        const cap = root.querySelector(".df-cap"); topH = cap ? cap.offsetTop + cap.offsetHeight + 10 : 118;
+        const textTop = heroText ? heroText.offsetTop + (parseFloat(getComputedStyle(heroText).paddingTop) || 0) : st.H * 0.54;
+        capH = Math.max(60, st.H - (textTop - 36)); // il dato può scendere un po' nella sfumatura sopra il testo
+      }
       const step = mobile ? 2.6 : 2.7; const cy0 = topH + (st.H - capH - topH) / 2 + 4;
       if (f.kind === "number") assign(textPoints(f.display, Math.round(st.W * (hero ? 0.22 : 0.24)), st.W / 2, cy0, st.W - pad * 2, step));
       else if (f.kind === "words") assign(textPoints(f.words[st.word % f.words.length], Math.round(st.W * (hero ? 0.24 : 0.27)), st.W / 2, cy0, st.W - pad * 2, step, 700));
@@ -91,7 +99,7 @@ const DataField = (() => {
     function show(i) {
       st.i = (i + figs.length) % figs.length; st.fig = figs[st.i]; st.at = performance.now(); st.word = 0; st.wordAt = st.at; st.counter = 0;
       if (st.fig.kind !== "stream") st.parts.forEach(p => { p.vx = 0; p.vy = 0; });
-      layout(); caption(); if (!st.visible) draw();
+      caption(); layout(); if (!st.visible) draw(); // prima la didascalia: nell'intestazione la sua altezza decide dove sta il dato
     }
     function next() { show(st.i + 1); }
 
