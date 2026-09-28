@@ -591,11 +591,15 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
 .brief-text h2{margin-bottom:14px}
 .caps-brief .lead{max-width:64ch;margin:0 0 26px}
 .caps-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:18px 40px}
-.caps-list li{display:grid;gap:6px;padding:20px 0 22px;border-top:1px solid var(--line)}
-.caps-list li .eyebrow{font-size:10.5px}
-.caps-list li b{font-size:clamp(22px,2vw,28px);font-weight:600;letter-spacing:-.015em;line-height:1.1}
-.caps-list li b .serif{font-weight:400}
-.caps-list li p{color:var(--ink-2);font-size:15.5px;line-height:1.5;max-width:48ch;margin:0}
+.caps-list>li{display:grid;gap:6px;padding:20px 0 22px;border-top:1px solid var(--line)}
+.caps-list>li>.eyebrow{font-size:10.5px}
+.caps-list>li>b{font-size:clamp(22px,2vw,28px);font-weight:600;letter-spacing:-.015em;line-height:1.1}
+.caps-list>li>b .serif{font-weight:400}
+.caps-list>li>p{color:var(--ink-2);font-size:15.5px;line-height:1.5;max-width:48ch;margin:0}
+.caps-uses{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px;max-width:52ch}
+.caps-uses li{position:relative;padding-left:14px;font-size:14px;line-height:1.45;color:var(--ink-2)}
+.caps-uses li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.caps-list>li>.tags{margin-top:10px}
 @media (max-width:1000px){.caps-list{grid-template-columns:1fr;gap:0}}
 
 /* =========================================================
@@ -905,11 +909,15 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
 @media (max-width:820px){
   .m-lead{font-size:15.5px;line-height:1.5;color:var(--ink-2);margin:0 0 14px}
   .caps-list-m{list-style:none;margin:0;padding:0;display:grid;gap:0}
-  .caps-list-m li{display:grid;gap:4px;padding:14px 0;border-top:1px solid var(--line)}
-  .caps-list-m li .eyebrow{font-size:10px}
-  .caps-list-m li b{font-size:20px;font-weight:600;letter-spacing:-.015em;line-height:1.15}
-  .caps-list-m li b .serif{font-weight:400}
-  .caps-list-m li p{font-size:14.5px;line-height:1.45;color:var(--ink-2);margin:0}
+  .caps-list-m>li{display:grid;gap:4px;padding:14px 0;border-top:1px solid var(--line)}
+  .caps-list-m>li>.eyebrow{font-size:10px}
+  .caps-list-m>li>b{font-size:20px;font-weight:600;letter-spacing:-.015em;line-height:1.15}
+  .caps-list-m>li>b .serif{font-weight:400}
+  .caps-list-m>li>p{font-size:14.5px;line-height:1.45;color:var(--ink-2);margin:0}
+  .caps-list-m .caps-uses{margin-top:6px;gap:4px}
+  .caps-list-m .caps-uses li{font-size:13.5px;padding-left:12px}
+  .caps-list-m .caps-uses li::before{width:5px;height:5px;top:.6em}
+  .caps-list-m>li>.tags{margin-top:8px}
 }
 
 /* Console su mobile: mood, tempo e lingua dentro la finestra (al posto della barra in alto) */

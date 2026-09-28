@@ -12,7 +12,7 @@ const F = (a, b, c) => [a, b, c];
 const DESKTOP = [
   { id: "console", label: "Hero / Console", what: "mappa a nodi, titolo e manifesto, campo Console, striscia Radar", fixed: "first", def: F("full", "full", "full") },
   { id: "reel", label: "Reel", what: "carosello dei reel tematici", def: F("off", "full", "full") },
-  { id: "aree", label: "Servizi (aree)", what: "le 4 card · breve: un blocco unico con le 4 aree, senza rimandi alle schede", brief: true, def: F("full", "full", "full") },
+  { id: "aree", label: "Servizi (aree)", what: "le 4 card · breve: un blocco unico con le 4 aree (sintesi, esempi, tecnologie), senza rimandi alle schede", brief: true, def: F("brief", "full", "full") },
   { id: "sistema", label: "Il contesto", what: "testo + campo dati particellare · breve: solo il testo breve", brief: true, def: F("off", "full", "full") },
   { id: "lavori", label: "Lavori", what: "griglia dei lavori (filtrata dalle priorità)", def: F("full", "full", "full") },
   { id: "organismo", label: "L'organismo", what: "organismo interattivo · breve: solo il testo breve", brief: true, def: F("off", "full", "full") },
@@ -29,7 +29,7 @@ const HOME = [
   { id: "cover", label: "Card in cima (hero)", what: "saluto, titolo, manifesto, campo dati", fixed: "first", def: F("full", "full", "full") },
   { id: "reels", label: "Fila dei Reel", what: "", def: F("full", "full", "full") },
   { id: "ask", label: "Bottone Console + esempi", what: "solo se l'AI è configurata", def: F("full", "full", "full") },
-  { id: "aree", label: "Carosello Servizi", what: "breve: elenco compatto delle 4 aree, senza schede", brief: true, def: F("full", "full", "full") },
+  { id: "aree", label: "Carosello Servizi", what: "breve: elenco compatto delle 4 aree (sintesi, esempi, tecnologie), senza schede", brief: true, def: F("brief", "full", "full") },
   { id: "lavori", label: "Fila Lavori", what: "i primi 6 lavori (filtrati dalle priorità)", def: F("off", "full", "full") },
   { id: "radar", label: "Radar oggi", what: "3 segnali; dentro un percorso della Console compare comunque", def: F("off", "full", "full") },
   { id: "metodo", label: "Metodo", what: "5 fasi · breve: solo il testo breve", brief: true, def: F("off", "full", "full") },

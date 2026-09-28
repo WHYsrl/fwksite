@@ -91,7 +91,7 @@ const SECTIONS = [
       { key: "m_all_areas", label: "Rimando accanto al titolo (porta all'elenco)", def: "Tutte" },
       { key: "areas_list_title", label: "Titolo dell'elenco in Sistema", def: "Le aree" },
       { group: "Versione breve" },
-      { key: "areas_brief_intro", label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: nome e sintesi di ciascuna, senza rimandi alle schede. Questo testo, se c'è, sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo. Vuoto = si vede la versione completa.", def: "" }
+      { key: "areas_brief_intro", label: "Testo sopra l'elenco compatto", type: "textarea", rows: 3, hint: "Nella versione breve le 4 aree diventano un blocco unico: per ciascuna il nome, la sintesi, tre esempi concreti (i primi casi d'uso della scheda) e le tecnologie, senza rimandi alle schede. Questo testo sta sopra l'elenco. Si vede al posto della sezione completa quando, nella pagina Fruizione, la sezione è impostata su «Breve» per quel tempo.", def: "Quattro sistemi, un solo organismo: contenuti che si declinano in ogni formato, attivazioni che reagiscono a chi passa, esperienze che escono dallo schermo, media che si adattano con l'AI. In breve, cosa facciamo in ciascuna area." }
     ]
   },
   {
