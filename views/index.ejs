@@ -31,7 +31,9 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <link rel="stylesheet" href="<%= preview ? 'site.css' : '/public/css/site.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
 <link rel="stylesheet" href="<%= preview ? 'organismo.css' : '/public/css/organismo.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
 <link rel="stylesheet" href="<%= preview ? 'vetrina.css' : '/public/css/vetrina.css?v=' + (typeof v !== 'undefined' ? v : '1') %>">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-6 -3 63 65'><rect x='-6' y='-3' width='63' height='65' rx='12' fill='%23050307'/><g fill='%23fff'><polygon points='51.09 14.75 25.55 59 51.09 44.25 51.09 14.75'/><polygon points='25.55 29.5 0 14.75 25.55 0 51.09 14.75 25.55 29.5'/><polygon points='25.55 29.5 25.55 59 0 44.25 25.55 29.5'/></g></svg>">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/public/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/public/apple-touch-icon.png">
 </head>
 <body class="<%= content.lightMedia && Object.keys(content.lightMedia).length ? "light-media" : "" %>">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -43,7 +45,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 <div class="glow" id="glow" aria-hidden="true"></div>
 
 <header class="topbar">
-  <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="157" height="22" aria-hidden="true"><use href="#fw-logo"/></svg></a>
+  <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="214" height="30" aria-hidden="true"><use href="#fw-logo"/></svg></a>
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
     <a href="#aree"><%= site.areas_label %></a><a href="#sistema"><%= site.nav_sistema %></a><a href="#lavori"><%= site.nav_lavori %></a><a href="#metodo"><%= site.nav_metodo %></a><a href="#team"><%= site.nav_team %></a><a href="#radar"><%= site.nav_radar %></a>
     <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
@@ -218,6 +220,8 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
     </button>
     <% }) %>
   </div>
+  <%# anteprima di 9 lavori: gli altri con "Mostra altri lavori" (site.js · WorksFilter) %>
+  <div class="works-more-row" id="works-more-row" hidden><button type="button" class="btn" id="works-more" data-works-more><%= site.works_more %> <span>+0</span></button></div>
 </section>
 <% } else if (SEC === "organismo") { %>
 <!-- ============================ ORGANISMO ============================ -->

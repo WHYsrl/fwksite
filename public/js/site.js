@@ -248,13 +248,23 @@ $("#drawer-next") && $("#drawer-next").addEventListener("click", () => DrawerNav
 $("#drawer-expand") && $("#drawer-expand").addEventListener("click", () => DrawerNav.expand());
 document.addEventListener("keydown", e => { if (drawer.dataset.state !== "open" || /input|textarea|select/i.test((e.target && e.target.tagName) || "")) return; if (e.key === "ArrowRight") DrawerNav.go(1); else if (e.key === "ArrowLeft") DrawerNav.go(-1); });
 // ---- lavori (desktop): chip filtro per sistema ----
+const WORKS_PREVIEW = 9; // lavori in anteprima; gli altri con "Mostra altri lavori"
+const prioMaxOf = (d) => ({ "2": 1, "10": 2, all: 3 }[d] || 3);
+// Limita a WORKS_PREVIEW le card visibili (non filtrate, non oltre la priorità del tempo): le altre prendono .is-over finché non si espande
+function capWorks(cards, expanded, btn, row) {
+  const max = prioMaxOf(Modes.density); let n = 0, over = 0;
+  cards.forEach(c => { const ok = !c.classList.contains("is-filtered") && !c.hidden && (+c.dataset.prio || 1) <= max; if (!ok) { c.classList.remove("is-over"); return; } n++; const o = !expanded && n > WORKS_PREVIEW; c.classList.toggle("is-over", o); if (o) over++; });
+  if (row) row.hidden = !over; if (btn) { const sp = $("span", btn); if (sp) sp.textContent = "+" + over; }
+}
 const WorksFilter = {
-  current: "all",
+  current: "all", expanded: false,
+  cap() { capWorks($$("#lavori .work"), this.expanded, $("#works-more"), $("#works-more-row")); },
+  expand() { this.expanded = true; this.cap(); },
   // i conteggi nei chip contano solo i lavori visibili col tempo scelto (priorità 1-2-3, nascoste via CSS con data-prio)
   recount() { const cards = $$("#lavori .work").filter(w => getComputedStyle(w).display !== "none"); $$("[data-wfilter]").forEach(b => { const id = b.dataset.wfilter; const n = id === "all" ? cards.length : cards.filter(w => (w.dataset.caps || "").split(" ").includes(id)).length; const sm = $("small", b); if (sm) sm.textContent = String(n); b.hidden = id !== "all" && !n; }); },
-  set(id) { this.current = id; $$("[data-wfilter]").forEach(b => b.classList.toggle("on", b.dataset.wfilter === id)); const cards = $$("#lavori .work"); let n = 0; cards.forEach(w => { const on = id === "all" || (w.dataset.caps || "").split(" ").includes(id); w.classList.toggle("is-filtered", !on); if (on) n++; }); const grid = $("#lavori .works"); if (grid) { let e = grid.querySelector(".works-empty"); if (!n) { if (!e) { e = document.createElement("div"); e.className = "works-empty"; e.textContent = t("Nessun lavoro in questa area, per ora."); grid.appendChild(e); } } else if (e) e.remove(); } }
+  set(id) { this.current = id; this.expanded = false; $$("[data-wfilter]").forEach(b => b.classList.toggle("on", b.dataset.wfilter === id)); const cards = $$("#lavori .work"); let n = 0; cards.forEach(w => { const on = id === "all" || (w.dataset.caps || "").split(" ").includes(id); w.classList.toggle("is-filtered", !on); if (on) n++; }); const grid = $("#lavori .works"); if (grid) { let e = grid.querySelector(".works-empty"); if (!n) { if (!e) { e = document.createElement("div"); e.className = "works-empty"; e.textContent = t("Nessun lavoro in questa area, per ora."); grid.appendChild(e); } } else if (e) e.remove(); } this.cap(); }
 };
-document.addEventListener("click", e => { const b = e.target.closest("[data-wfilter]"); if (b) WorksFilter.set(b.dataset.wfilter); });
+document.addEventListener("click", e => { const mm = e.target.closest("#m-works-more"); if (mm) { App.worksExpanded = true; App.capWorks(); return; } const b = e.target.closest("[data-wfilter]"); if (b) { WorksFilter.set(b.dataset.wfilter); return; } const m = e.target.closest("#works-more"); if (m) { WorksFilter.expand(); if (window.ScrollTrigger) setTimeout(() => ScrollTrigger.refresh(), 100); } });
 scrim.addEventListener("click", closeDetail); $("#drawer-close").addEventListener("click", closeDetail); $("#sheet-close").addEventListener("click", closeDetail);
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); const p = $("#modes"); if (p && !p.hidden) p.hidden = true; } });
 document.addEventListener("click", e => {
@@ -397,7 +407,7 @@ const Console = (() => {
     nodes.forEach(nd => {
       const p = P[nd.id]; const isHover = active && active.id === nd.id; const isHi = hiOn && hi.has(nd.id); const inRel = (!active || rel.has(nd.id)) && (!hiOn || hi.has(nd.id) || nd.kind === "core"); const inFocus = !focusSet || focusSet.has(nd.id) || nd.kind === "core"; const dim = inRel ? (inFocus ? 1 : .22) : .3;
       ctx.save(); ctx.globalAlpha = dim;
-      if (nd.kind === "core") { const r = nd.r; ctx.fillStyle = isHover ? PURPLE : T.ink; cube(p.x, p.y, r * 2.1); ctx.fillStyle = T.inkA(.9); ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
+      if (nd.kind === "core") { const r = nd.r; ctx.save(); ctx.fillStyle = PURPLE; if (isHover) { ctx.shadowColor = PURPLE; ctx.shadowBlur = 28; } cube(p.x, p.y, r * 2.1); ctx.restore(); /* il cubo Frameworks, viola come il marchio */ ctx.fillStyle = T.inkA(.9); ctx.font = `500 10.5px ${MONO}`; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.letterSpacing = "1.5px"; ctx.fillText((DATA.site.claim || "").toUpperCase(), p.x, p.y + r + 12); ctx.letterSpacing = "0px"; }
       else if (nd.kind === "cap") { ctx.beginPath(); ctx.arc(p.x, p.y, nd.r + (isHi ? 3 : 0), 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.bg; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = isHover || isHi ? PURPLE : T.ink; ctx.stroke(); label(p, nd, nd.name, L_AREA, `600 14px ${SANS}`, T.ink, nd.r + 12); }
       else if (nd.kind === "work") { ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2 : nd.r, 0, Math.PI * 2); ctx.fillStyle = isHover || isHi ? PURPLE : T.ink2; ctx.fill(); label(p, nd, nd.label || nd.client, isHover ? nd.title.toUpperCase() : "", `500 12px ${SANS}`, isHover || isHi ? T.ink : T.ink2, nd.r + 9); }
       else if (nd.kind === "signal") { ctx.globalAlpha = inRel ? .95 : .3; ctx.beginPath(); ctx.arc(p.x, p.y, isHover || isHi ? nd.r + 2.5 : nd.r, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill(); if (isHover || isHi || (active && active.kind === "cap" && rel.has(nd.id))) label(p, nd, nd.src, L_RADAR, `400 11px ${MONO}`, PAPER, nd.r + 8); }
@@ -560,6 +570,7 @@ const App = {
       ${reelsBlock(esc(site.m_reel_title || "Reel"))}
       <div><h2>${em(site.works_title || t("Organismi in <em>azione.</em>"))}</h2><div class="chips"><button type="button" class="on" data-filter="all">${esc(site.works_all || t("Tutti"))}</button>${DATA.caps.map(c => `<button type="button" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}</div></div>
       <div class="grid2m feed" id="works-grid">${Focus.list(DATA.works).map(gc).join("")}</div>
+      <div class="works-more-row" id="m-works-more-row" hidden><button type="button" class="btn" id="m-works-more">${esc(site.works_more || t("Mostra altri lavori"))} <span>+0</span></button></div>
       ${site.m_works_hint ? `<p class="app-foot">${esc(site.m_works_hint)}</p>` : ""}
       ${contactHTML()}
     </section>`;
@@ -579,7 +590,7 @@ const App = {
     bar.innerHTML = tabs.map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
     const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
     AI.check().then(ok => { if (!ok) { $$("[data-tab=console]").forEach(el => el.remove()); cols(); } });
-    this.applyDensity(); this.show(this.current, true);
+    this.applyDensity(); this.capWorks(); this.show(this.current, true);
     if (window.Diffusion) Diffusion.mountAll(); // il Denoise nella schermata Sistema
     if (window.Organismo) Organismo.mountAll(); // l'organismo nella schermata Sistema
     if (window.Reels) Reels.mountAll(); // i reel nella schermata Lavori
@@ -595,7 +606,8 @@ const App = {
     if (name === "sistema" && window.Organismo) Organismo.mountAll(); // l'organismo si monta quando la schermata è visibile
     if (!silent) try { history.replaceState(null, "", "#" + name); } catch {}
   },
-  filterWorks(id) { this.filter = id; $$("#works-grid .gc").forEach(g => g.hidden = !(id === "all" || g.dataset.caps.split(" ").includes(id))); },
+  filterWorks(id) { this.filter = id; this.worksExpanded = false; $$("#works-grid .gc").forEach(g => g.hidden = !(id === "all" || g.dataset.caps.split(" ").includes(id))); this.capWorks(); },
+  capWorks() { capWorks($$("#works-grid .gc"), !!this.worksExpanded, $("#m-works-more"), $("#m-works-more-row")); },
   applyDensity() {
     const d = Modes.density; const key = d === "2" ? "v2" : d === "10" ? "v10" : "vall";
     $$("[data-m-tier]").forEach(el => { const t = el.dataset.mTier; el.hidden = (d === "2" && t !== "2"); });
@@ -891,7 +903,7 @@ initialTab();
 renderApp();
 watchPaper();
 bindPrompt($("#prompt"));
-if (!isMobile()) WorksFilter.recount();
+if (!isMobile()) { WorksFilter.recount(); WorksFilter.cap(); }
 Intro.start(() => { renderContext(); if (isMobile()) App.applyDensity(); animateDesktop(); });
 if (window.Diffusion) Diffusion.mountAll(); // Denoise (desktop: sezione Adaptive Content Systems)
 if (window.Organismo) Organismo.mountAll(); // L'organismo (desktop: sezione Adaptive Content Systems)
@@ -910,5 +922,5 @@ Ctx.fetchWeather().then(() => { Modes.apply(); renderContext(); const st = $("#m
 let wasMobile = isMobile();
 matchMedia("(max-width: 820px)").addEventListener("change", () => { const m = isMobile(); if (m !== wasMobile) { wasMobile = m; closeDetail(); renderContext(); renderApp(); if (!m && Console) { Console.resize(); Console.start(); } } });
 // la densità cambia la composizione del feed
-const _set = Modes.set.bind(Modes); Modes.set = (k, v) => { _set(k, v); if (k === "density") { if (isMobile()) App.applyDensity(); else WorksFilter.recount(); } renderContext(); };
+const _set = Modes.set.bind(Modes); Modes.set = (k, v) => { _set(k, v); if (k === "density") { if (isMobile()) { App.applyDensity(); App.capWorks(); } else { WorksFilter.recount(); WorksFilter.cap(); } } renderContext(); };
 })();

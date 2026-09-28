@@ -115,6 +115,7 @@ const SECTIONS = [
       { group: "Desktop e mobile" },
       { key: "works_title", label: "Titolo", em: true, hint: "Su mobile è il titolo della schermata Lavori.", def: "Organismi in <em>azione.</em>" },
       { key: "works_all", label: "Filtro «tutti»", def: "Tutti" },
+      { key: "works_more", label: "Bottone «mostra altri lavori»", hint: "Si vedono 9 lavori; gli altri compaiono con questo bottone (desktop e mobile).", def: "Mostra altri lavori" },
       { group: "Solo mobile", hint: "La fila dei lavori in Home e la nota in fondo alla schermata Lavori." },
       { key: "m_works_title", label: "Titolo della fila in Home", from: "works_label", hint: "Vuoto = come l'etichetta desktop.", def: "Lavori" },
       { key: "m_see_all", label: "Rimando accanto al titolo (porta alla schermata Lavori)", def: "Vedi tutti" },
