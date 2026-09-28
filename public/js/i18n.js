@@ -134,6 +134,7 @@
     "Il telefono lo guarda nella stanza, in realtà aumentata: dove punta lo sguardo, qui si inclina. Un tocco di là arriva qui.": "The phone is watching it in the room, in augmented reality: where the gaze points, here it tilts. A tap over there arrives here.", "È nella stanza": "It is in the room", "Il telefono lo sta guardando in realtà aumentata, a un metro da chi lo tiene: lo stesso organismo, in tre dimensioni. Dove punta lo sguardo, qui si inclina.": "The phone is watching it in augmented reality, a metre from whoever holds it: the same organism, in three dimensions. Where the gaze points, here it tilts.",
     "Lo stesso organismo, riconfigurato in verticale sul telefono. Inclinalo: si sposta anche qui. Toccalo: lascia uno stimolo su entrambi gli schermi. Tocca un nodo di là: la sua notizia si apre qui.": "The same organism, reconfigured vertically on the phone. Tilt it: it moves here too. Tap it: it leaves a stimulus on both screens. Tap a node over there: its news opens here.", "Telefono scollegato": "Phone disconnected", "L'organismo resta com'è: gli stimoli lasciati dal telefono sono rimasti.": "The organism stays as it is: the stimuli left by the phone remain.",
     "QR non disponibile": "QR unavailable", "Senza il permesso al movimento: tocca e trascina": "Without motion permission: tap and drag",
+    "Non mostrarle più": "Don't show these again", "Didascalie disattivate · riattiva": "Captions off · turn on",
     // ---- campo dati ----
     "tocca · prossimo dato": "tap · next figure", "Dati del contesto: ": "Context figures: "
   };

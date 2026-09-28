@@ -880,3 +880,16 @@ html[data-density="2"] [data-tier="10"],html[data-density="2"] [data-tier="all"]
 @media (max-width:820px){.topnav a.lang-switch{display:inline-block}}
 .seg a{flex:1;text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-radius:999px;color:var(--ink-3);text-decoration:none}
 .seg a.on{background:var(--ink);color:var(--bg)}
+
+/* ---- Home mobile: la cover lascia spazio al testo. Immagine più piccola, in alto a destra, sfumata verso il testo;
+   stato, saluto, titolo e manifesto stanno sotto, sul fondo della card: leggibili in ogni umore, anche in Chiaro ---- */
+@media (max-width:820px){
+  .cover{aspect-ratio:auto;min-height:0;padding:calc(57% + 6px) 20px 22px;background:var(--bg-2);border:1px solid var(--line);gap:0}
+  .cover img{inset:auto;top:0;right:0;left:auto;bottom:auto;width:70%;height:auto;aspect-ratio:5/4;object-fit:cover;object-position:50% 45%;-webkit-mask-image:linear-gradient(to right,rgba(0,0,0,0),#000 30%),linear-gradient(to top,rgba(0,0,0,0),#000 26%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,rgba(0,0,0,0),#000 30%),linear-gradient(to top,rgba(0,0,0,0),#000 26%);mask-composite:intersect}
+  .cover::before{display:none}
+  .cover .status{position:static;align-self:flex-start;margin-bottom:14px;color:var(--ink-2);background:rgba(var(--bg-rgb),.6);border:1px solid var(--line)}
+  html[data-mood="light"] body.light-media .cover .status{color:var(--ink-2)}
+  .cover .greet{margin-bottom:8px}
+  .cover h1{font-size:clamp(32px,9vw,42px)}
+  .cover p{font-size:15px;max-width:none;color:var(--ink-2)}
+}

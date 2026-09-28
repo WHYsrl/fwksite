@@ -141,3 +141,12 @@ html.vo-page[data-mood="light"] .grain{display:block}
   .vo-desktop .vo-say{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion:reduce){.vo-phone-ico i,.vo-feed .f.tick dt::before{animation:none}}
+
+/* ---- didascalie: "non mostrarle più" dentro la didascalia, pillola in basso per riattivarle ---- */
+.vo-say .say-actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+.vo-say .say-stop,.vo-say .say-x{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);background:none;border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer}
+.vo-say .say-x{padding:5px 8px;margin-left:auto}
+.vo-say .say-stop:hover,.vo-say .say-x:hover{color:var(--ink);border-color:var(--ink)}
+.vo-quiet{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);background:rgba(var(--bg2-rgb),.7);border:1px solid var(--line);border-radius:999px;padding:6px 10px;cursor:pointer}
+.vo-quiet:hover{color:var(--ink);border-color:var(--ink)}
+.vo-quiet[hidden]{display:none}

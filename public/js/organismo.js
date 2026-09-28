@@ -266,13 +266,19 @@
     // ---- didascalie: raccontano cosa lo nutre, una alla volta, in basso; un clic le chiude ----
     const Say = (() => {
       const box = q("vo-say"); const queue = []; const shown = new Set(); let showing = false, timer = 0, lastHide = -1e9;
-      const render = () => { if (!box || showing || !queue.length || !onScreen) return; const m = queue.shift(); showing = true; box.innerHTML = `<span class="eyebrow"><span class="dot"></span>${m.k}</span>${m.t}<i class="say-bar" style="animation-duration:${m.ms}ms"></i>`; box.classList.add("on"); timer = setTimeout(hide, m.ms); };
+      // "Non mostrarle più": scelta che resta (localStorage) per tutte le pagine con l'organismo; una pillola in basso permette di riattivarle
+      const QUIET = "vo.quiet"; const quiet = () => { try { return localStorage.getItem(QUIET) === "1"; } catch { return false; } };
+      const pill = document.createElement("button"); pill.type = "button"; pill.className = "vo-quiet"; pill.textContent = tr("Didascalie disattivate · riattiva"); pill.hidden = !quiet();
+      const bottom = root.querySelector(".vo-bottom"); if (bottom) bottom.appendChild(pill);
+      const setQuiet = (on) => { try { if (on) localStorage.setItem(QUIET, "1"); else localStorage.removeItem(QUIET); } catch {} pill.hidden = !on; if (on) { queue.length = 0; hide(); } };
+      pill.addEventListener("click", () => setQuiet(false));
+      const render = () => { if (!box || showing || !queue.length || !onScreen || quiet()) return; const m = queue.shift(); showing = true; box.innerHTML = `<span class="eyebrow"><span class="dot"></span>${m.k}</span>${m.t}<span class="say-actions"><button type="button" class="say-stop">${tr("Non mostrarle più")}</button><button type="button" class="say-x" aria-label="${tr("Chiudi")}">✕</button></span><i class="say-bar" style="animation-duration:${m.ms}ms"></i>`; box.classList.add("on"); timer = setTimeout(hide, m.ms); };
       const hide = () => { if (!box) return; box.classList.remove("on"); clearTimeout(timer); lastHide = performance.now(); setTimeout(() => { showing = false; render(); }, 650); };
-      if (box) box.addEventListener("click", hide);
-      const push = (k, t, o = {}) => { if (!box) return; if (o.key && queue.some(m => m.key === o.key)) return; const m = { k, t, ms: o.ms || 7500, key: o.key }; if (o.front) queue.unshift(m); else queue.push(m); if (queue.length > 4) queue.length = 4; render(); };
+      if (box) box.addEventListener("click", e => { if (e.target.closest(".say-stop")) { setQuiet(true); return; } hide(); });
+      const push = (k, t, o = {}) => { if (!box || quiet()) return; if (o.key && queue.some(m => m.key === o.key)) return; const m = { k, t, ms: o.ms || 7500, key: o.key }; if (o.front) queue.unshift(m); else queue.push(m); if (queue.length > 4) queue.length = 4; render(); };
       return {
         push, once(key, k, t, o) { if (shown.has(key)) return; shown.add(key); push(k, t, { ...(o || {}), key }); }, kick: render,
-        idle: () => !showing && !queue.length && performance.now() - lastHide > 14000,
+        idle: () => !showing && !queue.length && performance.now() - lastHide > 45000,
         seq(list, gap, delay) { list.forEach((m, i) => setTimeout(() => push(m.k, m.t, { ms: m.ms || 8000 }), (delay || 0) + i * gap)); return (delay || 0) + list.length * gap; }
       };
     })();
@@ -289,12 +295,10 @@
       const list = [
         { k: tr("Un solo organismo"), t: tr("È lo stesso per chiunque apra questo sito. Vive da <b>{days}</b> e non lo accudisce nessuno: lo nutre il mondo.", { days: days === 1 ? tr("un giorno") : tr("{n} giorni", { n: days }) }) },
         { k: tr("Il Radar lo nutre"), t: tr("Ogni notizia che il Radar pubblica diventa un nodo, nel settore del suo sistema. Finora ne ha assimilate <b>{n}</b>", { n: (stato.totals.signals || 0).toLocaleString(LOCALE) }) + (last ? tr("; l'ultima: «{title}».", { title: esc(last.title) }) : ".") },
-        { k: tr("Il meteo di Roma"), t: weatherSay(w) + " " + tr("Il meteo decide il ritmo.") },
-        { k: tr("Gli umori"), t: org.moodN ? tr("I visitatori hanno dichiarato: {moods}. I colori sono la loro media.", { moods: moodsSay() }) + (DESK ? " " + tr("Il tuo, dal tasto Modalità, entra nel conto.") : "") : tr("Nessun visitatore ha ancora dichiarato un umore: i colori sono quelli di base.") + (DESK ? " " + tr("Il tuo, dal tasto Modalità, entra nel suo temperamento.") : "") },
         { k: tr("Gli stimoli"), t: tr("{who} lasciano un nodo bianco che resta per tutti: finora <b>{n}</b>.", { who: MOBILE ? tr("Tocchi e clic") : tr("Clic e tocchi"), n: stato.totals.stimoli || 0 }) + " " + (MOBILE ? tr("Tocca nel vuoto per lasciare il tuo; tocca un nodo per sapere da quale notizia è nato.") : tr("Clicca nel vuoto per lasciare il tuo; clicca un nodo per sapere da quale notizia è nato.")) },
         DESK ? { k: tr("Continua sul telefono"), t: tr("Inquadra il QR: l'organismo passa sul telefono, sullo schermo o nella stanza in AR, e i due schermi restano collegati.") } : { k: tr("Nella stanza"), t: tr("Con «Portalo nella stanza» esce dallo schermo: in realtà aumentata, a un metro da te.") }
       ];
-      introEnd = performance.now() + Say.seq(list, 9200, 1800);
+      introEnd = performance.now() + Say.seq(list, 12000, 2500); // quattro didascalie, una ogni 12 secondi
     }
     const AMBIENT = [
       () => tr("Gli impulsi corrono dal cuore verso i rami: è il contenuto che viaggia tra i touchpoint."),
@@ -306,10 +310,10 @@
     ];
     let lastAmbient = -1;
     setInterval(() => {
-      if (PHONE || !stato || !onScreen || performance.now() < introEnd || !Say.idle() || Math.random() > .4 || org.until !== Infinity) return;
+      if (PHONE || !stato || !onScreen || performance.now() < introEnd || !Say.idle() || Math.random() > .25 || org.until !== Infinity) return;
       let i; do { i = Math.floor(Math.random() * AMBIENT.length); } while (i === lastAmbient); lastAmbient = i;
       Say.push(tr("L'organismo"), AMBIENT[i](), { ms: 7000 });
-    }, 12000);
+    }, 30000);
     let seen = false;
     function firstSight() { if (seen) return; seen = true; if (!PHONE) { if (stato) intro(); Say.kick(); } }
 
