@@ -214,15 +214,16 @@ const AI = {
    DETTAGLIO (drawer desktop / sheet mobile)
    ========================================================= */
 function detailHTML(item) {
+  // ogni scheda: media in cima, poi .d-in con due blocchi — .d-main (etichetta, titolo, testo) e .d-side (casi d'uso, tecnologie, form, rimandi); nel drawer espanso stanno su due colonne
   const list = (items, label) => items.length ? `<div class="list">${items.map(i => `<button type="button" data-open="${i.id}"><span>${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.title : i.name)}</span><small>${label}</small></button>`).join("")}</div>` : "";
   // il form «Adatta al tuo contesto» si accende dal backoffice per le schede delle aree (Contenuti → Servizi) e dei lavori (Contenuti → Lavori); l'AI deve essere attiva (Console e AI)
   const adaptOn = (kind) => DATA.features.adapt !== false && !!(kind === "cap" ? DATA.site.adapt_caps : DATA.site.adapt_works);
   const adapt = (id, kind) => adaptOn(kind) ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>${t("Adatta al tuo contesto")}</div><h4>${t("Tre idee concrete per il vostro brand.")}</h4><p class="adapt-hint">${t("Settore, canale e obiettivo: la Console risponde con proposte specifiche, senza giri di parole.")}</p><div class="grid"><input name="sector" placeholder="${t("Settore (es. automotive, farmaceutico, GDO)")}" maxlength="60"><input name="channel" placeholder="${t("Canale (es. DOOH aeroporti, TikTok, showroom)")}" maxlength="60"></div><input name="goal" placeholder="${t("Obiettivo (es. lancio in 12 paesi, traffico in store, formare la rete vendita)")}" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">${t("Dammi tre idee")}</button><div class="adapt-out" hidden></div></div>` : "";
   const concrete = (item) => { const uses = item.uses || [], tech = item.tech || []; if (!uses.length && !tech.length) return `<div class="tags">${(item.tags || []).map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div>`; return `<div class="d-concrete">${uses.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Casi d'uso")}</div>${usesHTML(item)}</div>` : ""}${tech.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Tecnologie, dispositivi e formati")}</div><div class="tags">${tech.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>` : ""}</div>`; };
-  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p>${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
-  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p>${concrete(item)}${adapt(item.id, "cap")}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), t("lavoro"))}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div>`;
-  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${adapt(item.id, "work")}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
-  if (item.kind === "signal") return `<div class="d-in"><div class="eyebrow"><span class="chip ext">${t("Fonte esterna")}</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">${t("Contenuto di terzi: titolo e riassunto appartengono a {src} ({domain}). Frameworks lo segnala e lo commenta.", { src: esc(item.src), domain: esc(domain(item.url)) })}</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">${t("La nostra lettura")}</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">${t("Leggi la fonte")} ↗</a></p>${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div>`;
+  if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p></div><div class="d-side">${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
+  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p></div><div class="d-side">${concrete(item)}${adapt(item.id, "cap")}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), t("lavoro"))}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div></div>`;
+  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p></div><div class="d-side">${adapt(item.id, "work")}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
+  if (item.kind === "signal") return `<div class="d-in"><div class="d-main"><div class="eyebrow"><span class="chip ext">${t("Fonte esterna")}</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">${t("Contenuto di terzi: titolo e riassunto appartengono a {src} ({domain}). Frameworks lo segnala e lo commenta.", { src: esc(item.src), domain: esc(domain(item.url)) })}</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">${t("La nostra lettura")}</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">${t("Leggi la fonte")} ↗</a></p></div><div class="d-side">${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
   return "";
 }
 const drawer = $("#drawer"), scrim = $("#scrim"), sheet = $("#sheet");
@@ -343,7 +344,8 @@ const Console = (() => {
   const SANS = '"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif', MONO = '"Geist Mono",ui-monospace,Menlo,monospace';
   const L_AREA = t("AREA"), L_RADAR = t("RADAR · FONTE ESTERNA"); // etichette dei nodi (dentro draw(t) la t è il tempo)
   let W = 0, H = 0, nodes = [], edges = [], hover = null, drag = null, particles = [], raf = 0, running = false, last = 0, spawnAt = 0, hi = new Set(), hiUntil = 0, fontsReady = false, focusSet = null;
-  const deg = (d) => d * Math.PI / 180;
+  let geom = null, fanId = null, fanKeep = null; // geometria della mappa (per il ventaglio) e area attiva (i cui dipendenti sono aperti a ventaglio)
+  const deg = (d) => d * Math.PI / 180, MAXA = deg(138); // il ventaglio non va oltre ±138°: niente nodi dietro il testo
   const amp = () => parseFloat(getComputedStyle(html).getPropertyValue("--amp")) || 1;
   const speed = () => parseFloat(getComputedStyle(html).getPropertyValue("--speed")) || 1;
   // Il grafo vive a destra del testo dell'hero: il lato sinistro del ventaglio viene compresso (kxl) finché
@@ -351,24 +353,33 @@ const Console = (() => {
   function make(s, cx, cy, kxl) {
     const R_CAP = 215 * s, R_WORK = 345 * s, R_SIG = 430 * s, ky = Math.min(0.86, (H / 2 - 120) / R_SIG);
     const place = (ang, R) => { const c = Math.cos(ang); return { bx: cx + c * R * (c < 0 ? kxl : 1), by: cy + Math.sin(ang) * R * ky }; };
-    nodes = []; edges = [];
-    const core = { id: "core", kind: "core", r: 30 * s, bx: cx, by: cy, ox: 0, oy: 0, ph: 0, ang: 0 }; nodes.push(core);
-    const n = DATA.caps.length, a0 = -115, a1 = 115, MAXA = deg(138); // il ventaglio non va oltre ±138°: niente nodi dietro il testo
+    nodes = []; edges = []; geom = { cx, cy, kxl, ky, R_WORK, R_SIG };
+    // ogni nodo: posizione base (bx,by) più uno spostamento animato (ox,oy) che insegue il bersaglio = spostamento del genitore
+    // + spostamento proprio (sx,sy, dai trascinamenti) + apertura a ventaglio (fx,fy, quando la sua area è attiva)
+    const core = { id: "core", kind: "core", r: 30 * s, bx: cx, by: cy, ox: 0, oy: 0, sx: 0, sy: 0, fx: 0, fy: 0, ph: 0, ang: 0, k: .12 }; nodes.push(core);
+    const n = DATA.caps.length, a0 = -115, a1 = 115;
     // ventaglio di figli attorno all'angolo dell'area, tenuto dentro ±MAXA (verso l'alto/basso, non verso sinistra)
     const fan = (center, count, step) => { const w = step * (count - 1); let st = center - w / 2; if (st + w > MAXA) st = MAXA - w; if (st < -MAXA) st = -MAXA; return (k) => st + step * k; };
-    DATA.caps.forEach((c, i) => { const ang = deg(n > 1 ? a0 + (a1 - a0) * i / (n - 1) : 0); const nd = { ...c, kind: "cap", r: 14 * s, ang, ...place(ang, R_CAP), ox: 0, oy: 0, ph: i * 1.7 }; nodes.push(nd); edges.push({ a: core, b: nd, alpha: .18 }); });
+    DATA.caps.forEach((c, i) => { const ang = deg(n > 1 ? a0 + (a1 - a0) * i / (n - 1) : 0); const nd = { ...c, kind: "cap", r: 14 * s, ang, parent: "core", ...place(ang, R_CAP), ox: 0, oy: 0, sx: 0, sy: 0, fx: 0, fy: 0, ph: i * 1.7, k: .12 }; nodes.push(nd); edges.push({ a: core, b: nd, alpha: .18 }); });
     const capNode = (id) => nodes.find(x => x.id === id && x.kind === "cap") || nodes[1];
     // nella mappa entrano al massimo 5 lavori e 4 segnali per area (gli altri restano nelle sezioni): il ventaglio resta leggibile.
     // Ogni lavoro va all'area, tra le sue, che ha meno lavori: la mappa resta bilanciata anche se i casi si concentrano su un'area.
     const capIds = DATA.caps.map(c => c.id), perCap = {}, works = []; capIds.forEach(id => perCap[id] = []);
     const mentions = {}; DATA.works.forEach(w => w.caps.forEach(id => mentions[id] = (mentions[id] || 0) + 1));
     DATA.works.forEach(w => { const opts = w.caps.filter(id => perCap[id] && perCap[id].length < 5); if (!opts.length) return; const home = opts.reduce((a, b) => (perCap[b].length < perCap[a].length || (perCap[b].length === perCap[a].length && mentions[b] < mentions[a])) ? b : a); perCap[home].push(w); works.push({ w, home }); });
-    works.forEach(({ w, home }, i) => { const cn = capNode(home); const sib = perCap[home]; const k = sib.indexOf(w); const ang = fan(cn.ang + deg(6), sib.length, deg(13))(k); const near = Math.abs(ang - cn.ang) < deg(9); const rf = sib.length > 3 ? (near ? 1.22 : ((k + capIds.indexOf(home)) % 2 ? 1.14 : 0.9)) : (near ? 1.1 : 1); const nd = { ...w, kind: "work", r: 6 * s, ang, parent: cn.id, ...place(ang, R_WORK * rf), ox: 0, oy: 0, ph: 10 + i * 1.3 }; nodes.push(nd); [home, ...w.caps.filter(id => id !== home)].forEach((cid, j) => { const c = capNode(cid); if (c) edges.push({ a: c, b: nd, alpha: j === 0 ? .12 : .06 }); }); });
+    works.forEach(({ w, home }, i) => { const cn = capNode(home); const sib = perCap[home]; const k = sib.indexOf(w); const ang = fan(cn.ang + deg(6), sib.length, deg(13))(k); const near = Math.abs(ang - cn.ang) < deg(9); const rf = sib.length > 3 ? (near ? 1.22 : ((k + capIds.indexOf(home)) % 2 ? 1.14 : 0.9)) : (near ? 1.1 : 1); const nd = { ...w, kind: "work", r: 6 * s, ang, rf, parent: cn.id, ...place(ang, R_WORK * rf), ox: 0, oy: 0, sx: 0, sy: 0, fx: 0, fy: 0, ph: 10 + i * 1.3, k: Math.max(.07, .13 - k * .012) }; nodes.push(nd); [home, ...w.caps.filter(id => id !== home)].forEach((cid, j) => { const c = capNode(cid); if (c) edges.push({ a: c, b: nd, alpha: j === 0 ? .12 : .06 }); }); });
     // i segnali senza area (fonti in tempo reale non ancora classificate) si distribuiscono a turno tra le aree
     const perCapS = {}, sigs = []; capIds.forEach(id => perCapS[id] = []); let rr = 0;
     DATA.signals.forEach(sg => { if (sigs.length >= 14) return; let home = sg.caps.find(id => perCapS[id] && perCapS[id].length < 4); if (!home) { for (let t = 0; t < capIds.length && !home; t++) { const id = capIds[(rr + t) % capIds.length]; if (perCapS[id].length < 4) home = id; } rr++; } if (!home) return; perCapS[home].push(sg); sigs.push({ sg, home }); });
-    sigs.forEach(({ sg, home }, i) => { const cn = capNode(home); const sib = perCapS[home]; const k = sib.indexOf(sg); const ang = fan(cn.ang - deg(12), sib.length, deg(9))(k); const nd = { ...sg, kind: "signal", r: 3.4 * s, ang, parent: cn.id, ...place(ang, R_SIG), ox: 0, oy: 0, ph: 30 + i * 2.1 }; nodes.push(nd); edges.push({ a: nd, b: cn, alpha: .07, dash: true, signal: true }); });
-    particles = [];
+    sigs.forEach(({ sg, home }, i) => { const cn = capNode(home); const sib = perCapS[home]; const k = sib.indexOf(sg); const ang = fan(cn.ang - deg(12), sib.length, deg(9))(k); const nd = { ...sg, kind: "signal", r: 3.4 * s, ang, parent: cn.id, ...place(ang, R_SIG), ox: 0, oy: 0, sx: 0, sy: 0, fx: 0, fy: 0, ph: 30 + i * 2.1, k: Math.max(.06, .11 - k * .012) }; nodes.push(nd); edges.push({ a: nd, b: cn, alpha: .07, dash: true, signal: true }); });
+    // A riposo, dove etichette e punti si toccano (fra loro o con l'etichetta dell'area), i lavori e i segnali di ogni area
+    // si scostano del minimo necessario, verso l'esterno della mappa; il resto della composizione non cambia.
+    nodes.filter(x => x.kind === "cap").forEach(cn => {
+      const deps = nodes.filter(x => x.parent === cn.id); if (!deps.length) return;
+      const items = deps.map(nd => ({ nd, x: nd.bx, y: nd.by })), fixed = nodes.filter(x => !deps.includes(x)).map(nd => ({ nd, x: nd.bx, y: nd.by }));
+      separate(items, fixed, true); items.forEach(it => { it.nd.bx = it.x; it.nd.by = it.y; });
+    });
+    particles = []; fanId = null; fanKeep = null;
   }
   // estensione orizzontale del grafo, etichette comprese (i segnali mostrano l'etichetta solo al passaggio: contano solo i punti)
   function extents() {
@@ -388,13 +399,74 @@ const Console = (() => {
     const hc = $(".hero-copy"), cr = cv.getBoundingClientRect();
     const L = (hc ? hc.getBoundingClientRect().right - cr.left : W * 0.44) + 28, R = W - 28; // spazio disponibile
     let s = Math.max(0.68, Math.min(1.25, Math.min(W, H) / 900)), cx = W * 0.64, cy = H * 0.5, kxl = 1;
-    make(s, cx, cy, kxl); let e = extents();
-    if (e.minX < L) { kxl = Math.max(0.3, (cx - L) / (cx - e.minX)); make(s, cx, cy, kxl); e = extents(); }
-    if (e.maxX > R) { s *= Math.max(0.55, (R - cx) / (e.maxX - cx)); make(s, cx, cy, kxl); e = extents(); }
-    if (e.minX < L) { const dx = Math.min(L - e.minX, Math.max(0, R - e.maxX)); if (dx > 0) nodes.forEach(nd => nd.bx += dx); }
+    make(s, cx, cy, kxl); let e = extents(); geom.L = L;
+    if (e.minX < L) { kxl = Math.max(0.3, (cx - L) / (cx - e.minX)); make(s, cx, cy, kxl); e = extents(); geom.L = L; }
+    if (e.maxX > R) { s *= Math.max(0.55, (R - cx) / (e.maxX - cx)); make(s, cx, cy, kxl); e = extents(); geom.L = L; }
+    if (e.minX < L) { const dx = Math.min(L - e.minX, Math.max(0, R - e.maxX)); if (dx > 0) { nodes.forEach(nd => nd.bx += dx); geom.cx += dx; } }
   }
   // trascinando un'area si porta dietro lavori e segnali derivati; trascinando il cubo si muove tutto l'organismo
   function group(nd) { if (nd.kind === "core") return nodes.filter(x => x !== nd); if (nd.kind === "cap") return nodes.filter(x => x.parent === nd.id); return []; }
+  // L'area attiva è quella sotto il puntatore (o quella di un suo lavoro/segnale, o quella trascinata); resta attiva per un attimo
+  // dopo che il puntatore l'ha lasciata, così si arriva a un dipendente senza che il ventaglio si richiuda a metà strada.
+  function activeCap(t) {
+    const h = drag ? drag.nd : hover;
+    const c = !h ? null : h.kind === "cap" ? h : (h.parent && h.parent !== "core") ? nodes.find(x => x.id === h.parent) : null;
+    if (c) { fanKeep = { id: c.id, until: t + 380 }; return c; }
+    if (fanKeep && t < fanKeep.until) return nodes.find(x => x.id === fanKeep.id) || null;
+    return null;
+  }
+  // Quando un'area è attiva, i suoi lavori e segnali si aprono a ventaglio attorno a lei senza sovrapporsi: stessa sequenza
+  // angolare di prima, ma con un passo che cresce (da 12° in su) finché nessuna etichetta ne tocca un'altra (o quella dell'area),
+  // e i nodi consecutivi su due corone alternate. Gli altri nodi restano al loro posto.
+  function boxOf(nd, x, y, rest) { // ingombro di punto ed etichetta, con un po' d'aria (a riposo i segnali sono solo punti)
+    const right = Math.cos(nd.ang) >= -0.15; let w, off, top, bot;
+    if (nd.kind === "signal" && rest) return [x - nd.r - 8, y - nd.r - 8, x + nd.r + 8, y + nd.r + 8];
+    if (nd.kind === "work") { ctx.font = `500 12px ${SANS}`; w = ctx.measureText(nd.label || nd.client).width; off = nd.r + 9; top = 8; bot = 8; }
+    else if (nd.kind === "signal") { ctx.font = `400 11px ${MONO}`; w = ctx.measureText(nd.src || "").width; ctx.font = `500 9px ${MONO}`; w = Math.max(w, ctx.measureText(L_RADAR).width + 24); off = nd.r + 8; top = 16; bot = 12; }
+    else { ctx.font = `600 14px ${SANS}`; w = ctx.measureText(nd.name || "").width; off = nd.r + 12; top = 17; bot = 13; }
+    const x0 = right ? x + off : x - off - w;
+    return [Math.min(x0, x - nd.r) - 10, y - top - 9, Math.max(x0 + w, x + nd.r) + 10, y + bot + 9]; // l'aria copre anche l'oscillazione ambientale (±9 px)
+  }
+  const touches = (a, b) => Math.min(a[2], b[2]) > Math.max(a[0], b[0]) && Math.min(a[3], b[3]) > Math.max(a[1], b[1]);
+  // Sposta solo gli `items` (nodo + posizione) finché il loro ingombro non tocca più né gli altri items né i `fixed`:
+  // a ogni giro ogni coppia che si tocca si separa lungo l'asse con meno sovrapposizione (le etichette sono orizzontali,
+  // quindi quasi sempre in verticale), spingendo verso l'esterno della mappa. Poi tutto resta dentro il canvas e fuori dal testo.
+  function separate(items, fixed, rest) {
+    const F = fixed.map(f => boxOf(f.nd, f.x, f.y, rest));
+    const cx = geom ? geom.cx : W / 2, cy = geom ? geom.cy : H / 2;
+    const dir = (a, b, ax) => { const d = ax === "x" ? (a[0] + a[2]) - (b[0] + b[2]) : (a[1] + a[3]) - (b[1] + b[3]); return d > .5 ? 1 : d < -.5 ? -1 : 0; };
+    const L = geom && geom.L || 0;
+    const clamp = (it) => { const bx = boxOf(it.nd, it.x, it.y, rest); if (bx[2] > W - 4) it.x -= bx[2] - (W - 4); if (bx[0] < L) it.x += L - bx[0]; if (bx[1] < 4) it.y += 4 - bx[1]; if (bx[3] > H - 4) it.y -= bx[3] - (H - 4); };
+    for (let round = 0; round < 90; round++) {
+      let moved = false; items.forEach(clamp); const B = items.map(it => boxOf(it.nd, it.x, it.y, rest));
+      items.forEach((it, i) => {
+        const shove = (o, other) => { // o = ingombro dell'altro; other = item mobile (ognuno fa metà strada) oppure null (fisso)
+          const A = B[i], ix = Math.min(A[2], o[2]) - Math.max(A[0], o[0]), iy = Math.min(A[3], o[3]) - Math.max(A[1], o[1]); if (ix <= 0 || iy <= 0) return;
+          const ax = ix < iy ? "x" : "y", d = dir(A, o, ax) || (ax === "x" ? (it.x >= cx ? 1 : -1) : (it.y >= cy ? 1 : -1)), amt = (ax === "x" ? ix : iy) + 1;
+          if (other) { it[ax] += d * amt / 2; other[ax] -= d * amt / 2; } else it[ax] += d * amt;
+          moved = true; B[i] = boxOf(it.nd, it.x, it.y, rest);
+        };
+        F.forEach(o => shove(o, null));
+        items.forEach((ot, j) => { if (j > i) { shove(B[j], ot); B[j] = boxOf(ot.nd, ot.x, ot.y, rest); } });
+      });
+      if (!moved) break;
+    }
+    items.forEach(clamp);
+  }
+  // Quando un'area è attiva, i suoi lavori e segnali si aprono a ventaglio attorno a lei: un po' più larghi (passo minimo 12°)
+  // e un po' più fuori (corone alternate), poi si scostano da qualunque etichetta o punto che toccherebbero. Gli altri restano fermi.
+  function setFan(cap) {
+    nodes.forEach(nd => { nd.fx = nd.fy = 0; });
+    fanId = cap ? cap.id : null; if (!cap || !geom) return;
+    const deps = group(cap).slice().sort((a, b) => a.ang - b.ang); if (!deps.length) return;
+    const step = Math.max(deg(12), deps.length > 1 ? 1.15 * (deps[deps.length - 1].ang - deps[0].ang) / (deps.length - 1) : 0), span = step * (deps.length - 1);
+    let st = cap.ang - span / 2; if (st + span > MAXA) st = MAXA - span; if (st < -MAXA) st = -MAXA;
+    const off = (nd) => { const par = nodes.find(x => x.id === nd.parent); return { x: (par ? par.ox : 0) + nd.sx, y: (par ? par.oy : 0) + nd.sy }; }; // spostamento a riposo (genitore + proprio)
+    const items = deps.map((nd, i) => { const ang = st + step * i, R = nd.kind === "signal" ? geom.R_SIG * (i % 2 ? 1.08 : 1.02) : geom.R_WORK * Math.max(nd.rf || 1, i % 2 ? 1.22 : 1.08), c = Math.cos(ang), o = off(nd); return { nd, x: geom.cx + c * R * (c < 0 ? geom.kxl : 1) + o.x, y: geom.cy + Math.sin(ang) * R * geom.ky + o.y }; });
+    const fixed = nodes.filter(x => !deps.includes(x)).map(nd => ({ nd, x: nd.bx + nd.ox, y: nd.by + nd.oy }));
+    separate(items, fixed, false);
+    items.forEach(it => { const o = off(it.nd); it.nd.fx = it.x - it.nd.bx - o.x; it.nd.fy = it.y - it.nd.by - o.y; });
+  }
   function resize() { const dpr = Math.min(2, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); build(); if (!running) draw(performance.now()); }
   function pos(nd, t) { const a = reduced ? 0 : (nd.kind === "core" ? 3 : nd.kind === "cap" ? 7 : 9) * amp(); return { x: nd.bx + nd.ox + Math.sin(t * 0.00035 * speed() + nd.ph) * a, y: nd.by + nd.oy + Math.cos(t * 0.00028 * speed() + nd.ph * 1.3) * a }; }
   function related(nd) { if (!nd) return new Set(); const set = new Set([nd.id]); edges.forEach(e => { if (e.a.id === nd.id) set.add(e.b.id); if (e.b.id === nd.id) set.add(e.a.id); }); return set; }
@@ -404,10 +476,20 @@ const Console = (() => {
   function label(p, nd, main, eyebrow, font, color, off) { const right = Math.cos(nd.ang) >= -0.15; const x = right ? p.x + off : p.x - off; ctx.textAlign = right ? "left" : "right"; ctx.textBaseline = "middle"; if (eyebrow) { ctx.font = `500 9px ${MONO}`; ctx.fillStyle = T.ink3; ctx.letterSpacing = "1.2px"; ctx.fillText(eyebrow, x, p.y - 9); ctx.letterSpacing = "0px"; } ctx.font = font; ctx.fillStyle = color; ctx.fillText(main, x, eyebrow ? p.y + 5 : p.y); }
   function draw(t) {
     ctx.clearRect(0, 0, W, H); if (!nodes.length || !W) return;
-    // Trascinando un nodo, i suoi dipendenti lo inseguono con una molla (leggero rimbalzo) e, finché si tira, si dipanano:
-    // si allargano un po' verso l'esterno in proporzione alla velocità del trascinamento, ognuno con un ritardo diverso
-    if (drag && !reduced && drag.dx != null) { drag.speed *= .86; const spread = Math.min(44, drag.speed * 1.8); drag.group.forEach(g => { g.nd.tox = g.ox0 + drag.dx + g.ux * spread; g.nd.toy = g.oy0 + drag.dy + g.uy * spread; }); }
-    nodes.forEach(nd => { if (nd.tox != null) { const k = nd.k || .12, d = .7; nd.vx = ((nd.vx || 0) + (nd.tox - nd.ox) * k) * d; nd.vy = ((nd.vy || 0) + (nd.toy - nd.oy) * k) * d; nd.ox += nd.vx; nd.oy += nd.vy; if (!drag && Math.abs(nd.tox - nd.ox) < .3 && Math.abs(nd.toy - nd.oy) < .3 && Math.abs(nd.vx) < .3 && Math.abs(nd.vy) < .3) { nd.ox = nd.tox; nd.oy = nd.toy; nd.tox = nd.toy = null; nd.vx = nd.vy = 0; nd.k = null; } } });
+    // Ogni nodo insegue con una molla (leggero rimbalzo) il suo bersaglio: spostamento del genitore + spostamento proprio
+    // + apertura a ventaglio se la sua area è attiva + tiro del trascinamento in corso (si dipanano in proporzione alla velocità,
+    // ognuno con un ritardo diverso). Il nodo trascinato segue il puntatore direttamente; i nodi stanno in ordine genitore → figli.
+    const act = activeCap(t); if ((act ? act.id : null) !== fanId) setFan(act);
+    if (drag) drag.speed *= .86; const spread = drag && !reduced ? Math.min(44, drag.speed * 1.8) : 0;
+    const tgt = {};
+    nodes.forEach(nd => {
+      if (drag && nd === drag.nd) { tgt[nd.id] = { x: nd.ox, y: nd.oy }; return; }
+      const par = nd.parent ? tgt[nd.parent] : null, pull = drag && drag.pull[nd.id];
+      const g = { x: (par ? par.x : 0) + nd.sx + nd.fx + (pull ? pull.ux * spread : 0), y: (par ? par.y : 0) + nd.sy + nd.fy + (pull ? pull.uy * spread : 0) }; tgt[nd.id] = g;
+      if (reduced) { nd.ox = g.x; nd.oy = g.y; return; }
+      const k = nd.k || .12, d = .7; nd.vx = ((nd.vx || 0) + (g.x - nd.ox) * k) * d; nd.vy = ((nd.vy || 0) + (g.y - nd.oy) * k) * d; nd.ox += nd.vx; nd.oy += nd.vy;
+      if (Math.abs(g.x - nd.ox) < .2 && Math.abs(g.y - nd.oy) < .2 && Math.abs(nd.vx) < .2 && Math.abs(nd.vy) < .2) { nd.ox = g.x; nd.oy = g.y; nd.vx = nd.vy = 0; }
+    });
     const P = {}; nodes.forEach(nd => P[nd.id] = pos(nd, t));
     const active = hover || null; const rel = related(active); const hiOn = hi.size && t < hiUntil; if (!hiOn && hi.size) hi.clear();
     edges.forEach(e => { const a = P[e.a.id], b = P[e.b.id]; const hot = (active && rel.has(e.a.id) && rel.has(e.b.id)) || (hiOn && (hi.has(e.a.id) || hi.has(e.b.id))); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.setLineDash(e.dash ? [2, 7] : []); ctx.lineWidth = hot ? 1.5 : 1; ctx.strokeStyle = hot ? T.rgba(.9) : T.inkA(active || hiOn ? e.alpha * .5 : e.alpha); ctx.stroke(); });
@@ -428,14 +510,17 @@ const Console = (() => {
     });
     last = t;
   }
+  cv._graph = () => { const t = performance.now(); return nodes.map(nd => ({ id: nd.id, kind: nd.kind, parent: nd.parent || null, r: nd.r, ang: nd.ang, name: nd.kind === "cap" ? nd.name : nd.kind === "work" ? (nd.label || nd.client) : nd.kind === "signal" ? nd.src : "", fx: nd.fx, fy: nd.fy, ox: nd.ox, oy: nd.oy, bx: nd.bx, by: nd.by, ...pos(nd, t) })); }; // per i test automatici
   function loop(t) { draw(t); raf = requestAnimationFrame(loop); }
   function start() { if (running) return; running = true; last = 0; raf = requestAnimationFrame(loop); }
   function stop() { running = false; cancelAnimationFrame(raf); }
   function hit(x, y) { const t = performance.now(); let best = null, bd = 1e9; nodes.forEach(nd => { const p = pos(nd, t); const d = Math.hypot(p.x - x, p.y - y); const R = Math.max(nd.r + 10, 14); if (d < R && d < bd) { bd = d; best = nd; } }); return best; }
   const xy = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  cv.addEventListener("pointermove", e => { const { x, y } = xy(e); if (drag) { const dx = x - drag.x0, dy = y - drag.y0; drag.nd.ox = drag.ox0 + dx; drag.nd.oy = drag.oy0 + dy; const mv = Math.hypot(x - (drag.lx == null ? x : drag.lx), y - (drag.ly == null ? y : drag.ly)); drag.lx = x; drag.ly = y; drag.speed = drag.speed * .5 + mv * .5; drag.dx = dx; drag.dy = dy; if (reduced) drag.group.forEach(g => { g.nd.ox = g.ox0 + dx; g.nd.oy = g.oy0 + dy; g.nd.tox = g.nd.toy = null; }); drag.moved = Math.max(drag.moved, Math.hypot(dx, dy)); if (reduced) draw(performance.now()); return; } const h = hit(x, y); if (h !== hover) { hover = h; cv.style.cursor = h ? "pointer" : "default"; if (reduced) draw(performance.now()); } });
-  cv.addEventListener("pointerdown", e => { const { x, y } = xy(e); const h = hit(x, y); if (h) { drag = { nd: h, x0: x, y0: y, ox0: h.ox, oy0: h.oy, moved: 0, speed: 0, dx: null, dy: null, group: group(h).map((nd, i) => { const vx = nd.bx - h.bx, vy = nd.by - h.by, l = Math.hypot(vx, vy) || 1; nd.k = Math.max(.06, .13 - i * .005); /* ognuno con un ritardo un po' diverso: si dipanano in sequenza */ return { nd, ox0: nd.ox, oy0: nd.oy, ux: vx / l, uy: vy / l }; }) }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; } });
-  cv.addEventListener("pointerup", () => { if (drag) { const nd = drag.nd, moved = drag.moved; if (drag.dx != null) drag.group.forEach(g => { g.nd.tox = g.ox0 + drag.dx; g.nd.toy = g.oy0 + drag.dy; }); /* lasciando, i dipendenti si ricompongono con la molla */ drag = null; cv.style.cursor = "pointer"; if (moved < 5) openDetail(byId(nd.id)); } });
+  cv.addEventListener("pointermove", e => { const { x, y } = xy(e); if (drag) { const dx = x - drag.x0, dy = y - drag.y0; drag.nd.ox = drag.ox0 + dx; drag.nd.oy = drag.oy0 + dy; const mv = Math.hypot(x - (drag.lx == null ? x : drag.lx), y - (drag.ly == null ? y : drag.ly)); drag.lx = x; drag.ly = y; drag.speed = drag.speed * .5 + mv * .5; drag.dx = dx; drag.dy = dy; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy)); if (reduced) draw(performance.now()); return; } const h = hit(x, y); if (h !== hover) { hover = h; cv.style.cursor = h ? "pointer" : "default"; if (reduced) draw(performance.now()); } });
+  // trascinando: il nodo segue il puntatore; i dipendenti (pull) lo inseguono e, finché si tira, si allargano verso l'esterno
+  cv.addEventListener("pointerdown", e => { const { x, y } = xy(e); const h = hit(x, y); if (h) { const pull = {}; group(h).forEach(nd => { const vx = nd.bx - h.bx, vy = nd.by - h.by, l = Math.hypot(vx, vy) || 1; pull[nd.id] = { ux: vx / l, uy: vy / l }; }); drag = { nd: h, x0: x, y0: y, ox0: h.ox, oy0: h.oy, moved: 0, speed: 0, dx: 0, dy: 0, pull }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; } });
+  // lasciando: lo spostamento resta acquisito (sx,sy) e i dipendenti si ricompongono con la molla
+  cv.addEventListener("pointerup", () => { if (drag) { const nd = drag.nd, moved = drag.moved; nd.sx += drag.dx; nd.sy += drag.dy; drag = null; cv.style.cursor = "pointer"; if (moved < 5) openDetail(byId(nd.id)); } });
   cv.addEventListener("pointerleave", () => { if (!drag) { hover = null; if (reduced) draw(performance.now()); } });
   new IntersectionObserver(en => en.forEach(x => { if (x.isIntersecting && !isMobile()) start(); else stop(); }), { threshold: 0.05 }).observe(cv);
   // finché l'hero è sotto la barra, il logo resta bianco anche nel mood chiaro

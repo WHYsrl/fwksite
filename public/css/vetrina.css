@@ -43,9 +43,16 @@
 .drawer-nav .expand{width:auto;border-radius:999px;padding:0 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
 .drawer{transition:transform .5s cubic-bezier(.2,.8,.2,1),width .4s cubic-bezier(.2,.8,.2,1)}
 .drawer.wide{width:min(1180px,94vw)}
-.drawer.wide .drawer-body .d-in{padding:34px 40px;max-width:820px}
+/* espanso: il media in cima resta 16:9 ma non oltre metà schermo; sotto, il contenuto si apre su due colonne — a sinistra etichetta, titolo e testo, a destra casi d'uso, tecnologie, form e rimandi */
+.drawer.wide .drawer-body .d-in{padding:34px 40px 48px;max-width:none;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:8px 48px;align-items:start}
+.drawer.wide .drawer-body .d-in>.d-main{position:sticky;top:0}
 .drawer.wide .drawer-body h2{font-size:42px}
-.drawer.wide .drawer-body .d-img{aspect-ratio:16/9}
+.drawer.wide .drawer-body .d-img{aspect-ratio:auto;height:min(52vh,calc(min(1180px,94vw)*.5625))} /* 16:9 su tutta la larghezza, ma non oltre metà schermo */
+.drawer.wide .drawer-body .d-concrete{margin-top:0}
+.drawer.wide .drawer-body .d-side .list:first-child{margin-top:0;border-top:0}
+.drawer.wide .drawer-body .d-side .adapt:first-child{margin-top:0}
+.drawer.wide .drawer-body .use-cards{margin-left:-18px;margin-right:-18px}
+@media (max-width:1000px){.drawer.wide .drawer-body .d-in{grid-template-columns:1fr;gap:0}.drawer.wide .drawer-body .d-in>.d-main{position:static}}
 .drawer-body.swap-out{opacity:0;transform:translateX(24px)}
 .drawer-body{transition:opacity .25s,transform .25s}
 
