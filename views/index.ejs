@@ -183,7 +183,7 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
     <button class="cap rv" type="button" data-open="<%= c.id %>" style="--i:<%= i %>">
       <div class="cap-img"><img src="<%= c.image || '/media/frames.jpg' %>" alt="" loading="lazy"></div>
       <%# .mk: lo span che in modalità Chiaro porta l'evidenziatore viola riga per riga (negli altri umori non fa nulla) %>
-      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><div class="tags tech-tags"><% ((c.tech && c.tech.length) ? c.tech.slice(0, 8) : c.tags).forEach(tg => { %><span class="tag"><%= tg %></span><% }) %></div><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
+      <div class="cap-body"><div class="eyebrow"><%= T("Area") %> <%= String(i + 1).padStart(2, '0') %></div><h3><span class="mk"><%- c.accent && c.name.includes(c.accent) ? cx(c.name).replace(cx(c.accent), '<span class="serif">' + cx(c.accent) + '</span>') : cx(c.name) %></span></h3><p><span class="mk"><%= c.short %></span></p><span class="cap-more"><%= T("Casi d'uso e tecnologie") %> →</span></div>
     </button>
     <% }) %>
   </div>

@@ -95,15 +95,15 @@ body.reel-box-open{overflow:hidden}
 /* ---- modalità Chiaro: il logo nel suo viola, card delle aree con la foto libera e i testi "evidenziati" in viola, Radar viola invece che nero ---- */
 html[data-mood="light"] .topbar .logo,html[data-mood="light"] body.over-hero:not(.light-media) .topbar .logo{color:#BF00FF}
 html[data-mood="light"] body.on-paper .topbar .logo{color:#fff} /* sul Radar viola il logo torna bianco */
-/* card delle aree: niente fondo viola; la foto sfuma nel bianco, titolo e testo hanno un evidenziatore viola sotto (riga per riga), area e tag sono capsule viola */
+/* card delle aree: niente fondo viola; la foto sfuma nel bianco. L'evidenziatore viola resta solo sul titolo; il testo è in inchiostro sulla sfumatura, "Area 01" è una capsula leggera */
 html[data-mood="light"] .cap{background:#fff}
 html[data-mood="light"] .cap-img img{opacity:.85}
-html[data-mood="light"] .cap-img::after{background:linear-gradient(180deg,rgba(255,255,255,0) 34%,rgba(255,255,255,.72) 62%,rgba(255,255,255,.96))}
+html[data-mood="light"] .cap-img::after{background:linear-gradient(180deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.82) 56%,rgba(255,255,255,.97))}
 html[data-mood="light"] .cap-body{gap:12px}
-html[data-mood="light"] .cap-body .eyebrow{align-self:flex-start;background:#8E00C4;color:#fff;border-radius:999px;padding:6px 11px 5px;font-size:10px}
+html[data-mood="light"] .cap-body .eyebrow{align-self:flex-start;background:rgba(255,255,255,.7);color:#8E00C4;border:1px solid rgba(142,0,196,.35);border-radius:999px;padding:5px 10px 4px;font-size:10px}
 html[data-mood="light"] .cap-body h3{line-height:1.22}
-html[data-mood="light"] .cap-body p{line-height:1.55;color:#fff}
-html[data-mood="light"] .cap-body .mk{background:#8E00C4;color:#fff;padding:.06em .34em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+html[data-mood="light"] .cap-body p{line-height:1.5;color:var(--ink-2);max-width:44ch}
+html[data-mood="light"] .cap-body h3 .mk{background:#8E00C4;color:#fff;padding:.06em .34em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 html[data-mood="light"] .cap-body h3 .serif{color:#F1D9FF}
 html[data-mood="light"] .cap-body .tag,html[data-mood="light"] .cap-body .tech-tags .tag{color:#fff;background:#8E00C4;border-color:#8E00C4;border-radius:999px;padding:4px 9px}
 html[data-mood="light"] .cap-more{color:#8E00C4;opacity:1}
@@ -119,11 +119,11 @@ html[data-mood="light"] .paper,html[data-mood="light"] .paper-screen,html[data-m
   html[data-mood="light"] .tile:not(.work){background:#fff}
   html[data-mood="light"] .tile:not(.work) img{z-index:-2;opacity:.9} /* la foto sotto la sfumatura, così sfuma davvero nel bianco */
   html[data-mood="light"] .tile:not(.work)::before{background:linear-gradient(180deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.74) 58%,rgba(255,255,255,.96))}
-  html[data-mood="light"] .tile:not(.work) .eyebrow{align-self:flex-start;background:#8E00C4;color:#fff;border-radius:999px;padding:5px 9px 4px;font-size:9.5px}
-  html[data-mood="light"] .tile:not(.work) .eyebrow .dot{background:#fff}
+  html[data-mood="light"] .tile:not(.work) .eyebrow{align-self:flex-start;background:rgba(255,255,255,.7);color:#8E00C4;border:1px solid rgba(142,0,196,.35);border-radius:999px;padding:4px 9px 3px;font-size:9.5px}
+  html[data-mood="light"] .tile:not(.work) .eyebrow .dot{background:#8E00C4}
   html[data-mood="light"] .tile:not(.work) h3{line-height:1.22}
-  html[data-mood="light"] .tile:not(.work) p{color:#fff}
-  html[data-mood="light"] .tile:not(.work) .mk{background:#8E00C4;color:#fff;padding:.05em .3em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+  html[data-mood="light"] .tile:not(.work) p{color:var(--ink-2)}
+  html[data-mood="light"] .tile:not(.work) h3 .mk{background:#8E00C4;color:#fff;padding:.05em .3em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
   html[data-mood="light"] .tile:not(.work) h3 .serif{color:#F1D9FF}
 }
 html[data-mood="light"] body.on-paper .topbar .cta{background:#fff;color:#8E00C4} /* sul Radar viola il bottone resta leggibile */
