@@ -336,8 +336,8 @@ const reels = (content.reels || []).filter(r => r.vimeo || r.cover);
 
 <!-- ============================ MOBILE (app) ============================ -->
 <div class="app-shell mobile-only">
-  <%# mobile: il logo in cima ha una card tutta sua, in evidenza; scorrendo esce di scena (si solleva e sfuma), tornando in cima rientra %>
-  <div class="m-mast" id="m-mast" aria-hidden="false"><a class="m-logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="210" height="29" aria-hidden="true"><use href="#fw-logo"/></svg></a><i class="m-mast-glow" aria-hidden="true"></i></div>
+  <%# mobile: il logo in cima ha una card tutta sua, fissa in alto; scorrendo, il foglio con i contenuti le scivola sopra e la card finisce sotto %>
+  <div class="m-mast" id="m-mast"><a class="m-logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="210" height="29" aria-hidden="true"><use href="#fw-logo"/></svg></a></div>
   <div class="app" id="app"></div>
   <nav class="tabbar" id="tabbar" aria-label="<%= T("Sezioni") %>"></nav>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="<%= T("Dettaglio") %>"><div class="sheet-grip"></div><div class="sheet-head"><span class="eyebrow" id="sheet-eyebrow"></span><button class="x" type="button" id="sheet-close" aria-label="<%= T("Chiudi") %>">✕</button></div><div class="sheet-body" id="sheet-body"></div></div>
