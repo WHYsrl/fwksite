@@ -18,6 +18,31 @@ db.exec(`CREATE TABLE IF NOT EXISTS organismo_events (
   a REAL DEFAULT 0, r REAL DEFAULT 0, src TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')));`);
 
 const router = express.Router();
+
+// ---------- CORS: l'organismo vive anche nel sito Frameworks (Vercel), che legge lo stato, ascolta lo
+// stream SSE e manda stimoli, umori e gesti da un'altra origine. Origini ammesse: frame.it e sottodomini,
+// i deployment Vercel del sito, localhost per lo sviluppo; in più quelle elencate in ORGANISMO_ORIGINS.
+const EXTRA_ORIGINS = String(process.env.ORGANISMO_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+const originOk = (o) => { if (!o) return false; try { const u = new URL(o); const h = u.hostname; return h === "frame.it" || h.endsWith(".frame.it") || h.endsWith(".vercel.app") || h === "localhost" || h === "127.0.0.1" || EXTRA_ORIGINS.includes(o); } catch { return false; } };
+router.use((req, res, next) => {
+  const o = req.headers.origin;
+  if (originOk(o)) {
+    res.set({ "Access-Control-Allow-Origin": o, "Vary": "Origin", "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "content-type", "Access-Control-Max-Age": "86400" });
+  }
+  if (req.method === "OPTIONS") return res.status(204).end();
+  next();
+});
+
+// ---------- QR del secondo schermo: lo chiede il sito (l'organismo nel sito Vercel non ha il generatore) ----------
+const qrcode = require("../public/js/vendor/qrcode.js");
+router.get("/qr.svg", (req, res) => {
+  const room = ROOM.test(String(req.query.r || "")) ? String(req.query.r) : "";
+  if (!room) return res.status(400).type("text/plain").send("Stanza mancante");
+  const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
+  const url = `${base.replace(/\/$/, "")}/organismo/telefono?r=${room}`;
+  try { const qr = qrcode(0, "M"); qr.addData(url); qr.make(); res.set("Cache-Control", "public, max-age=3600"); res.type("image/svg+xml").send(qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true })); }
+  catch (e) { res.status(500).type("text/plain").send("QR non disponibile"); }
+});
 const isoOf = (sq) => { if (!sq) return null; const d = new Date(String(sq).includes("T") ? sq : sq.replace(" ", "T") + "Z"); return isNaN(d) ? null : d.toISOString(); };
 const MOODS = ["vivid", "calm", "nervous", "light"];
 const ROOM = /^[a-z0-9]{4,12}$/;
