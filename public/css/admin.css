@@ -149,3 +149,14 @@ tr.moved td{background:rgba(191,0,255,.08)}
 .use-thumb{width:64px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--line);background:#000}
 .use-thumb[hidden]{display:none}
 @media (max-width:900px){.use-row{grid-template-columns:28px 1fr 1fr;gap:6px}.use-row select{grid-column:2 / span 2}.use-thumb{display:none}}
+
+/* galleria di un lavoro: una riga per media (frecce, media, scelta dai media, didascalia, anteprima) */
+.gal-rows{display:grid;gap:6px;margin:8px 0 14px}
+.gal-row{display:grid;grid-template-columns:52px 28px minmax(0,2fr) 140px minmax(0,2fr) 56px;gap:8px;align-items:center;min-width:0}
+.gal-row .use-thumb{width:56px;height:32px}
+.gal-row input,.gal-row select{margin-top:0;min-width:0}
+.gal-mv{display:inline-flex;gap:2px}
+.gal-mv .mv{width:24px;height:24px;padding:0;border:1px solid var(--line);background:transparent;color:var(--ink2);border-radius:6px;cursor:pointer;font-size:9px}
+.gal-mv .mv:hover{color:var(--ink);border-color:var(--ink3)}
+.gal-video{display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink3)}
+@media (max-width:900px){.gal-row{grid-template-columns:52px 28px 1fr 1fr;gap:6px}.gal-row select,.gal-row input[name$="[caption]"]{grid-column:3 / span 2}.gal-row .use-thumb{display:none}}

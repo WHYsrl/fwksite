@@ -48,6 +48,7 @@
 .drawer.wide .drawer-body .d-in>.d-main{position:sticky;top:0}
 .drawer.wide .drawer-body h2{font-size:42px}
 .drawer.wide .drawer-body .d-img{aspect-ratio:auto;height:min(52vh,calc(min(1180px,94vw)*.5625))} /* 16:9 su tutta la larghezza, ma non oltre metà schermo */
+.drawer.wide .drawer-body .gal-cap{margin:12px 40px 0}
 .drawer.wide .drawer-body .d-concrete{margin-top:0}
 .drawer.wide .drawer-body .d-side .list:first-child{margin-top:0;border-top:0}
 .drawer.wide .drawer-body .d-side .adapt:first-child{margin-top:0}

@@ -26,7 +26,7 @@ const isText = (v) => typeof v === "string" && v.trim().length > 0;
 const FIELDS = [
   ...require("./site-fields").I18N_PATHS, "site.statements[]",
   "caps{id}.short", "caps{id}.body", "caps{id}.tags[]", "caps{id}.tech[]", "caps{id}.uses[]",
-  "works{id}.title", "works{id}.short", "works{id}.body", "works{id}.status", "works{id}.label",
+  "works{id}.title", "works{id}.short", "works{id}.body", "works{id}.status", "works{id}.label", "works{id}.gallery[].caption",
   "team{id}.role", "team{id}.unit", "team{id}.bio",
   "signals{id}.summary", "signals{id}.why",
   "reels{id}.title", "reels{id}.theme",

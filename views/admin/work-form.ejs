@@ -24,6 +24,27 @@
     <label>…oppure carica un file <input type="file" name="image_file" accept="image/*"></label>
     <img id="w-prev" class="prev" src="<%= work.image %>" alt="" <%= work.image ? '' : 'hidden' %>>
     <label>Video (link Vimeo tipo https://vimeo.com/123456789 oppure URL mp4/webm; va in loop muto nel dettaglio del lavoro) <input name="video_url" value="<%= work.video_url %>" placeholder="https://vimeo.com/…"></label>
+
+    <%
+    // galleria: foto e video che seguono la copertina nella scheda del lavoro (carosello con frecce e pallini), con didascalia facoltativa
+    const gal = work.gallery || []; const nRows = Math.min(galleryMax, Math.max(4, gal.length + 2));
+    const isVideo = (u) => /vimeo\.com\//i.test(u) || /\.(mp4|webm|mov)(\?|$)/i.test(u);
+    %>
+    <h3 class="fgroup">Galleria</h3>
+    <p class="fh fgroup-hint">Foto e video che nella scheda del lavoro seguono la copertina, in un carosello (frecce e pallini; su mobile si scorre col dito). Una riga per media: un'immagine dai media caricati o un URL, un video mp4/webm o un link Vimeo (in loop muto, con un tocco parte l'audio). La didascalia è facoltativa e compare sotto la galleria. Le frecce cambiano l'ordine; per togliere un media, svuota la riga. In fondo si caricano più file in una volta: vanno in coda.</p>
+    <div class="gal-rows" data-gal-rows>
+      <% for (let i = 0; i < nRows; i++) { const g = gal[i] || {}; %>
+      <div class="gal-row">
+        <span class="gal-mv"><button type="button" class="mv" data-gal-move="-1" title="Sposta su" aria-label="Sposta su">▲</button><button type="button" class="mv" data-gal-move="1" title="Sposta giù" aria-label="Sposta giù">▼</button></span>
+        <span class="pairs-n"><%= String(i + 1).padStart(2, '0') %></span>
+        <input name="gallery[<%= i %>][src]" id="g-<%= i %>" value="<%= g.src || '' %>" placeholder="/media/… oppure https://vimeo.com/… o URL mp4" aria-label="Media <%= i + 1 %>">
+        <select data-pick="#g-<%= i %>" data-preview="#gp-<%= i %>" aria-label="Scegli dai media"><option value="">…scegli</option><% media.forEach(m => { %><option value="<%= m.path %>" <%= m.path === g.src ? 'selected' : '' %>><%= m.filename %></option><% }) %></select>
+        <input name="gallery[<%= i %>][caption]" value="<%= g.caption || '' %>" placeholder="Didascalia (facoltativa)" aria-label="Didascalia <%= i + 1 %>">
+        <% if (g.src && isVideo(g.src)) { %><span id="gp-<%= i %>" class="use-thumb gal-video" title="video">VIDEO</span><% } else { %><img id="gp-<%= i %>" class="use-thumb" src="<%= g.src || '' %>" alt="" <%= g.src ? '' : 'hidden' %>><% } %>
+      </div>
+      <% } %>
+    </div>
+    <label>Aggiungi file alla galleria (più file insieme: immagini, mp4, webm; max 25 MB l'uno) <input type="file" name="gallery_files" accept="image/*,video/mp4,video/webm" multiple></label>
     <label class="check"><input type="checkbox" name="published" <%= work.published ? 'checked' : '' %>> Pubblicato</label>
   </section>
   <div class="actions"><button class="btn primary" type="submit">Salva</button></div>

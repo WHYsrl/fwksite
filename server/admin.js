@@ -14,6 +14,7 @@ const i18n = require("./i18n");
 const siteFields = require("./site-fields");
 const layout = require("./layout");
 const priority = require("./priority");
+const gallery = require("./gallery");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -149,12 +150,14 @@ router.post("/capacita/:id/delete", (req, res) => { store.deleteCap(req.params.i
 
 // ---------- lavori ----------
 router.get("/lavori", (req, res) => res.render("admin/works", { works: store.listWorks(true).map(w => ({ ...w, priority: priority.forWork(w.id) })), caps: store.listCaps(true) }));
-router.get("/lavori/new", (req, res) => res.render("admin/work-form", { work: { id: "", sort: store.listWorks(true).length + 1, client: "", label: "", title: "", year: String(new Date().getFullYear()), caps: [], short: "", body: "", image: "", video_url: "", status: "placeholder", published: true }, caps: store.listCaps(true), media: store.listMedia(), isNew: true, levels: priority.LEVELS }));
-router.get("/lavori/:id", (req, res) => { const work = store.getWork(req.params.id); if (!work) return res.redirect("/admin/lavori"); res.render("admin/work-form", { work: { ...work, priority: priority.forWork(work.id) }, caps: store.listCaps(true), media: store.listMedia(), isNew: false, levels: priority.LEVELS }); });
-router.post("/lavori/:id", upload.single("image_file"), (req, res) => {
-  const b = req.body; const image = req.file ? registerUpload(req.file) : b.image;
+router.get("/lavori/new", (req, res) => res.render("admin/work-form", { work: { id: "", sort: store.listWorks(true).length + 1, client: "", label: "", title: "", year: String(new Date().getFullYear()), caps: [], short: "", body: "", image: "", video_url: "", status: "placeholder", published: true, gallery: [] }, caps: store.listCaps(true), media: store.listMedia(), isNew: true, levels: priority.LEVELS, galleryMax: gallery.MAX }));
+router.get("/lavori/:id", (req, res) => { const work = store.getWork(req.params.id); if (!work) return res.redirect("/admin/lavori"); res.render("admin/work-form", { work: { ...work, priority: priority.forWork(work.id), gallery: gallery.forWork(work.id) }, caps: store.listCaps(true), media: store.listMedia(), isNew: false, levels: priority.LEVELS, galleryMax: gallery.MAX }); });
+// copertina (un file) e galleria (fino a 12 file per volta: foto o video mp4/webm, in coda alle righe già presenti)
+router.post("/lavori/:id", upload.fields([{ name: "image_file", maxCount: 1 }, { name: "gallery_files", maxCount: 12 }]), (req, res) => {
+  const b = req.body, files = req.files || {}; const image = files.image_file && files.image_file[0] ? registerUpload(files.image_file[0]) : b.image;
   const id = store.upsertWork({ id: req.params.id === "new" ? (b.id || undefined) : req.params.id, sort: b.sort, client: b.client, label: b.label, title: b.title, year: b.year, caps: [].concat(b.caps || []), short: b.short, body: b.body, image, video_url: b.video_url, status: b.status, published: !!b.published });
   priority.setWork(id, b.priority);
+  gallery.setWork(id, [...gallery.clean(b.gallery), ...(files.gallery_files || []).map(f => ({ src: registerUpload(f), caption: "" }))]);
   flash(req, "Lavoro salvato"); res.redirect("/admin/lavori/" + id);
 });
 // ordine dei lavori: frecce e menu della posizione nell'elenco; dopo ogni spostamento l'ordine viene rinumerato 1..N
@@ -165,7 +168,7 @@ function reorderWorks(id, to) {
 }
 router.post("/lavori/:id/move", (req, res) => { const list = store.listWorks(true); const i = list.findIndex(w => w.id === req.params.id); if (i >= 0) reorderWorks(req.params.id, i + (+req.body.dir || 1)); res.redirect("/admin/lavori#w-" + req.params.id); });
 router.post("/lavori/:id/pos", (req, res) => { reorderWorks(req.params.id, (parseInt(req.body.pos, 10) || 1) - 1); res.redirect("/admin/lavori#w-" + req.params.id); });
-router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); priority.removeWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
+router.post("/lavori/:id/delete", (req, res) => { store.deleteWork(req.params.id); priority.removeWork(req.params.id); gallery.removeWork(req.params.id); flash(req, "Lavoro eliminato"); res.redirect("/admin/lavori"); });
 
 // ---------- team ----------
 const UNITS = ["Direzione e supervisione", "Produzione", "Design, 3D & Motion", "AI & Interactive"];

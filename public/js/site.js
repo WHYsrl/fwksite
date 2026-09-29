@@ -26,17 +26,57 @@ const usesHTML = (item, max, small) => {
   if (!imgs.some(Boolean)) return `<ul class="${small ? "caps-uses" : "uses"}">${uses.map(u => `<li>${esc(u)}</li>`).join("")}</ul>`;
   return `<div class="${small ? "use-mini" : "use-cards"}">${uses.map((u, i) => `<figure class="use-card">${imgs[i] ? `<img src="${media(small ? thumb(imgs[i]) : imgs[i])}" alt="" loading="lazy">` : `<span class="use-ph"></span>`}<figcaption><span class="use-n">${String(i + 1).padStart(2, "0")}</span>${esc(u)}</figcaption></figure>`).join("")}</div>`;
 };
-// Video dei lavori: link Vimeo (vimeo.com/ID o vimeo.com/ID/HASH) → player in loop muto; file mp4/webm → <video>; altrimenti immagine.
+// Media in cima alla scheda di un lavoro: la copertina (link Vimeo → player in loop muto; file mp4/webm → <video>; altrimenti
+// l'immagine) seguita dalla galleria del backoffice (foto e video, con didascalia). Con una sola slide è com'era; con più slide
+// è un carosello (scorrimento a scatti, frecce, pallini, contatore); i video partono muti solo sulla slide attiva e un tocco dà l'audio.
 const vimeoId = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] } : null; };
-function workMedia(item, fallback) {
-  const v = (item.video_url || "").trim();
-  if (v) {
-    const vm = vimeoId(v);
-    if (vm) return `<div class="d-img video"><iframe src="https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}background=1&autoplay=1&loop=1&muted=1&autopause=0&dnt=1" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${t("Video del progetto")}"></iframe></div>`;
-    if (/\.(mp4|webm|mov)(\?|$)/i.test(v)) return `<div class="d-img video"><video src="${esc(v)}" autoplay muted loop playsinline preload="metadata"${item.image ? ` poster="${esc(media(item.image))}"` : ""}></video></div>`;
-  }
-  return `<div class="d-img"><img src="${media(item.image) || media(fallback)}" alt=""></div>`;
+const isFileVideo = (u) => /\.(mp4|webm|mov)(\?|$)/i.test(u || "");
+const vimeoSrc = (vm, full) => `https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}dnt=1&playsinline=1&` + (full ? "autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0" : "background=1&autoplay=1&loop=1&muted=1&autopause=0");
+function workSlides(item, fallback) {
+  const slides = []; const v = (item.video_url || "").trim(); const vm = v && vimeoId(v);
+  if (vm) slides.push({ kind: "vimeo", vm, poster: item.image }); else if (v && isFileVideo(v)) slides.push({ kind: "video", src: v, poster: item.image }); else slides.push({ kind: "image", src: item.image || fallback });
+  (item.gallery || []).forEach(g => { const src = String(g && g.src || "").trim(); if (!src) return; const gv = vimeoId(src); slides.push(gv ? { kind: "vimeo", vm: gv, caption: g.caption } : isFileVideo(src) ? { kind: "video", src, caption: g.caption } : { kind: "image", src, caption: g.caption }); });
+  return slides;
 }
+function slideHTML(sl, lazy) { // lazy: i video partono (e gli iframe si caricano) solo quando la slide è attiva
+  if (sl.kind === "vimeo") return lazy ? `<div class="gal-vm" data-vimeo="${sl.vm.id}" data-h="${sl.vm.h || ""}"${sl.poster ? ` style="background-image:url('${esc(media(sl.poster))}')"` : ""}></div>` : `<iframe src="${vimeoSrc(sl.vm, false)}" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${t("Video del progetto")}"></iframe>`;
+  if (sl.kind === "video") return `<video src="${esc(media(sl.src))}" ${lazy ? "" : "autoplay "}muted loop playsinline preload="metadata"${sl.poster ? ` poster="${esc(media(sl.poster))}"` : ""}></video>`;
+  return `<img src="${esc(media(sl.src))}" alt=""${lazy ? ' loading="lazy"' : ""}>`;
+}
+function workMedia(item, fallback) {
+  const slides = workSlides(item, fallback);
+  if (slides.length === 1) { const sl = slides[0]; return `<div class="d-img${sl.kind === "image" ? "" : " video"}">${slideHTML(sl, false)}</div>`; }
+  const caps = slides.some(sl => sl.caption);
+  return `<div class="d-img video gallery" data-gallery><div class="gal-track">${slides.map((sl, i) => `<div class="gal-slide" data-i="${i}" data-kind="${sl.kind}" data-cap="${esc(sl.caption || "")}">${slideHTML(sl, true)}${sl.kind === "vimeo" ? `<span class="gal-chip">${t("Guarda con audio")}</span>` : sl.kind === "video" ? `<span class="gal-chip">${t("Audio")}</span>` : ""}</div>`).join("")}</div><button type="button" class="gal-arrow prev" data-gal="-1" aria-label="${t("Precedente")}">←</button><button type="button" class="gal-arrow next" data-gal="1" aria-label="${t("Successiva")}">→</button><div class="gal-foot"><div class="gal-dots">${slides.map((sl, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div><span class="gal-n">1 / ${slides.length}</span></div></div>${caps ? `<p class="gal-cap"${slides[0].caption ? "" : " hidden"}>${esc(slides[0].caption || "")}</p>` : ""}`;
+}
+// Carosello della scheda: pallini e contatore seguono lo scorrimento; solo la slide attiva ha il video in moto (gli altri in pausa,
+// gli iframe Vimeo tolti); un tocco sulla slide video dà l'audio (mp4: si toglie il muto; Vimeo: player completo con i controlli).
+const Gallery = {
+  mount(root) {
+    if (!root || root.dataset.mounted) return; root.dataset.mounted = "1";
+    const track = $(".gal-track", root), slides = $$(".gal-slide", root), dots = $$(".gal-dots i", root), n = $(".gal-n", root), cap = root.nextElementSibling && root.nextElementSibling.classList.contains("gal-cap") ? root.nextElementSibling : null;
+    let cur = -1;
+    const vimeoOn = (sl, full) => { const box = $(".gal-vm", sl); if (!box) return; const old = $("iframe", box); if (old) old.remove(); const f = document.createElement("iframe"); f.src = vimeoSrc({ id: box.dataset.vimeo, h: box.dataset.h }, full); f.allow = "autoplay; fullscreen; picture-in-picture"; f.title = t("Video del progetto"); if (full) f.allowFullscreen = true; else { f.inert = true; f.tabIndex = -1; } box.appendChild(f); sl.classList.toggle("sound", full); };
+    const vimeoOff = (sl) => { const f = $(".gal-vm iframe", sl); if (f) f.remove(); sl.classList.remove("sound"); };
+    const activate = (i) => {
+      if (i === cur) return; cur = i;
+      slides.forEach((sl, k) => { const v = $("video", sl); if (k === i) { if (v) { v.play().catch(() => {}); } if (sl.dataset.kind === "vimeo" && !$("iframe", sl)) vimeoOn(sl, false); } else { if (v) { v.pause(); v.muted = true; sl.classList.remove("sound"); } if (sl.dataset.kind === "vimeo") vimeoOff(sl); } });
+      dots.forEach((d, k) => d.classList.toggle("on", k === i)); if (n) n.textContent = `${i + 1} / ${slides.length}`;
+      if (cap) { const c = slides[i].dataset.cap || ""; cap.textContent = c; cap.hidden = !c; }
+      $$(".gal-arrow", root).forEach(b => { b.disabled = b.dataset.gal === "-1" ? i === 0 : i === slides.length - 1; });
+    };
+    const index = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    let tick = 0; track.addEventListener("scroll", () => { clearTimeout(tick); tick = setTimeout(() => activate(index()), 80); }, { passive: true });
+    root.addEventListener("click", e => {
+      const a = e.target.closest("[data-gal]"); if (a) { track.scrollBy({ left: +a.dataset.gal * track.clientWidth, behavior: reduced ? "auto" : "smooth" }); return; }
+      const sl = e.target.closest(".gal-slide"); if (!sl || +sl.dataset.i !== cur) return;
+      const v = $("video", sl); if (v) { v.muted = !v.muted; sl.classList.toggle("sound", !v.muted); if (!v.muted) v.play().catch(() => {}); return; }
+      if (sl.dataset.kind === "vimeo" && !sl.classList.contains("sound")) vimeoOn(sl, true); // il player completo ha i suoi controlli
+    });
+    activate(0);
+  },
+  stop(container) { $$("[data-gallery] video", container).forEach(v => { v.pause(); v.muted = true; }); $$("[data-gallery] .gal-vm iframe", container).forEach(f => f.remove()); }
+};
 const capById = (id) => DATA.caps.find(c => c.id === id);
 const capName = (id) => (capById(id) || {}).name || id;
 const worksFor = (id) => DATA.works.filter(w => w.caps.includes(id));
@@ -233,9 +273,10 @@ function openDetail(item) {
   if (isMobile()) { $("#sheet-body").innerHTML = h; $("#sheet-eyebrow").textContent = eyebrow; sheet.dataset.state = "open"; }
   else { $("#drawer-body").innerHTML = h; $("#drawer-eyebrow").textContent = eyebrow; drawer.dataset.state = "open"; drawer.querySelector(".drawer-body").scrollTop = 0; $$("#drawer-body iframe").forEach(f => { f.inert = true; f.tabIndex = -1; }); DrawerNav.update(item); } // il loop video non prende il fuoco: ← → restano al drawer
   scrim.dataset.state = "open";
+  $$("[data-gallery]").forEach(g => Gallery.mount(g)); // la galleria del lavoro, se ce n'è una
   AI.check().then(ok => { if (!ok) $$(".adapt").forEach(a => a.hidden = true); });
 }
-function closeDetail() { drawer.dataset.state = "closed"; sheet.dataset.state = "closed"; scrim.dataset.state = "closed"; }
+function closeDetail() { drawer.dataset.state = "closed"; sheet.dataset.state = "closed"; scrim.dataset.state = "closed"; Gallery.stop(document); }
 // ---- drawer: avanti/indietro fra le schede dello stesso tipo senza chiudere (anche con ← →), ed "espandi" ----
 const DrawerNav = {
   item: null,
@@ -406,12 +447,13 @@ const Console = (() => {
   }
   // trascinando un'area si porta dietro lavori e segnali derivati; trascinando il cubo si muove tutto l'organismo
   function group(nd) { if (nd.kind === "core") return nodes.filter(x => x !== nd); if (nd.kind === "cap") return nodes.filter(x => x.parent === nd.id); return []; }
-  // L'area attiva è quella sotto il puntatore (o quella di un suo lavoro/segnale, o quella trascinata); resta attiva per un attimo
-  // dopo che il puntatore l'ha lasciata, così si arriva a un dipendente senza che il ventaglio si richiuda a metà strada.
+  // L'area attiva è quella sotto il puntatore (o trascinata); resta attiva per un attimo dopo che il puntatore l'ha lasciata,
+  // e finché il puntatore sta su un suo lavoro o segnale, così si arriva a un dipendente senza che il ventaglio si richiuda a metà strada.
   function activeCap(t) {
     const h = drag ? drag.nd : hover;
-    const c = !h ? null : h.kind === "cap" ? h : (h.parent && h.parent !== "core") ? nodes.find(x => x.id === h.parent) : null;
-    if (c) { fanKeep = { id: c.id, until: t + 380 }; return c; }
+    if (h && h.kind === "cap") { fanKeep = { id: h.id, until: t + 380 }; return h; }
+    // un lavoro o un segnale non apre il ventaglio (il nodo scapperebbe da sotto il puntatore): se era già aperto per la sua area, lo tiene aperto
+    if (h && h.parent && h.parent !== "core" && fanId === h.parent) { fanKeep = { id: h.parent, until: t + 380 }; return nodes.find(x => x.id === h.parent) || null; }
     if (fanKeep && t < fanKeep.until) return nodes.find(x => x.id === fanKeep.id) || null;
     return null;
   }
