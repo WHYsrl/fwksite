@@ -13,14 +13,9 @@
 
 const SECTIONS = [
   {
-    id: "menu", nav: "Menu e barra", title: "Menu e barra in alto", where: "Desktop: la barra fissa in alto con le voci di menu e il bottone viola. Su mobile la barra mostra solo il logo, Modalità e il bottone.",
+    id: "menu", nav: "Brand e menu", title: "Brand e menu", where: "Le voci della barra in alto (desktop) e della barra in basso (mobile) si gestiscono nella pagina Menu: quali sono, in che ordine, dove portano, come si chiamano.",
+    manage: [{ label: "Gestisci il menu (desktop e mobile)", href: "/admin/menu" }],
     fields: [
-      { key: "nav_sistema", label: "Voce di menu · Sistema", hint: "Porta alla sezione Il contesto.", def: "Sistema" },
-      { key: "nav_lavori", label: "Voce di menu · Lavori", def: "Lavori" },
-      { key: "nav_metodo", label: "Voce di menu · Metodo", def: "Metodo" },
-      { key: "nav_team", label: "Voce di menu · Team", def: "Team" },
-      { key: "nav_radar", label: "Voce di menu · Radar", def: "Radar" },
-      { key: "nav_cta", label: "Bottone viola (porta ai contatti)", def: "Parliamone" },
       { key: "brand", label: "Nome del brand", hint: "Usato nei titoli della pagina e nei testi dell'AI, non nel logo (che è un'immagine).", i18n: false, def: "Frameworks" }
     ]
   },

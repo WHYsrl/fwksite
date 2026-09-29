@@ -15,6 +15,7 @@ const siteFields = require("./site-fields");
 const layout = require("./layout");
 const priority = require("./priority");
 const gallery = require("./gallery");
+const menu = require("./menu");
 
 const router = express.Router();
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
@@ -106,6 +107,10 @@ router.post("/contenuti/:id", (req, res) => {
 router.get("/fruizione", (req, res) => res.render("admin/fruizione", { layout: layout.get(), groups: layout.GROUPS, isDefault: layout.isDefault(), levels: priority.LEVELS, works: store.listWorks(true).map(w => ({ ...w, priority: priority.forWork(w.id) })), reels: require("./reels").list().map(r => ({ ...r, priority: priority.norm(r.priority) })) }));
 router.post("/fruizione", (req, res) => { layout.save(req.body); flash(req, "Fruizione salvata"); res.redirect("/admin/fruizione"); });
 router.post("/fruizione/reset", (req, res) => { layout.reset(); flash(req, "Fruizione riportata allo standard"); res.redirect("/admin/fruizione"); });
+// ---------- Menu: le voci della barra in alto (desktop) e della barra in basso (mobile) ----------
+router.get("/menu", (req, res) => res.render("admin/menu", { menu: menu.get(), groups: menu.GROUPS, icons: menu.ICONS, isDefault: menu.isDefault(), site: store.getSetting("site", {}) }));
+router.post("/menu", (req, res) => { menu.save(req.body); flash(req, "Menu salvato"); res.redirect("/admin/menu"); });
+router.post("/menu/reset", (req, res) => { menu.reset(); flash(req, "Menu riportato allo standard"); res.redirect("/admin/menu"); });
 router.post("/fruizione/priorita", (req, res) => {
   const b = req.body || {}; const w = (b.works && typeof b.works === "object") ? b.works : {}; const r = (b.reels && typeof b.reels === "object") ? b.reels : {};
   Object.keys(w).forEach(id => priority.setWork(id, w[id]));

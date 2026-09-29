@@ -856,8 +856,8 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
   .tabbar.three{grid-template-columns:repeat(3,1fr)}
   .tabbar.two{grid-template-columns:repeat(2,1fr)}
 
-  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px 3px;color:var(--ink-3);font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;border-radius:12px}
-  .tabbar button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button,.tabbar a.tab-link{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px 3px;color:var(--ink-3);font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;border-radius:12px;text-decoration:none;background:none;border:0}
+  .tabbar button svg,.tabbar a.tab-link svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   .tabbar button.on{color:var(--ink)}
   .tabbar button.on svg{stroke:var(--accent-ink)}
   /* la Console è un tasto come gli altri (solo il colore la distingue): la barra resta sottile */

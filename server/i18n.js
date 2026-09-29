@@ -27,13 +27,14 @@ const FIELDS = [
   ...require("./site-fields").I18N_PATHS, "site.statements[]",
   "caps{id}.short", "caps{id}.body", "caps{id}.tags[]", "caps{id}.tech[]", "caps{id}.uses[]",
   "works{id}.title", "works{id}.short", "works{id}.body", "works{id}.status", "works{id}.label", "works{id}.gallery[].caption",
+  "menu.desktop{id}.label", "menu.mobile{id}.label",
   "team{id}.role", "team{id}.unit", "team{id}.bio",
   "signals{id}.summary", "signals{id}.why",
   "reels{id}.title", "reels{id}.theme",
   "figures{id}.cat", "figures{id}.label", "figures{id}.display", "figures{id}.counter", "figures{id}.date", "figures{id}.bars[].display"
 ];
 // Contesto per il traduttore: cosa sono questi campi (aiuta a scegliere tono e lunghezza)
-const HINTS = { site: "site copy (headlines, manifesto)", caps: "service area", works: "case history", team: "team member", signals: "Radar: third-party news, our reading", reels: "video reel", figures: "context figures (numbers with source)" };
+const HINTS = { menu: "navigation menu item (1-2 words)", site: "site copy (headlines, manifesto)", caps: "service area", works: "case history", team: "team member", signals: "Radar: third-party news, our reading", reels: "video reel", figures: "context figures (numbers with source)" };
 
 // Visita il contenuto lungo un percorso e chiama fn(obj, prop, key) per ogni foglia di testo
 function walk(content, path, fn) {

@@ -104,6 +104,7 @@ function decorate(content) {
   const a = all();
   if (Array.isArray(content.caps)) content.caps = content.caps.map(c => ({ ...c, ...forCap(c.id) }));
   if (content.site && !content.site.hero_concrete) content.site = { ...content.site, hero_concrete: SITE.hero_concrete };
+  content.menu = require("./menu").get(); // le voci del menu (desktop e mobile), per la traduzione e il sito
   return require("./gallery").decorate(content); // e la galleria (foto/video) di ogni lavoro, anche lei in un setting
 }
 // Per l'anteprima statica (senza database): applica i default al contenuto del seed
@@ -111,6 +112,7 @@ function applyDefaults(content) {
   content.caps = (content.caps || []).map(c => CAPS[c.id] ? { ...c, ...CAPS[c.id] } : { ...c, uses: c.uses || [], tech: c.tech || [], use_images: c.use_images || [] });
   content.site = { ...content.site, hero_concrete: content.site.hero_concrete || SITE.hero_concrete, tech: SITE.tech };
   content.works = (content.works || []).map(w => ({ ...w, gallery: w.gallery || [] }));
+  content.menu = require("./menu").defaultsAll();
   return content;
 }
 // Una volta sola: testi concreti al posto di quelli astratti, tecnologie e casi d'uso di default, riga "in pratica"

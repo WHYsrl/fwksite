@@ -1,0 +1,52 @@
+<%- include('../partials/admin-head', { title: 'Menu' }) %>
+<%
+// Menu: le voci della barra in alto (desktop) e della barra in basso (mobile). Ogni riga: attiva, destinazione, etichetta, opzioni; le frecce cambiano l'ordine (server/menu.js).
+const ICON_LABELS = { home: "Casa", sistema: "Sistema", console: "Console (stella)", lavori: "Lavori", radar: "Radar", contatti: "Busta", reel: "Reel", aree: "Griglia", contesto: "Grafico", organismo: "Organismo", metodo: "Elenco", team: "Persone", tech: "Chip", triade: "Triangolo", link: "Link esterno", star: "Stella", info: "Info" };
+const esc = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;");
+const rowHTML = (key, targets, it, i) => {
+  const t = targets.find(x => x.id === it.target) || {};
+  const std = t.areas ? (site.areas_label || t.std) : (t.std || "");
+  let h = `<tr class="menu-row" data-key="${key}">`;
+  h += `<td class="fru-move"><button type="button" class="mv" data-menu-move="-1" title="Sposta su" aria-label="Sposta su">▲</button><button type="button" class="mv" data-menu-move="1" title="Sposta giù" aria-label="Sposta giù">▼</button></td>`;
+  h += `<td class="menu-on"><input type="hidden" name="${key}[${i}][id]" value="${esc(it.id)}"><label class="show" title="Spenta: la voce non compare"><input type="checkbox" name="${key}[${i}][on]" value="1" ${it.on ? 'checked' : ''}> <span>Attiva</span></label></td>`;
+  h += `<td><select name="${key}[${i}][target]" class="menu-target" data-std="${esc(JSON.stringify(Object.fromEntries(targets.map(x => [x.id, x.areas ? (site.areas_label || x.std) : x.std]))))}" data-icons="${esc(JSON.stringify(Object.fromEntries(targets.map(x => [x.id, x.icon || ""]))))}">`;
+  targets.forEach(x => { h += `<option value="${x.id}" ${x.id === it.target ? 'selected' : ''}>${esc(x.label)}</option>`; });
+  h += `</select><input name="${key}[${i}][url]" class="menu-url" value="${esc(it.url)}" placeholder="https://… (o mailto:)" ${it.target === 'url' ? '' : 'hidden'}></td>`;
+  h += `<td><input name="${key}[${i}][label]" class="menu-label" value="${esc(it.label)}" placeholder="${esc(std ? 'Standard: ' + std : (it.target === 'lang' ? 'IT / EN (automatico)' : ''))}" maxlength="40" ${it.target === 'lang' ? 'disabled' : ''}></td>`;
+  if (key === "desktop") h += `<td class="menu-opt"><label class="show"><input type="checkbox" name="${key}[${i}][cta]" value="1" ${it.cta ? 'checked' : ''}> <span>Bottone viola</span></label><label class="show menu-blank" ${it.target === 'url' ? '' : 'hidden'}><input type="checkbox" name="${key}[${i}][blank]" value="1" ${it.blank ? 'checked' : ''}> <span>Nuova scheda</span></label></td>`;
+  else h += `<td class="menu-opt"><select name="${key}[${i}][icon]" class="menu-icon" aria-label="Icona">${icons.map(ic => `<option value="${ic}" ${ic === (it.icon || t.icon) ? 'selected' : ''}>${ICON_LABELS[ic] || ic}</option>`).join('')}</select><label class="show menu-blank" ${it.target === 'url' ? '' : 'hidden'}><input type="checkbox" name="${key}[${i}][blank]" value="1" ${it.blank ? 'checked' : ''}> <span>Nuova scheda</span></label></td>`;
+  h += `<td class="menu-del"><button type="button" class="mv" data-menu-del title="Togli la voce" aria-label="Togli la voce">✕</button></td></tr>`;
+  return h;
+};
+%>
+<div class="head sec-head">
+  <div>
+    <h1>Menu</h1>
+    <p class="muted where">Le voci della barra in alto (desktop) e della barra in basso (mobile): quali sono, in che ordine, dove portano e come si chiamano. Una voce può portare a una sezione del sito, a una schermata dell'app mobile o a un link esterno. Etichetta vuota = nome standard (tradotto da solo in inglese); un'etichetta scritta si traduce con l'AI come gli altri testi.</p>
+  </div>
+  <div class="row">
+    <% if (isDefault) { %><span class="pill">standard</span><% } else { %><form method="post" action="/admin/menu/reset" data-confirm="Riportare il menu allo standard (desktop e mobile)?"><button class="btn sm" type="submit">Ripristina lo standard</button></form><% } %>
+    <a class="btn sm" href="/" target="_blank">Vedi sul sito ↗</a>
+  </div>
+</div>
+
+<form method="post" action="/admin/menu" class="form cms" id="menu-form">
+  <% groups.forEach(g => { const rows = menu[g.key]; %>
+  <section class="card fru menu-card" data-key="<%= g.key %>">
+    <div class="head"><div><h2><%= g.title %></h2><p class="muted" style="margin:0"><%= g.note %></p></div></div>
+    <table class="fru-table menu-table">
+      <thead><tr><th class="fru-move"></th><th></th><th>Dove porta</th><th>Etichetta</th><th><%= g.key === 'desktop' ? 'Opzioni' : 'Icona' %></th><th></th></tr></thead>
+      <tbody data-menu-rows="<%= g.key %>">
+      <% rows.forEach((it, i) => { %><%- rowHTML(g.key, g.targets, it, i) %><% }) %>
+      </tbody>
+    </table>
+    <template data-menu-template="<%= g.key %>"><%- rowHTML(g.key, g.targets, { id: "", target: g.key === "desktop" ? "aree" : "home", label: "", on: true }, 0) %></template>
+    <p><button type="button" class="btn sm" data-menu-add="<%= g.key %>">+ Aggiungi una voce</button></p>
+  </section>
+  <% }) %>
+  <div class="savebar">
+    <span class="muted">Le modifiche valgono da subito sul sito. Su desktop le voci «sezione» scorrono alla sezione (e la riaprono se il tempo scelto la nasconde); su mobile portano alla schermata o al blocco giusto.</span>
+    <button class="btn primary" type="submit">Salva il menu</button>
+  </div>
+</form>
+<%- include('../partials/admin-foot') %>

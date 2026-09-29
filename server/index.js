@@ -25,6 +25,7 @@ const figures = require("./figures"); // Il contesto: i numeri che il campo di p
 if (concrete.migrate()) console.log("Aree: testi concreti, tecnologie e casi d'uso applicati");
 if (concrete.migrateV2()) console.log("Aree: Activation System riscritta intorno all'engagement");
 if (concrete.migrateUsi()) console.log("Aree: visual standard assegnati ai casi d'uso");
+const menu = require("./menu"); if (menu.migrate()) console.log("Menu: voci standard (con i testi già personalizzati dal backoffice)"); // le voci della barra (backoffice Menu)
 // Radar in tempo reale: ricerche Google News per parola chiave (it/en), aggiunte come fonti
 const RADAR_QUERIES = [["DOOH", "it"], ["programmatic DOOH", "en"], ["digital signage retail", "en"], ["AI generativa pubblicità", "it"], ["generative AI advertising", "en"], ["brand content", "it"], ["retail media", "en"], ["virtual production", "en"], ["esperienze immersive museo", "it"], ["immersive brand experience", "en"], ["AI video production", "en"], ["adaptive content", "en"]];
 store.migrateRadarV2(RADAR_QUERIES.map(([q, lang]) => ({ q, url: feeds.gnewsUrl(q, 7, lang) })));
@@ -55,6 +56,7 @@ function renderSite(req, res, lang) {
   const t = i18n.ui.make(lang);
   const content = priority.decorate(i18n.apply(withImage(concrete.decorate(store.getContent())), lang));
   content.site = siteFields.view(content.site, t); // i testi delle sezioni: quelli del backoffice, o quelli standard
+  content.menu = menu.forSite(content.menu, content.site, t); // le voci attive del menu, con le etichette risolte
   content.layout = layout.forSite(); // fruizione: ordine e stato (nascosta / breve / completa) per 2 · 10 · tutto
   res.set("Cache-Control", "no-cache"); res.set("Vary", "Cookie, Accept-Language");
   res.render("index", { content, preview: false, aiOn: ai.isConfigured(), lang, t, enPublic: i18n.isPublic() });
@@ -63,7 +65,7 @@ app.get("/", (req, res) => renderSite(req, res, i18n.resolve(req)));
 app.get("/en", (req, res) => { i18n.setCookie(res, "en"); renderSite(req, res, "en"); });
 app.get("/it", (req, res) => { i18n.setCookie(res, "it"); renderSite(req, res, "it"); });
 const reqLang = (req) => { const l = String((req.query && req.query.lang) || (req.body && req.body.lang) || "").toLowerCase(); return i18n.LANGS.includes(l) ? l : "it"; };
-app.get("/api/content", (req, res) => { feeds.maybeRefresh(); const lang = reqLang(req); const c = priority.decorate(i18n.apply(withImage(concrete.decorate(store.getContent())), lang)); c.site = siteFields.view(c.site, i18n.ui.make(lang)); c.layout = layout.forSite(); res.json(c); });
+app.get("/api/content", (req, res) => { feeds.maybeRefresh(); const lang = reqLang(req); const c = priority.decorate(i18n.apply(withImage(concrete.decorate(store.getContent())), lang)); c.site = siteFields.view(c.site, i18n.ui.make(lang)); c.menu = menu.forSite(c.menu, c.site, i18n.ui.make(lang)); c.layout = layout.forSite(); res.json(c); });
 // il laboratorio Denoise compare solo se la generazione di immagini è attiva e configurata
 function withImage(content) { const c = imagegen.cfg(); content.features = { ...(content.features || {}), image: c.enabled && !!c.key }; content.lightMedia = LIGHT_MEDIA; content.figures = figures.list(); content.reels = reels.list(); return content; }
 const reels = require("./reels"); reels.seedIfMissing(); // i video tematici del carosello (gestiti da /admin/reel)

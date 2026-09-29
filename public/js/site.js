@@ -145,7 +145,7 @@ const Modes = {
     html.dataset.energy = energy; html.dataset.mood = this.mood;
     Theme.read(); document.dispatchEvent(new CustomEvent("fw:theme")); // i canvas si adeguano alla palette dell'umore
     $$(".seg [data-density]").forEach(b => b.classList.toggle("on", b.dataset.density === this.density));
-    const lbl = $(".modes-lbl"); if (lbl) lbl.textContent = isMobile() ? (this.density === "2" ? t("Essenziale") : t("Modalità")) : (this.density === "2" ? t("Essenziale · mostra tutto") : this.density === "all" ? t("Modalità · tutto") : t("Modalità"));
+    const lbl = $(".modes-lbl"); if (lbl) { const mb = lbl.closest(".modes-btn"), base = mb && mb.dataset.label && mb.dataset.label !== t("Modalità") ? mb.dataset.label : null; /* etichetta scritta nel backoffice (Menu) */ lbl.textContent = isMobile() ? (this.density === "2" ? t("Essenziale") : base || t("Modalità")) : (this.density === "2" ? t("Essenziale · mostra tutto") : this.density === "all" ? (base ? t("Modalità · {x}", { x: t("tutto") }).replace(t("Modalità"), base) : t("Modalità · tutto")) : base || t("Modalità")); }
     const mb = $("#modes-btn"); if (mb) mb.classList.toggle("reduced", this.density === "2");
     $$(".seg [data-mood]").forEach(b => b.classList.toggle("on", b.dataset.mood === this.mood));
     const env = $("#modes-env"); if (env) env.textContent = `${t("Roma")} · ${c.day} ${c.slot} · ${w && w.temp != null ? w.temp + "° · " + weatherLabel(w) : t("meteo non disponibile")} · ${t("ritmo")} ${this.mood === "nervous" ? t("essenziale") : energy === "calm" ? t("calmo") : energy === "vivid" ? t("vivace") : t("neutro")}`;
@@ -327,7 +327,7 @@ document.addEventListener("click", e => {
   const c = e.target.closest("[data-copy]"); if (c) copyText(c);
   const cta = e.target.closest(".topnav .cta"); if (cta && isMobile()) { e.preventDefault(); openContactSheet(); }
   const lg = e.target.closest(".topbar .logo"); if (lg && isMobile()) { e.preventDefault(); App.show("home"); return; } // su mobile il logo riporta alla Home dell'app
-  const tab = e.target.closest("[data-tab]"); if (tab) { if (tab.dataset.tab === "console") ConsoleWin.open(tab.dataset.q || ""); else if (tab.dataset.tab === "contatti") openContactSheet(); else App.show(tab.dataset.tab); return; }
+  const tab = e.target.closest("[data-tab]"); if (tab) { const k = tab.dataset.tab; if (k === "console") ConsoleWin.open(tab.dataset.q || ""); else if (k === "contatti") openContactSheet(); else if (k.startsWith("go:")) goSection(k.slice(3)); else App.show(k); return; }
   const sn = e.target.closest("[data-story-next]"); if (sn) { Path.go(1); return; }
   const sp = e.target.closest("[data-story-prev]"); if (sp) { Path.go(-1); return; }
   const chip = e.target.closest("[data-ask]"); if (chip) { ConsoleWin.open(chip.dataset.ask); return; }
@@ -635,7 +635,19 @@ const ICONS = {
   lavori: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 5v14"/></svg>',
   radar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v9l6 4"/></svg>',
   percorso: '<svg viewBox="0 0 24 24"><path d="M4 6h6M4 12h10M4 18h14"/><circle cx="19" cy="6" r="2"/></svg>',
-  contatti: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg>'
+  contatti: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg>',
+  // per le voci aggiunte dal backoffice (Menu)
+  reel: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5M10 13l5 2.5-5 2.5z"/></svg>',
+  aree: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>',
+  contesto: '<svg viewBox="0 0 24 24"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg>',
+  organismo: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="7" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="17" r="2"/><path d="M9.5 10.5L6.5 7.5M14.5 10.5l3-2M9.8 14l-2.5 2.5M14.3 14l2.5 2"/></svg>',
+  metodo: '<svg viewBox="0 0 24 24"><path d="M4 6h4M4 12h8M4 18h12"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+  team: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M15 20v-1a4 4 0 0 1 6 0v1"/></svg>',
+  tech: '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></svg>',
+  triade: '<svg viewBox="0 0 24 24"><path d="M12 4l8 14H4z"/><circle cx="12" cy="4" r="1.5"/><circle cx="4" cy="18" r="1.5"/><circle cx="20" cy="18" r="1.5"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 14L20 4M20 4h-6M20 4v6M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 6 6.3.6-4.8 4.3 1.5 6.3L12 17l-5.7 3.2 1.5-6.3L3 9.6l6.3-.6z"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>'
 };
 const initials = (n) => String(n || "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 3).toUpperCase();
 function teamHTML() {
@@ -724,10 +736,12 @@ const App = {
     app.innerHTML = story + home + sistema + lavori + radar;
     if (story) Path.bindStory();
     // in modalità percorso la tab bar si riduce a Percorso · Console · Contatti
-    const tabs = Focus.ids ? [["percorso", t("Percorso")], ["console", "Console"], ["contatti", t("Contatti")]] : [["home", "Home"], ["sistema", t("Sistema")], ["console", "Console"], ["lavori", t("Lavori")], ["radar", "Radar"]];
+    // le voci vengono dal backoffice (Menu): schermate, Console, scheda contatti, blocchi dentro le schermate (go:id), link esterni
+    const menuTabs = ((DATA.menu && DATA.menu.mobile) || []).map(it => ({ k: it.kind === "screen" || it.kind === "console" || it.kind === "contatti" ? it.target : it.kind === "url" ? "url" : "go:" + it.target, l: esc(it.label), icon: ICONS[it.icon] || ICONS.link, url: it.url, blank: it.blank }));
+    const tabs = Focus.ids ? [{ k: "percorso", l: t("Percorso"), icon: ICONS.percorso }, { k: "console", l: "Console", icon: ICONS.console }, { k: "contatti", l: t("Contatti"), icon: ICONS.contatti }] : menuTabs.length ? menuTabs : [{ k: "home", l: "Home", icon: ICONS.home }, { k: "sistema", l: t("Sistema"), icon: ICONS.sistema }, { k: "console", l: "Console", icon: ICONS.console }, { k: "lavori", l: t("Lavori"), icon: ICONS.lavori }, { k: "radar", l: "Radar", icon: ICONS.radar }];
     const bar = $("#tabbar");
-    bar.innerHTML = tabs.map(([k, l]) => k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${l}</span></button>` : `<button type="button" data-tab="${k}" class="${k === this.current ? "on" : ""}">${ICONS[k]}<span>${l}</span></button>`).join("");
-    const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button", bar).length},1fr)`; }; cols();
+    bar.innerHTML = tabs.map(tb => tb.k === "console" ? `<button type="button" class="fab" data-tab="console" id="tab-console"><i>${ICONS.console}</i><span>${tb.l}</span></button>` : tb.k === "url" ? (tb.url ? `<a class="tab-link" href="${esc(tb.url)}"${tb.blank ? ' target="_blank" rel="noopener"' : ""}>${tb.icon}<span>${tb.l}</span></a>` : "") : `<button type="button" data-tab="${tb.k}" class="${tb.k === this.current ? "on" : ""}">${tb.icon}<span>${tb.l}</span></button>`).join("");
+    const cols = () => { bar.style.gridTemplateColumns = `repeat(${$$("button, a", bar).length},1fr)`; }; cols();
     AI.check().then(ok => { if (!ok) { $$("[data-tab=console]").forEach(el => el.remove()); cols(); } });
     this.applyDensity(); this.capWorks(); this.show(this.current, true);
     if (window.Diffusion) Diffusion.mountAll(); // il Denoise nella schermata Sistema
@@ -864,13 +878,16 @@ const Path = {
 
 /* Sezioni del sito proponibili dalla Console: nome e destinazione su desktop (ancora) e su mobile (schermata + blocco) */
 const AREAS_LABEL = () => DATA.site.areas_label || t("Aree"); // come si chiamano le aree (backoffice → Testi → Etichette delle aree)
-const SECTIONS = { sistema: { name: t("Sistema"), m: ["sistema", null] }, aree: { name: AREAS_LABEL(), m: ["sistema", ".list-cards"] }, lavori: { name: t("Lavori"), m: ["lavori", null] }, metodo: { name: t("Metodo"), m: ["sistema", ".m-text.metodo-m"] }, team: { name: "Team", m: ["sistema", ".team-m"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: t("Contatti"), m: ["contatti", null] } };
+const SECTIONS = { sistema: { name: t("Sistema"), m: ["sistema", null] }, aree: { name: AREAS_LABEL(), m: ["sistema", "[data-m-block=aree]"] }, lavori: { name: t("Lavori"), m: ["lavori", null] }, metodo: { name: t("Metodo"), m: ["sistema", "[data-m-block=metodo]"] }, team: { name: "Team", m: ["sistema", "[data-m-block=team]"] }, radar: { name: "Radar", m: ["radar", null] }, contatti: { name: t("Contatti"), m: ["contatti", null] },
+  // raggiungibili dai tab del menu (backoffice): blocchi dentro le schermate
+  reel: { name: "Reel", m: ["home", "[data-m-block=reels]"], hidden: true }, contesto: { name: t("Contesto"), m: ["sistema", "[data-m-block=contesto]"], hidden: true }, organismo: { name: t("Organismo"), m: ["sistema", "[data-m-block=organism]"], hidden: true }, tecnologie: { name: t("Tecnologie"), m: ["sistema", "[data-m-block=tech]"], hidden: true }, triade: { name: t("Triade"), m: ["sistema", "[data-m-block=triad]"], hidden: true }, console: { name: "Console", m: ["console", null], hidden: true } };
 // Una sezione chiesta esplicitamente vince sulla densità "2 minuti": se è nascosta, si riapre tutto
 function showAll() { if (Modes.density !== "all") { Modes.set("density", "all"); Prefs.set({ ...(Prefs.get() || {}), time: "all" }); } }
 function goSection(id) {
   const sec = SECTIONS[id]; if (!sec) return;
   if (isMobile()) {
     if (id === "contatti") { openContactSheet(); return; }
+    if (id === "console") { ConsoleWin.open(""); return; }
     if (Focus.ids) Focus.clear();
     App.show(sec.m[0]);
     const target = () => sec.m[1] ? $(`.screen[data-screen="${sec.m[0]}"] ${sec.m[1]}`) : null;

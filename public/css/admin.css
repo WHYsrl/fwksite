@@ -160,3 +160,18 @@ tr.moved td{background:rgba(191,0,255,.08)}
 .gal-mv .mv:hover{color:var(--ink);border-color:var(--ink3)}
 .gal-video{display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink3)}
 @media (max-width:900px){.gal-row{grid-template-columns:52px 28px 1fr 1fr;gap:6px}.gal-row select,.gal-row input[name$="[caption]"]{grid-column:3 / span 2}.gal-row .use-thumb{display:none}}
+
+/* menu: righe delle voci (desktop e mobile) */
+.menu-table td{vertical-align:middle}
+.menu-table [hidden]{display:none!important}
+.menu-table .menu-on .show{display:inline-flex;gap:6px;align-items:center}
+.menu-table .menu-on{white-space:nowrap}
+.menu-table input,.menu-table select{margin-top:0;min-width:0}
+.menu-table .menu-url{margin-top:6px}
+.menu-table .menu-opt{white-space:nowrap}
+.menu-table .menu-opt .show{display:inline-flex;margin-right:10px}
+.menu-table .menu-opt select{width:150px}
+.menu-table .menu-del .mv{color:var(--ink3)}
+.menu-table .menu-del .mv:hover{color:#f55;border-color:#f55}
+.menu-table td:nth-child(3){min-width:240px}
+.menu-table td:nth-child(4){min-width:180px}

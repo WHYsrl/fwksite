@@ -46,11 +46,14 @@ const fmtDateL = (d) => { if (!d || LANG !== "en") return fmtDate(d); const [y, 
 
 <header class="topbar">
   <a class="logo" href="#top" aria-label="<%= site.brand %>"><svg viewBox="0 0 421.23 59" width="214" height="30" aria-hidden="true"><use href="#fw-logo"/></svg></a>
+  <%# le voci del menu vengono dal backoffice (Menu): sezioni della pagina, link esterni, il bottone Modalità, il cambio lingua; una voce può essere il bottone viola %>
   <nav class="topnav" aria-label="<%= T("Navigazione") %>">
-    <a href="#aree"><%= site.areas_label %></a><a href="#sistema"><%= site.nav_sistema %></a><a href="#lavori"><%= site.nav_lavori %></a><a href="#metodo"><%= site.nav_metodo %></a><a href="#team"><%= site.nav_team %></a><a href="#radar"><%= site.nav_radar %></a>
-    <button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= T("Modalità") %></span></button>
-    <% if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
-    <a class="cta" href="#contatti"><%= site.nav_cta %></a>
+    <% ((content.menu && content.menu.desktop) || []).forEach(it => { %>
+      <% if (it.kind === "modes") { %><button type="button" class="modes-btn" id="modes-btn" aria-expanded="false" aria-controls="modes" data-label="<%= it.label %>"><span class="modes-ico" aria-hidden="true"></span><span class="modes-lbl"><%= it.label %></span></button>
+      <% } else if (it.kind === "lang") { if (SHOW_LANG) { %><a class="lang-switch" href="<%= LANG === "en" ? "/it" : "/en" %>" hreflang="<%= LANG === "en" ? "it" : "en" %>" lang="<%= LANG === "en" ? "it" : "en" %>" aria-label="<%= LANG === "en" ? "Versione italiana" : "English version" %>"><%= LANG === "en" ? "IT" : "EN" %></a><% } %>
+      <% } else if (it.kind === "url") { if (it.url) { %><a class="<%= it.cta ? 'cta' : '' %>" href="<%= it.url %>"<%- it.blank ? ' target="_blank" rel="noopener"' : '' %>><%= it.label %></a><% } %>
+      <% } else { %><a class="<%= it.cta ? 'cta' : '' %>" href="#<%= it.target %>"><%= it.label %></a><% } %>
+    <% }) %>
   </nav>
 </header>
 
