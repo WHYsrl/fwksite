@@ -447,13 +447,14 @@ const Console = (() => {
   }
   // trascinando un'area si porta dietro lavori e segnali derivati; trascinando il cubo si muove tutto l'organismo
   function group(nd) { if (nd.kind === "core") return nodes.filter(x => x !== nd); if (nd.kind === "cap") return nodes.filter(x => x.parent === nd.id); return []; }
-  // L'area attiva è quella sotto il puntatore (o trascinata); resta attiva per un attimo dopo che il puntatore l'ha lasciata,
-  // e finché il puntatore sta su un suo lavoro o segnale, così si arriva a un dipendente senza che il ventaglio si richiuda a metà strada.
+  // L'area attiva è quella sotto il puntatore (o trascinata); resta attiva per FAN_HOLD dopo che il puntatore l'ha lasciata,
+  // e finché il puntatore sta su un suo lavoro o segnale: c'è il tempo di arrivare a un dipendente e cliccarlo prima che il ventaglio si richiuda.
+  const FAN_HOLD = 3000;
   function activeCap(t) {
     const h = drag ? drag.nd : hover;
-    if (h && h.kind === "cap") { fanKeep = { id: h.id, until: t + 380 }; return h; }
+    if (h && h.kind === "cap") { fanKeep = { id: h.id, until: t + FAN_HOLD }; return h; }
     // un lavoro o un segnale non apre il ventaglio (il nodo scapperebbe da sotto il puntatore): se era già aperto per la sua area, lo tiene aperto
-    if (h && h.parent && h.parent !== "core" && fanId === h.parent) { fanKeep = { id: h.parent, until: t + 380 }; return nodes.find(x => x.id === h.parent) || null; }
+    if (h && h.parent && h.parent !== "core" && fanId === h.parent) { fanKeep = { id: h.parent, until: t + FAN_HOLD }; return nodes.find(x => x.id === h.parent) || null; }
     if (fanKeep && t < fanKeep.until) return nodes.find(x => x.id === fanKeep.id) || null;
     return null;
   }
