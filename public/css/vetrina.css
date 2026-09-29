@@ -45,15 +45,17 @@
 .drawer.wide{width:min(1180px,94vw)}
 /* espanso: il media in cima resta 16:9 ma non oltre metà schermo; sotto, il contenuto si apre su due colonne — a sinistra etichetta, titolo e testo, a destra casi d'uso, tecnologie, form e rimandi */
 .drawer.wide .drawer-body .d-in{padding:34px 40px 48px;max-width:none;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:8px 48px;align-items:start}
-.drawer.wide .drawer-body .d-in>.d-main{position:sticky;top:0}
 .drawer.wide .drawer-body h2{font-size:42px}
 .drawer.wide .drawer-body .d-img{aspect-ratio:auto;height:min(52vh,calc(min(1180px,94vw)*.5625))} /* 16:9 su tutta la larghezza, ma non oltre metà schermo */
-.drawer.wide .drawer-body .gal-cap{margin:12px 40px 0}
-.drawer.wide .drawer-body .d-concrete{margin-top:0}
+.drawer.wide .drawer-body .d-side>.d-concrete:first-child{margin-top:0}
 .drawer.wide .drawer-body .d-side .list:first-child{margin-top:0;border-top:0}
 .drawer.wide .drawer-body .d-side .adapt:first-child{margin-top:0}
-.drawer.wide .drawer-body .use-cards{margin-left:-18px;margin-right:-18px}
-@media (max-width:1000px){.drawer.wide .drawer-body .d-in{grid-template-columns:1fr;gap:0}.drawer.wide .drawer-body .d-in>.d-main{position:static}}
+/* a sinistra le card (casi d'uso o galleria) stanno in verticale sotto il testo, non a carosello; i due riquadri tornano separati */
+.drawer.wide .drawer-body .d-main>.d-uses:last-child{margin-bottom:0;border-radius:12px}
+.drawer.wide .drawer-body .d-side>.d-tech:first-child{border-top:1px solid var(--line);border-radius:12px}
+.drawer.wide .drawer-body .d-main .use-cards{display:grid;grid-template-columns:1fr;gap:16px;overflow:visible;margin:12px 0 0;padding:0;width:auto;scroll-snap-type:none}
+.drawer.wide .drawer-body .d-main .use-card{width:auto}
+@media (max-width:1000px){.drawer.wide .drawer-body .d-in{grid-template-columns:1fr;gap:0}.drawer.wide .drawer-body .d-main>.d-uses:last-child{border-radius:12px 12px 0 0}.drawer.wide .drawer-body .d-side>.d-tech:first-child{border-top:0;border-radius:0 0 12px 12px}}
 .drawer-body.swap-out{opacity:0;transform:translateX(24px)}
 .drawer-body{transition:opacity .25s,transform .25s}
 

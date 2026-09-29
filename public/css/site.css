@@ -901,28 +901,15 @@ html[data-density="2"] [data-prio="2"],html[data-density="2"] [data-prio="3"],ht
 
 /* Video dei lavori nel dettaglio (loop Vimeo o mp4) */
 .drawer-body .d-img.video,.sheet-body .d-img.video{aspect-ratio:16/9}
-/* galleria in cima alla scheda di un lavoro: slide a scatti, frecce, pallini e contatore; didascalia sotto */
-.d-img.gallery{position:relative;overflow:hidden}
-.gal-track{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
-.gal-track::-webkit-scrollbar{display:none}
-.gal-slide{position:relative;flex:0 0 100%;width:100%;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#000;cursor:default}
-.gal-slide[data-kind="video"],.gal-slide[data-kind="vimeo"]{cursor:pointer}
-.gal-slide img,.gal-slide video,.gal-slide iframe,.gal-slide .gal-vm{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block;background:#000}
-.gal-slide .gal-vm{background-size:cover;background-position:center}
-.gal-chip{position:absolute;left:14px;bottom:14px;z-index:2;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 11px;pointer-events:none;transition:opacity .3s}
-.gal-slide.sound .gal-chip{opacity:0}
-.gal-arrow{position:absolute;top:50%;z-index:3;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;cursor:pointer;display:grid;place-items:center;font-size:15px;transition:background .2s,opacity .2s}
-.gal-arrow:hover{background:#fff;color:#0b0910}
-.gal-arrow:disabled{opacity:0;pointer-events:none}
-.gal-arrow.prev{left:12px}.gal-arrow.next{right:12px}
-.gal-foot{position:absolute;right:14px;bottom:14px;z-index:2;display:flex;align-items:center;gap:10px;pointer-events:none}
-.gal-dots{display:flex;gap:5px}
-.gal-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);transition:background .2s,transform .2s}
-.gal-dots i.on{background:#fff;transform:scale(1.25)}
-.gal-n{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:#fff;background:rgba(0,0,0,.5);border-radius:999px;padding:5px 9px}
-.drawer-body .gal-cap,.sheet-body .gal-cap{margin:12px 28px 0;font-size:13px;line-height:1.45;color:var(--ink-3);border-left:2px solid var(--accent);padding-left:10px}
-.sheet-body .gal-cap{margin:12px 20px 0}
-@media (hover:none){.gal-arrow{display:none}} /* su touch si scorre col dito */
+/* galleria di un lavoro: card come i casi d'uso, con video (mp4 o Vimeo) che girano muti in vista; un tocco dà l'audio */
+.use-card .use-media{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.use-card .use-media video,.use-card .use-media iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block;background:#000}
+.gal-card[data-kind="video"],.gal-card[data-kind="vimeo"]{cursor:pointer}
+.gal-chip{position:absolute;left:10px;bottom:10px;z-index:2;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 10px;pointer-events:none;transition:opacity .3s}
+.gal-card.sound .gal-chip{opacity:0}
+/* i riquadri "casi d'uso" (nel blocco principale) e "tecnologie" (in quello laterale) si vedono come uno solo quando stanno uno sotto l'altro */
+.d-main>.d-uses:last-child{margin-bottom:0;border-radius:12px 12px 0 0}
+.d-side>.d-tech:first-child{margin-top:0;border-top:0;border-radius:0 0 12px 12px}
 .drawer-body .d-img iframe,.drawer-body .d-img video,.sheet-body .d-img iframe,.sheet-body .d-img video{width:100%;height:100%;border:0;display:block;object-fit:cover;background:#000}
 
 /* ---- lingua: selettore IT/EN nella barra, nel pannello Modalità e nell'intro ---- */

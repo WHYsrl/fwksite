@@ -26,56 +26,52 @@ const usesHTML = (item, max, small) => {
   if (!imgs.some(Boolean)) return `<ul class="${small ? "caps-uses" : "uses"}">${uses.map(u => `<li>${esc(u)}</li>`).join("")}</ul>`;
   return `<div class="${small ? "use-mini" : "use-cards"}">${uses.map((u, i) => `<figure class="use-card">${imgs[i] ? `<img src="${media(small ? thumb(imgs[i]) : imgs[i])}" alt="" loading="lazy">` : `<span class="use-ph"></span>`}<figcaption><span class="use-n">${String(i + 1).padStart(2, "0")}</span>${esc(u)}</figcaption></figure>`).join("")}</div>`;
 };
-// Media in cima alla scheda di un lavoro: la copertina (link Vimeo → player in loop muto; file mp4/webm → <video>; altrimenti
-// l'immagine) seguita dalla galleria del backoffice (foto e video, con didascalia). Con una sola slide è com'era; con più slide
-// è un carosello (scorrimento a scatti, frecce, pallini, contatore); i video partono muti solo sulla slide attiva e un tocco dà l'audio.
+// Copertina in cima alla scheda di un lavoro: link Vimeo (vimeo.com/ID o vimeo.com/ID/HASH) → player in loop muto; file mp4/webm → <video>; altrimenti l'immagine.
 const vimeoId = (u) => { const m = /vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-z0-9]+))?/i.exec(u || ""); return m ? { id: m[1], h: m[2] } : null; };
 const isFileVideo = (u) => /\.(mp4|webm|mov)(\?|$)/i.test(u || "");
 const vimeoSrc = (vm, full) => `https://player.vimeo.com/video/${vm.id}?${vm.h ? "h=" + vm.h + "&" : ""}dnt=1&playsinline=1&` + (full ? "autoplay=1&muted=0&controls=1&title=0&byline=0&portrait=0" : "background=1&autoplay=1&loop=1&muted=1&autopause=0");
-function workSlides(item, fallback) {
-  const slides = []; const v = (item.video_url || "").trim(); const vm = v && vimeoId(v);
-  if (vm) slides.push({ kind: "vimeo", vm, poster: item.image }); else if (v && isFileVideo(v)) slides.push({ kind: "video", src: v, poster: item.image }); else slides.push({ kind: "image", src: item.image || fallback });
-  (item.gallery || []).forEach(g => { const src = String(g && g.src || "").trim(); if (!src) return; const gv = vimeoId(src); slides.push(gv ? { kind: "vimeo", vm: gv, caption: g.caption } : isFileVideo(src) ? { kind: "video", src, caption: g.caption } : { kind: "image", src, caption: g.caption }); });
-  return slides;
-}
-function slideHTML(sl, lazy) { // lazy: i video partono (e gli iframe si caricano) solo quando la slide è attiva
-  if (sl.kind === "vimeo") return lazy ? `<div class="gal-vm" data-vimeo="${sl.vm.id}" data-h="${sl.vm.h || ""}"${sl.poster ? ` style="background-image:url('${esc(media(sl.poster))}')"` : ""}></div>` : `<iframe src="${vimeoSrc(sl.vm, false)}" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${t("Video del progetto")}"></iframe>`;
-  if (sl.kind === "video") return `<video src="${esc(media(sl.src))}" ${lazy ? "" : "autoplay "}muted loop playsinline preload="metadata"${sl.poster ? ` poster="${esc(media(sl.poster))}"` : ""}></video>`;
-  return `<img src="${esc(media(sl.src))}" alt=""${lazy ? ' loading="lazy"' : ""}>`;
-}
 function workMedia(item, fallback) {
-  const slides = workSlides(item, fallback);
-  if (slides.length === 1) { const sl = slides[0]; return `<div class="d-img${sl.kind === "image" ? "" : " video"}">${slideHTML(sl, false)}</div>`; }
-  const caps = slides.some(sl => sl.caption);
-  return `<div class="d-img video gallery" data-gallery><div class="gal-track">${slides.map((sl, i) => `<div class="gal-slide" data-i="${i}" data-kind="${sl.kind}" data-cap="${esc(sl.caption || "")}">${slideHTML(sl, true)}${sl.kind === "vimeo" ? `<span class="gal-chip">${t("Guarda con audio")}</span>` : sl.kind === "video" ? `<span class="gal-chip">${t("Audio")}</span>` : ""}</div>`).join("")}</div><button type="button" class="gal-arrow prev" data-gal="-1" aria-label="${t("Precedente")}">←</button><button type="button" class="gal-arrow next" data-gal="1" aria-label="${t("Successiva")}">→</button><div class="gal-foot"><div class="gal-dots">${slides.map((sl, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div><span class="gal-n">1 / ${slides.length}</span></div></div>${caps ? `<p class="gal-cap"${slides[0].caption ? "" : " hidden"}>${esc(slides[0].caption || "")}</p>` : ""}`;
+  const v = (item.video_url || "").trim();
+  if (v) {
+    const vm = vimeoId(v);
+    if (vm) return `<div class="d-img video"><iframe src="${vimeoSrc(vm, false)}" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${t("Video del progetto")}"></iframe></div>`;
+    if (isFileVideo(v)) return `<div class="d-img video"><video src="${esc(media(v))}" autoplay muted loop playsinline preload="metadata"${item.image ? ` poster="${esc(media(item.image))}"` : ""}></video></div>`;
+  }
+  return `<div class="d-img"><img src="${media(item.image) || media(fallback)}" alt=""></div>`;
 }
-// Carosello della scheda: pallini e contatore seguono lo scorrimento; solo la slide attiva ha il video in moto (gli altri in pausa,
-// gli iframe Vimeo tolti); un tocco sulla slide video dà l'audio (mp4: si toglie il muto; Vimeo: player completo con i controlli).
+// Galleria di un lavoro (foto e video del backoffice, con didascalia): stesse card dei casi d'uso delle aree — carosello sotto il testo,
+// in verticale nel drawer espanso. I video partono muti quando la card è in vista; un tocco dà l'audio (mp4: via il muto; Vimeo: player completo).
+function galleryHTML(item) {
+  const items = (item.gallery || []).filter(g => g && String(g.src || "").trim()); if (!items.length) return "";
+  const card = (g, i) => {
+    const src = String(g.src).trim(), vm = vimeoId(src);
+    const inner = vm ? `<div class="use-media gal-vm" data-vimeo="${vm.id}" data-h="${vm.h || ""}"><span class="gal-chip">${t("Guarda con audio")}</span></div>`
+      : isFileVideo(src) ? `<div class="use-media"><video src="${esc(media(src))}" muted loop playsinline preload="metadata"></video><span class="gal-chip">${t("Audio")}</span></div>`
+      : `<img src="${esc(media(src))}" alt="" loading="lazy">`;
+    return `<figure class="use-card gal-card" data-kind="${vm ? "vimeo" : isFileVideo(src) ? "video" : "image"}">${inner}${g.caption ? `<figcaption><span class="use-n">${String(i + 1).padStart(2, "0")}</span>${esc(g.caption)}</figcaption>` : ""}</figure>`;
+  };
+  return `<div class="d-concrete d-uses d-gallery" data-gallery><div><div class="eyebrow"><span class="dot"></span>${t("Galleria")}</div><div class="use-cards">${items.map(card).join("")}</div></div></div>`;
+}
 const Gallery = {
   mount(root) {
     if (!root || root.dataset.mounted) return; root.dataset.mounted = "1";
-    const track = $(".gal-track", root), slides = $$(".gal-slide", root), dots = $$(".gal-dots i", root), n = $(".gal-n", root), cap = root.nextElementSibling && root.nextElementSibling.classList.contains("gal-cap") ? root.nextElementSibling : null;
-    let cur = -1;
-    const vimeoOn = (sl, full) => { const box = $(".gal-vm", sl); if (!box) return; const old = $("iframe", box); if (old) old.remove(); const f = document.createElement("iframe"); f.src = vimeoSrc({ id: box.dataset.vimeo, h: box.dataset.h }, full); f.allow = "autoplay; fullscreen; picture-in-picture"; f.title = t("Video del progetto"); if (full) f.allowFullscreen = true; else { f.inert = true; f.tabIndex = -1; } box.appendChild(f); sl.classList.toggle("sound", full); };
-    const vimeoOff = (sl) => { const f = $(".gal-vm iframe", sl); if (f) f.remove(); sl.classList.remove("sound"); };
-    const activate = (i) => {
-      if (i === cur) return; cur = i;
-      slides.forEach((sl, k) => { const v = $("video", sl); if (k === i) { if (v) { v.play().catch(() => {}); } if (sl.dataset.kind === "vimeo" && !$("iframe", sl)) vimeoOn(sl, false); } else { if (v) { v.pause(); v.muted = true; sl.classList.remove("sound"); } if (sl.dataset.kind === "vimeo") vimeoOff(sl); } });
-      dots.forEach((d, k) => d.classList.toggle("on", k === i)); if (n) n.textContent = `${i + 1} / ${slides.length}`;
-      if (cap) { const c = slides[i].dataset.cap || ""; cap.textContent = c; cap.hidden = !c; }
-      $$(".gal-arrow", root).forEach(b => { b.disabled = b.dataset.gal === "-1" ? i === 0 : i === slides.length - 1; });
-    };
-    const index = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
-    let tick = 0; track.addEventListener("scroll", () => { clearTimeout(tick); tick = setTimeout(() => activate(index()), 80); }, { passive: true });
+    const scroller = root.closest(".drawer-body, .sheet-body") || null;
+    const vimeoOn = (c, full) => { const box = $(".gal-vm", c); if (!box) return; const old = $("iframe", box); if (old) old.remove(); const f = document.createElement("iframe"); f.src = vimeoSrc({ id: box.dataset.vimeo, h: box.dataset.h }, full); f.allow = "autoplay; fullscreen; picture-in-picture"; f.title = t("Video del progetto"); if (full) f.allowFullscreen = true; else { f.inert = true; f.tabIndex = -1; } box.appendChild(f); c.classList.toggle("sound", full); };
+    const vimeoOff = (c) => { const f = $(".gal-vm iframe", c); if (f) f.remove(); c.classList.remove("sound"); };
+    // i video girano (muti) solo quando la card è in vista; un iframe Vimeo con l'audio resta finché la card è in vista
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      const c = e.target, v = $("video", c);
+      if (e.isIntersecting) { if (v) v.play().catch(() => {}); if (c.dataset.kind === "vimeo" && !$("iframe", c)) vimeoOn(c, false); }
+      else { if (v) { v.pause(); v.muted = true; c.classList.remove("sound"); } if (c.dataset.kind === "vimeo") vimeoOff(c); }
+    }), { root: scroller, threshold: .35 });
+    $$(".gal-card", root).forEach(c => io.observe(c));
     root.addEventListener("click", e => {
-      const a = e.target.closest("[data-gal]"); if (a) { track.scrollBy({ left: +a.dataset.gal * track.clientWidth, behavior: reduced ? "auto" : "smooth" }); return; }
-      const sl = e.target.closest(".gal-slide"); if (!sl || +sl.dataset.i !== cur) return;
-      const v = $("video", sl); if (v) { v.muted = !v.muted; sl.classList.toggle("sound", !v.muted); if (!v.muted) v.play().catch(() => {}); return; }
-      if (sl.dataset.kind === "vimeo" && !sl.classList.contains("sound")) vimeoOn(sl, true); // il player completo ha i suoi controlli
+      const c = e.target.closest(".gal-card"); if (!c) return;
+      const v = $("video", c); if (v) { v.muted = !v.muted; c.classList.toggle("sound", !v.muted); if (!v.muted) v.play().catch(() => {}); return; }
+      if (c.dataset.kind === "vimeo" && !c.classList.contains("sound")) vimeoOn(c, true); // il player completo ha i suoi controlli
     });
-    activate(0);
   },
-  stop(container) { $$("[data-gallery] video", container).forEach(v => { v.pause(); v.muted = true; }); $$("[data-gallery] .gal-vm iframe", container).forEach(f => f.remove()); }
+  stop(container) { $$("[data-gallery] video", container).forEach(v => { v.pause(); v.muted = true; }); $$("[data-gallery] .gal-vm iframe", container).forEach(f => f.remove()); $$("[data-gallery] .sound", container).forEach(c => c.classList.remove("sound")); }
 };
 const capById = (id) => DATA.caps.find(c => c.id === id);
 const capName = (id) => (capById(id) || {}).name || id;
@@ -254,15 +250,17 @@ const AI = {
    DETTAGLIO (drawer desktop / sheet mobile)
    ========================================================= */
 function detailHTML(item) {
-  // ogni scheda: media in cima, poi .d-in con due blocchi — .d-main (etichetta, titolo, testo) e .d-side (casi d'uso, tecnologie, form, rimandi); nel drawer espanso stanno su due colonne
+  // ogni scheda: media in cima, poi .d-in con due blocchi — .d-main (etichetta, titolo, testo e le card: casi d'uso o galleria) e .d-side (tecnologie, form, rimandi); nel drawer espanso stanno su due colonne, con le card in verticale a sinistra
   const list = (items, label) => items.length ? `<div class="list">${items.map(i => `<button type="button" data-open="${i.id}"><span>${esc(i.kind === "work" ? i.client + " · " + i.title : i.kind === "signal" ? i.title : i.name)}</span><small>${label}</small></button>`).join("")}</div>` : "";
   // il form «Adatta al tuo contesto» si accende dal backoffice per le schede delle aree (Contenuti → Servizi) e dei lavori (Contenuti → Lavori); l'AI deve essere attiva (Console e AI)
   const adaptOn = (kind) => DATA.features.adapt !== false && !!(kind === "cap" ? DATA.site.adapt_caps : DATA.site.adapt_works);
   const adapt = (id, kind) => adaptOn(kind) ? `<div class="adapt" data-adapt="${id}"><div class="eyebrow"><span class="dot"></span>${t("Adatta al tuo contesto")}</div><h4>${t("Tre idee concrete per il vostro brand.")}</h4><p class="adapt-hint">${t("Settore, canale e obiettivo: la Console risponde con proposte specifiche, senza giri di parole.")}</p><div class="grid"><input name="sector" placeholder="${t("Settore (es. automotive, farmaceutico, GDO)")}" maxlength="60"><input name="channel" placeholder="${t("Canale (es. DOOH aeroporti, TikTok, showroom)")}" maxlength="60"></div><input name="goal" placeholder="${t("Obiettivo (es. lancio in 12 paesi, traffico in store, formare la rete vendita)")}" maxlength="100" style="margin-top:8px"><button class="btn primary go" type="button">${t("Dammi tre idee")}</button><div class="adapt-out" hidden></div></div>` : "";
-  const concrete = (item) => { const uses = item.uses || [], tech = item.tech || []; if (!uses.length && !tech.length) return `<div class="tags">${(item.tags || []).map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div>`; return `<div class="d-concrete">${uses.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Casi d'uso")}</div>${usesHTML(item)}</div>` : ""}${tech.length ? `<div><div class="eyebrow"><span class="dot"></span>${t("Tecnologie, dispositivi e formati")}</div><div class="tags">${tech.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>` : ""}</div>`; };
+  // casi d'uso (card) sotto il testo, nel blocco principale; tecnologie nel blocco laterale — nel drawer stretto e su mobile i due riquadri si vedono uniti
+  const usesBox = (item) => (item.uses || []).length ? `<div class="d-concrete d-uses"><div><div class="eyebrow"><span class="dot"></span>${t("Casi d'uso")}</div>${usesHTML(item)}</div></div>` : "";
+  const techBox = (item) => { const tech = item.tech || []; if (tech.length) return `<div class="d-concrete d-tech"><div><div class="eyebrow"><span class="dot"></span>${t("Tecnologie, dispositivi e formati")}</div><div class="tags">${tech.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div></div>`; return (item.uses || []).length ? "" : `<div class="tags">${(item.tags || []).map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div>`; };
   if (item.kind === "core") return `<div class="d-img"><img src="${media(DATA.site.hero_image)}" alt=""></div><div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${esc(DATA.site.claim)}</div><h2>${em(DATA.site.hero_title)}</h2><p>${esc(DATA.site.tagline)}</p><p>${esc(DATA.site.hero_text)}</p></div><div class="d-side">${list(DATA.caps.map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
-  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p></div><div class="d-side">${concrete(item)}${adapt(item.id, "cap")}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), t("lavoro"))}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div></div>`;
-  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p></div><div class="d-side">${adapt(item.id, "work")}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
+  if (item.kind === "cap") return `<div class="d-img"><img src="${media(item.image) || media("/media/frames.jpg")}" alt=""></div><div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${t("Area")}</div><h2>${esc(item.name)}</h2><p>${esc(item.body)}</p>${usesBox(item)}</div><div class="d-side">${techBox(item)}${adapt(item.id, "cap")}${list(worksFor(item.id).map(w => ({ ...w, kind: "work" })), t("lavoro"))}${list(signalsFor(item.id).map(s => ({ ...s, kind: "signal" })), "radar")}</div></div>`;
+  if (item.kind === "work") return `${workMedia(item, "/media/monolith.jpg")}<div class="d-in"><div class="d-main"><div class="eyebrow"><span class="dot"></span>${esc(item.client)} · ${esc(item.year)} · <span class="chip ghost">${esc(item.status)}</span></div><h2>${esc(item.title)}</h2><p>${esc(item.body)}</p>${galleryHTML(item)}</div><div class="d-side">${adapt(item.id, "work")}${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
   if (item.kind === "signal") return `<div class="d-in"><div class="d-main"><div class="eyebrow"><span class="chip ext">${t("Fonte esterna")}</span> &nbsp;${esc(item.src)} · ${esc(fmtDate(item.date))}</div><h2 class="serif" style="font-weight:400;font-size:28px">“${esc(item.title)}”</h2><div class="ext-note">${t("Contenuto di terzi: titolo e riassunto appartengono a {src} ({domain}). Frameworks lo segnala e lo commenta.", { src: esc(item.src), domain: esc(domain(item.url)) })}</div>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}<p style="padding-left:16px;border-left:2px solid var(--accent)"><small class="eyebrow" style="display:block;color:var(--accent-ink);margin-bottom:6px">${t("La nostra lettura")}</small>${esc(item.why)}</p><p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener nofollow">${t("Leggi la fonte")} ↗</a></p></div><div class="d-side">${list(item.caps.map(capById).filter(Boolean).map(c => ({ ...c, kind: "cap" })), t("area"))}</div></div>`;
   return "";
 }
